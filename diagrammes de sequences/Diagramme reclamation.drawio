@@ -1,0 +1,184 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="-Q3oADWimdFf7cjyHwn3">
+    <mxGraphModel dx="691" dy="2001" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="W_p32KHAOY7C2PekWzvu-1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#000000;" value="5 - Réclamation" vertex="1">
+          <mxGeometry height="30" width="700" x="300" y="-10" as="geometry" />
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#000000;fontColor=#cfbd97;strokeColor=#000000;" value="Étudiant" vertex="1">
+          <mxGeometry height="44" width="140" x="340" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-3" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="410" y="79" as="sourcePoint" />
+            <mxPoint x="410" y="943" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#000000;fontColor=#cfbd97;strokeColor=#000000;" value="Employé" vertex="1">
+          <mxGeometry height="44" width="140" x="530" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-5" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="600" y="79" as="sourcePoint" />
+            <mxPoint x="600" y="943" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#000000;fontColor=#cfbd97;strokeColor=#000000;" value="Gérant" vertex="1">
+          <mxGeometry height="44" width="140" x="720" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-7" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="79" as="sourcePoint" />
+            <mxPoint x="790" y="943" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="Frontend (Vue)" vertex="1">
+          <mxGeometry height="44" width="140" x="910" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-9" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="980" y="79" as="sourcePoint" />
+            <mxPoint x="980" y="943" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="API (Contrôleur)" vertex="1">
+          <mxGeometry height="44" width="140" x="1100" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-11" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1170" y="79" as="sourcePoint" />
+            <mxPoint x="1170" y="943" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="Base de données (Modèle)" vertex="1">
+          <mxGeometry height="44" width="140" x="1290" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-13" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1360" y="79" as="sourcePoint" />
+            <mxPoint x="1360" y="943" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-14" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Sélectionne une commande et décrit le problème">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="410" y="129" as="sourcePoint" />
+            <mxPoint x="980" y="129" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-15" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="POST /claims">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="980" y="175" as="sourcePoint" />
+            <mxPoint x="1170" y="175" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-16" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Crée la réclamation (statut : ouverte)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1170" y="221" as="sourcePoint" />
+            <mxPoint x="1360" y="221" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-17" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Ouvre le tableau des réclamations">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="600" y="267" as="sourcePoint" />
+            <mxPoint x="980" y="267" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-18" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="GET /claims">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="980" y="313" as="sourcePoint" />
+            <mxPoint x="1170" y="313" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-19" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Propose une réponse">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="600" y="359" as="sourcePoint" />
+            <mxPoint x="980" y="359" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-20" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="PUT /claims/{id}/response">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="980" y="405" as="sourcePoint" />
+            <mxPoint x="1170" y="405" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-21" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Statut = en attente de validation">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1170" y="451" as="sourcePoint" />
+            <mxPoint x="1360" y="451" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-22" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Examine la réponse proposée">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="497" as="sourcePoint" />
+            <mxPoint x="980" y="497" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-23" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#8c7a4f;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="543" as="sourcePoint" />
+            <mxPoint x="1450" y="543" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-24" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=1;fillColor=#cfbd97;strokeColor=#000000;spacingLeft=4;" value="alt [réponse validée]" vertex="1">
+          <mxGeometry height="22" width="200" x="300" y="531" as="geometry" />
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-25" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="PUT /claims/{id}/approve">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="980" y="581" as="sourcePoint" />
+            <mxPoint x="1170" y="581" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-26" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Statut = résolue">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1170" y="627" as="sourcePoint" />
+            <mxPoint x="1360" y="627" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-27" edge="1" parent="1" style="html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Notification de la réponse">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1170" y="673" as="sourcePoint" />
+            <mxPoint x="410" y="673" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-28" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#8c7a4f;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="719" as="sourcePoint" />
+            <mxPoint x="1450" y="719" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-29" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=1;fillColor=#cfbd97;strokeColor=#000000;spacingLeft=4;" value="else [réponse rejetée]" vertex="1">
+          <mxGeometry height="22" width="200" x="300" y="707" as="geometry" />
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-30" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="PUT /claims/{id}/reject">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="980" y="757" as="sourcePoint" />
+            <mxPoint x="1170" y="757" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-31" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Retour à l&#39;employé pour correction">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1170" y="803" as="sourcePoint" />
+            <mxPoint x="1360" y="803" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-32" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#8c7a4f;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="849" as="sourcePoint" />
+            <mxPoint x="1450" y="849" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-33" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=1;fillColor=#cfbd97;strokeColor=#000000;spacingLeft=4;" value="fin alt" vertex="1">
+          <mxGeometry height="22" width="200" x="300" y="837" as="geometry" />
+        </mxCell>
+        <mxCell id="W_p32KHAOY7C2PekWzvu-34" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Suit l&#39;état de sa réclamation">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="410" y="887" as="sourcePoint" />
+            <mxPoint x="980" y="887" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,130 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="Ut-f-daT-3gIehdWDPos">
+    <mxGraphModel dx="691" dy="2001" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#000000;" value="7 - Mise à jour du menu (employé)" vertex="1">
+          <mxGeometry height="30" width="700" x="170" y="-30" as="geometry" />
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#000000;fontColor=#cfbd97;strokeColor=#000000;" value="Employé" vertex="1">
+          <mxGeometry height="44" width="140" x="210" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-3" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="59" as="sourcePoint" />
+            <mxPoint x="280" y="671" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="Frontend (Vue)" vertex="1">
+          <mxGeometry height="44" width="140" x="400" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-5" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="470" y="59" as="sourcePoint" />
+            <mxPoint x="470" y="671" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="API (Contrôleur)" vertex="1">
+          <mxGeometry height="44" width="140" x="590" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-7" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="660" y="59" as="sourcePoint" />
+            <mxPoint x="660" y="671" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="Base de données (Modèle)" vertex="1">
+          <mxGeometry height="44" width="140" x="780" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-9" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="850" y="59" as="sourcePoint" />
+            <mxPoint x="850" y="671" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#000000;fontColor=#cfbd97;strokeColor=#000000;" value="Étudiant" vertex="1">
+          <mxGeometry height="44" width="140" x="970" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-11" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1040" y="59" as="sourcePoint" />
+            <mxPoint x="1040" y="671" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-12" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Ouvre la gestion du menu">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="109" as="sourcePoint" />
+            <mxPoint x="470" y="109" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-13" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="GET /menu">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="470" y="155" as="sourcePoint" />
+            <mxPoint x="660" y="155" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-14" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Lit le menu">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="660" y="201" as="sourcePoint" />
+            <mxPoint x="850" y="201" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-15" edge="1" parent="1" style="html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Articles">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="850" y="247" as="sourcePoint" />
+            <mxPoint x="660" y="247" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-16" edge="1" parent="1" style="html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Menu actuel">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="660" y="293" as="sourcePoint" />
+            <mxPoint x="470" y="293" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-17" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Marque un plat épuisé / change le plat du jour">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="339" as="sourcePoint" />
+            <mxPoint x="470" y="339" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-18" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="PUT /menu/{id}">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="470" y="385" as="sourcePoint" />
+            <mxPoint x="660" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-19" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Mise à jour temporaire">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="660" y="431" as="sourcePoint" />
+            <mxPoint x="850" y="431" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-20" edge="1" parent="1" style="html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="OK">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="660" y="477" as="sourcePoint" />
+            <mxPoint x="470" y="477" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-21" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Consulte le menu du jour">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1040" y="523" as="sourcePoint" />
+            <mxPoint x="470" y="523" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-22" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="GET /menu">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="470" y="569" as="sourcePoint" />
+            <mxPoint x="660" y="569" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RYtkKUxeVqaVpreNbMPR-23" edge="1" parent="1" style="html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Menu à jour">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="660" y="615" as="sourcePoint" />
+            <mxPoint x="470" y="615" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

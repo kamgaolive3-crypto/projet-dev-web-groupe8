@@ -1,0 +1,107 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="c8G1CnRm8NrMtzaiHznw">
+    <mxGraphModel dx="691" dy="832" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#000000;" value="8 - Statistiques temps réel" vertex="1">
+          <mxGeometry height="30" width="700" x="140" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#000000;fontColor=#cfbd97;strokeColor=#000000;" value="Admin / Gérant" vertex="1">
+          <mxGeometry height="44" width="140" x="180" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-3" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="149" as="sourcePoint" />
+            <mxPoint x="250" y="561" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="Frontend (Vue)" vertex="1">
+          <mxGeometry height="44" width="140" x="370" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-5" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="440" y="149" as="sourcePoint" />
+            <mxPoint x="440" y="561" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="API (Contrôleur)" vertex="1">
+          <mxGeometry height="44" width="140" x="560" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-7" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="630" y="149" as="sourcePoint" />
+            <mxPoint x="630" y="561" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="Base de données (Modèle)" vertex="1">
+          <mxGeometry height="44" width="140" x="750" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-9" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820" y="149" as="sourcePoint" />
+            <mxPoint x="820" y="561" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-10" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Ouvre le tableau de bord">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="199" as="sourcePoint" />
+            <mxPoint x="440" y="199" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-11" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#8c7a4f;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="245" as="sourcePoint" />
+            <mxPoint x="910" y="245" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-12" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=1;fillColor=#cfbd97;strokeColor=#000000;spacingLeft=4;" value="loop [rafraîchissement AJAX]" vertex="1">
+          <mxGeometry height="22" width="200" x="140" y="233" as="geometry" />
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-13" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="GET /stats (ventes, commandes, fidélité, parrainage)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="440" y="283" as="sourcePoint" />
+            <mxPoint x="630" y="283" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-14" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Agrège les données">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="630" y="329" as="sourcePoint" />
+            <mxPoint x="820" y="329" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-15" edge="1" parent="1" style="html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Résultats">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820" y="375" as="sourcePoint" />
+            <mxPoint x="630" y="375" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-16" edge="1" parent="1" style="html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="JSON des statistiques">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="630" y="421" as="sourcePoint" />
+            <mxPoint x="440" y="421" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-17" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;align=left;verticalAlign=middle;" value="Met à jour tableaux et graphiques">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="485" y="459" />
+              <mxPoint x="485" y="481" />
+            </Array>
+            <mxPoint x="440" y="459" as="sourcePoint" />
+            <mxPoint x="440" y="481" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-18" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#8c7a4f;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="513" as="sourcePoint" />
+            <mxPoint x="910" y="513" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xrhiNNfSNtfj9S5duQiO-19" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=1;fillColor=#cfbd97;strokeColor=#000000;spacingLeft=4;" value="fin loop" vertex="1">
+          <mxGeometry height="22" width="200" x="140" y="501" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

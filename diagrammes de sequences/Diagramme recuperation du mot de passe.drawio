@@ -1,0 +1,121 @@
+<mxfile host="Electron" agent="Claude">
+  <diagram id="d0" name="Diagrammes de sequence">
+    <mxGraphModel dx="1382" dy="464" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c43" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#8c7a4f;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="20" y="1210" as="sourcePoint" />
+            <mxPoint x="980" y="1210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c50" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#8c7a4f;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="20" y="1478" as="sourcePoint" />
+            <mxPoint x="980" y="1478" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c73" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#8c7a4f;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="20" y="2215" as="sourcePoint" />
+            <mxPoint x="980" y="2215" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c79" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#8c7a4f;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="20" y="2437" as="sourcePoint" />
+            <mxPoint x="980" y="2437" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c217" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#000000;" value="9 - Récupération du mot de passe" vertex="1">
+          <mxGeometry height="30" width="700" x="20" y="7102" as="geometry" />
+        </mxCell>
+        <mxCell id="c218" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#000000;fontColor=#cfbd97;strokeColor=#000000;" value="Étudiant" vertex="1">
+          <mxGeometry height="44" width="140" x="60" y="7147" as="geometry" />
+        </mxCell>
+        <mxCell id="c219" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="7191" as="sourcePoint" />
+            <mxPoint x="130" y="7619" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c220" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="Frontend (Vue)" vertex="1">
+          <mxGeometry height="44" width="140" x="250" y="7147" as="geometry" />
+        </mxCell>
+        <mxCell id="c221" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="320" y="7191" as="sourcePoint" />
+            <mxPoint x="320" y="7619" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c222" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="API (Contrôleur)" vertex="1">
+          <mxGeometry height="44" width="140" x="440" y="7147" as="geometry" />
+        </mxCell>
+        <mxCell id="c223" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="7191" as="sourcePoint" />
+            <mxPoint x="510" y="7619" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c224" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontStyle=1;fillColor=#cfbd97;fontColor=#000000;strokeColor=#000000;" value="Base de données (Modèle)" vertex="1">
+          <mxGeometry height="44" width="140" x="630" y="7147" as="geometry" />
+        </mxCell>
+        <mxCell id="c225" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="7191" as="sourcePoint" />
+            <mxPoint x="700" y="7619" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c226" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Clique sur « Mot de passe oublié »">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="7241" as="sourcePoint" />
+            <mxPoint x="320" y="7241" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c227" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="POST /password/forgot (email)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="320" y="7287" as="sourcePoint" />
+            <mxPoint x="510" y="7287" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c228" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Génère un jeton à durée limitée">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="7333" as="sourcePoint" />
+            <mxPoint x="700" y="7333" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c229" edge="1" parent="1" style="html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Envoie le lien de récupération">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="7379" as="sourcePoint" />
+            <mxPoint x="130" y="7379" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c230" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Ouvre le lien et saisit un nouveau mot de passe">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="7425" as="sourcePoint" />
+            <mxPoint x="320" y="7425" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c231" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="POST /password/reset">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="320" y="7471" as="sourcePoint" />
+            <mxPoint x="510" y="7471" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c232" edge="1" parent="1" style="html=1;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Vérifie le jeton ; enregistre le nouveau mot de passe haché">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="7517" as="sourcePoint" />
+            <mxPoint x="700" y="7517" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c233" edge="1" parent="1" style="html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=default;verticalAlign=bottom;" value="Mot de passe modifié">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="7563" as="sourcePoint" />
+            <mxPoint x="320" y="7563" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
