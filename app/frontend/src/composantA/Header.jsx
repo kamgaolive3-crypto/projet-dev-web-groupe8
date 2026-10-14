@@ -13,10 +13,10 @@ export default function Header() {
     const pages = {
         "/TableauBord": "TableauBord",
         "/Employes": "Employes",
-        "/Menu": "Menu",
+        "/MenuA": "Menu",
         "/Promotion": "Promotion",
         "/Parametre": "Parametre",
-        "Reclamation": "Reclamation",
+        "ReclamationA": "Reclamation",
     };
     // Recherche le nom correspondant à l'URL actuelle.
     // Si l'URL n'est pas dans l'objet, affiche "Mon MiamMiam".
@@ -49,17 +49,21 @@ export default function Header() {
                     {pageActive}
                 </span>
                 <ul className="hidden md:flex item-center gap-5">
-                    <li><NavLink to="/" end className={lienStyle}>
-                        Accueil</NavLink></li>
-                    <li><NavLink to="/Menu" className={lienStyle}>
+                    <li><NavLink to="/TableauBord" end className={lienStyle}>
+                        Tableau de bord</NavLink></li>
+                    <li><NavLink to="/Employes" className={lienStyle}>
+                        Employes</NavLink></li>
+                    <li><NavLink to="/MenuA"className={lienStyle}>
                         Menu</NavLink></li>
-                    <li><NavLink to="/Panier"className={lienStyle}>
-                        panier</NavLink></li>
-                    <li><NavLink to="/Fideliter"className={lienStyle}>
-                        fideliter</NavLink></li>
+                    <li><NavLink to="/Promotion"className={lienStyle}>
+                        Promotion</NavLink></li>
+                    <li><NavLink to="/Parametre"className={lienStyle}>
+                        Parametre</NavLink></li>
+                    <li><NavLink to="/ReclamationA"className={lienStyle}>
+                        Reclamation</NavLink></li>
                 </ul>
                 <Link to="/page_connexion" className="hidden md:inline-flex bg-primary text-secondary px-5 py-2 mr-3 rounded-[10px] cursor-pointer hover:bg-primary-700">
-                    Connexion </Link>
+                    Deconnexion </Link>
                 <button
                     type="button"
                     onClick={() => setMenuOuvert(!menuOuvert)}
@@ -106,19 +110,30 @@ export default function Header() {
                         {/* LIEN ACCUEIL */}
                         <li>
                             <NavLink
-                                to="/"
+                                to="/TableauBord"
                                 end
                                 className={lienStyle}
                                 onClick={fermerMenu}
                             >
-                                Accueil
+                                Tableau de bord
                             </NavLink>
                         </li>
 
                         {/* LIEN MENU */}
                         <li>
                             <NavLink
-                                to="/Menu"
+                                to="/Employes"
+                                className={lienStyle}
+                                onClick={fermerMenu}
+                            >
+                                Employes  
+                            </NavLink>
+                        </li>
+
+                        {/* LIEN PANIER */}
+                        <li>
+                            <NavLink
+                                to="/MenuA"
                                 className={lienStyle}
                                 onClick={fermerMenu}
                             >
@@ -126,25 +141,34 @@ export default function Header() {
                             </NavLink>
                         </li>
 
-                        {/* LIEN PANIER */}
-                        <li>
-                            <NavLink
-                                to="/Panier"
-                                className={lienStyle}
-                                onClick={fermerMenu}
-                            >
-                                Panier
-                            </NavLink>
-                        </li>
-
                         {/* LIEN FIDÉLITÉ */}
                         <li>
                             <NavLink
-                                to="/Fideliter"
+                                to="/Promotion"
                                 className={lienStyle}
                                 onClick={fermerMenu}
                             >
-                                Fidélité
+                                Promotion
+                            </NavLink>
+                        </li>
+
+                        <li>
+                            <NavLink
+                                to="/Parametre"
+                                className={lienStyle}
+                                onClick={fermerMenu}
+                            >
+                                Parametre
+                            </NavLink>
+                        </li>
+
+                        <li>
+                            <NavLink
+                                to="/ReclamationA"
+                                className={lienStyle}
+                                onClick={fermerMenu}
+                            >
+                                Reclamation
                             </NavLink>
                         </li>
 
@@ -175,7 +199,7 @@ export default function Header() {
                                     hover:bg-primary-700
                                 "
                             >
-                                Connexion
+                                Deconnexion
                             </Link>
 
                         </li>
