@@ -7,7 +7,7 @@ import GlassCard from "../../Composant/GlassCard";
 import GlassPage from "../../Composant/GlassPage";
 
 
-export default function Login() {
+export default function Signin() {
     const [nom, setnom] = useState("");
     const [prenom, setprenom] = useState("");
     const [email, setEmail] = useState("");
@@ -45,7 +45,7 @@ export default function Login() {
                 <div className="flex flex-col gap-1 mt-0 p-0">
                     <img src={avatar} alt="avatar" className="w-30 h-30 mx-auto"/>
                     <p className="text-secondary text-xs text-center"> Vous avez deja un compte ? {" "}
-                        <Link to="/" className="text-primary cursor-pointer hover:text-primary-700">
+                        <Link to="/page_connexion" className="text-primary cursor-pointer hover:text-primary-700">
                            connectez vous.
                         </Link>
                     </p>

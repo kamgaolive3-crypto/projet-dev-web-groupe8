@@ -6,6 +6,8 @@
   --color-primary-700: #C49E4C;
   --color-primary-800: #94690C;
   --color-secondary: #000;
+  --color-grey: #F3F3F3;
+  --color-grey-300: #c2c2c2;
 }
 
 :root {
