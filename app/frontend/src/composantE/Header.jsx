@@ -38,7 +38,7 @@ export default function Header() {
         <header className="relative w-full bg-grey border-b border-grey-300">
             <nav className="flex w-full-xl mx-auto items-center justify-between">
                 <div className="flex flex-col gap-1">
-                    <img src={logo} alt="logo mon miam miam" className="w-15 m-4 mb-0 rounded-[10px]"/>
+                    <img src={logo} alt="logo mon miam miam" className="w-15 m-5 mb-0 rounded-[10px]"/>
                     <p className="text-secondary text-sm px-1">Mon MiamMiam</p>
                 </div>
                 <span className="md:hidden text-primary font-semibold">
