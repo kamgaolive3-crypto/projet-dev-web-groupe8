@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class MiseAJourMenu extends Model
+class Gestion_menu_admin extends Model
 {
     //
 }
