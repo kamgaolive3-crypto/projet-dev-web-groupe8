@@ -8,7 +8,7 @@ import LayoutA from "./composantA/Layout";
 import TableauBord from "./vues/pagesA/TableauBord";
 import Employes from "./vues/pagesA/Employes";
 import MenuA from "./vues/pagesA/Menu";
-import Promotion from "./vues/pagesA/Promotion";
+import Evenement from "./vues/pagesA/Evenement";
 import Parametre from "./vues/pagesA/Parametre";
 import ReclamationA from "./vues/pagesA/Reclamation";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -30,7 +30,7 @@ export default function App() {
           <Route path="/TableauBord" element={<TableauBord />}/>
           <Route path="/Employes" element={<Employes />}/>
           <Route path="/MenuA" element={<MenuA />}/>
-          <Route path="/Promotion" element={<Promotion />}/>
+          <Route path="/Evenement" element={<Evenement />}/>
           <Route path="/Parametre" element={<Parametre />}/>
           <Route path="/ReclamationA" element={<ReclamationA />}/>
         </Route>
