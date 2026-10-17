@@ -35,6 +35,11 @@ const [menuDuJour] = useState([
     {id: 2, nom: "poisson braisé", prix: 2000, image:"/poisson braisé.jpg"},
     {id: 3, nom: "poulet pané", prix: 2000, image:"/poulet pané.jpg"}
 ])
+const [panier, setPanier] =useState([])
+
+const ajouterAuPanier = (plat) => {
+    setPanier([...panier, plat])
+}
     return(
          <div className="flex flex-col gap-6 p-4 md:p-6">
             {/* si un plat du jour existe, on l'affiche, sinon on affiche un message */}
@@ -51,7 +56,10 @@ const [menuDuJour] = useState([
                     <h2 className="text-sm font-bold uppercase">Découvrez notre plat du jour :</h2>
                     <p className="font-semibold text-[#b8862d]">{platDuJour.nom}</p>
                     <p className="text-sm">{platDuJour.prix} Fcfa</p>
-                    <button className="rounded-full bg-[#CFBD97] py-2 text-sm font-medium">
+                    <button
+                        onClick={() => ajouterAuPanier(platDuJour)} 
+                        className="rounded-full bg-[#CFBD97] py-2 text-sm font-medium"
+                    >
                         Ajouter au panier
                         </button>
                         </div>
@@ -104,8 +112,11 @@ const [menuDuJour] = useState([
                             </div>
 
                             <div className="p-3">
-                                <button className="w-full rounded-full bg-[#CFBD97] py-2 text-xs font-medium md:text-sm">
-                                     Ajouter au panier
+                                <button
+                                    onClick={() => ajouterAuPanier(plat)}
+                                    className="w-full rounded-full bg-[#CFBD97] py-2 text-xs font-medium md:text-sm"
+                                >
+                                    🛒 Ajouter au panier
                                 </button>
                             </div>
                         </div>
