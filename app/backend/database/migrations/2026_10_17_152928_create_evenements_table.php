@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('mise_a_jour_menu')) {
+        if (Schema::hasTable('evenement')) {
             return;
         }
         Schema::create('evenement', function (Blueprint $table) {
