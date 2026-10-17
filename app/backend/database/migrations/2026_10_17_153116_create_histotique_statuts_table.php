@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('histotique_statuts', function (Blueprint $table) {
+        Schema::create('histotique_statut', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
         });
@@ -22,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('histotique_statuts');
+        Schema::dropIfExists('histotique_statut');
     }
 };

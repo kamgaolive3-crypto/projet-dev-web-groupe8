@@ -11,9 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('parametres', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        if (Schema::hasTable('parametre')) {
+            return;
+        }
+        Schema::create('parametre', function (Blueprint $table) {
+            $table->string('Id_parametre',5)->primary();
+            $table->string('cle',100);
+            $table->text('valeur');
+            $table->string('Id_utilisateur',10);
+            $table->foreign('Id_utilisateur')->references('Id_utilisateur')->on('administrateur')->onDelete('cascade');
         });
     }
 
@@ -22,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('parametres');
+        Schema::dropIfExists('parametre');
     }
 };

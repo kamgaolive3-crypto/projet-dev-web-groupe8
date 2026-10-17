@@ -14,6 +14,7 @@ class ArticleMenu extends Model
     protected $fillable = [
         'Id_article',
         'nom_article',
+        'image_article',
         'description',
         'prix_article',
         'categories_article',
@@ -28,5 +29,11 @@ class ArticleMenu extends Model
 
     public function restaurants(){
         return $this->belongsTo(Restaurant::class, 'Id_restaurant', 'Id_restaurant');
+    }
+    public function gestion_menu(){
+        return $this->hasMany(Gestion_menu_admin::class,'Id_article','Id_article');
+    }
+    public function mise_ajour_menu(){
+        return $this->hasMany(Mise_a_jour_menu::class,'Id_article','Id_article');
     }
 }

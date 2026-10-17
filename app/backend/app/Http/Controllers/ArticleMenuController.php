@@ -17,6 +17,24 @@ class ArticleMenuController extends Controller
     }
 
     /**
+     * affiche tous les article au menu du jours
+     */
+    public function menu_du_jour(){
+        $menu = ArticleMenu::where('Menu_du_jour',1)->get();
+        return $menu;
+    }
+
+    /**
+     * affiche tous les plats , boissons, dessert ou accompagnement au menu du jours
+     */
+    public function plat_du_jour($categorie){
+        $menu = ArticleMenu::where('Menu_du_jour',1)
+                           ->where('categories_article',$categorie) // categorie doir etre soit plat soir boisson soit dessert soit accompagnement
+                           ->get();
+        return $menu;
+    }
+
+    /**
      * Store a newly created resource in storage.
      * POST/api/articlemenu: creer 
      */
@@ -25,6 +43,7 @@ class ArticleMenuController extends Controller
         $data = $request->validate([
             'Id_article'            => ['required', 'regex:/^[A-Z]{3}[0-9]{3}$/', 'unique:article_menu,Id_article'],
             'nom_article'           => 'required|string|max:150',
+            'image_article'         => 'nullable|string',
             'description'           => 'nullable|string',
             'prix_article'          => 'required|integer|min:0',
             'categories_article'    => 'required|in:plat,boisson,dessert,accompagnement,autre',
@@ -55,6 +74,7 @@ class ArticleMenuController extends Controller
         $data = $request->validate([
             'Id_article'            => ['required', 'regex:/^[A-Z]{3}[0-9]{3}$/', 'unique:article_menu,Id_article'],
             'nom_article'           => 'required|string|max:150',
+            'image_article'         => 'nullable|string',
             'description'           => 'nullable|string',
             'prix_article'          => 'required|integer|min:0',
             'categories_article'    => 'required|in:plat,boisson,dessert,accompagnement,autre',
@@ -64,7 +84,7 @@ class ArticleMenuController extends Controller
         ]);
 
         $article->update($data);
-        return $article;
+        return response()->json($article, 201);
     }
 
     /**
@@ -73,6 +93,6 @@ class ArticleMenuController extends Controller
     public function destroy(string $id)
     {
         ArticleMenu::findOrFail( $id )->delete();
-        return response () ->jsaon(['message'=> 'article supprimer']);
+        return response () ->json(['message'=> 'article supprimer']);
     }
 }
