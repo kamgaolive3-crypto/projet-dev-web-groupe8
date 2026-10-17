@@ -1,0 +1,37 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        //evite l;erreur si la table existe deja dans mysql
+        if(Schema::hasTable('article_menu')){
+            return;
+        }
+        Schema::create('article_menu', function (Blueprint $table) {
+            $table->string('Id_article',6)->primary();
+            $table->string('nom_article',150);
+            $table->text('description');
+            $table->integer('prix_article');
+            $table->string('categories_article',255);
+            $table->boolean('disponibiliter_article')->default(1);
+            $table->boolean('Menu_du_jour')->default(0);
+            $table->foreign('Id_restaurant')->references('Id_restaurant')->on('restaurant')->onDelete('cascade');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('article_menu');
+    }
+};
