@@ -28,6 +28,11 @@ class Evenement extends Model
     public function participation_env(){
         return $this->hasMany(Participation_evenement::class,'Id_evenement','Id_evenement');
     }
+
+    // Alias court attendu par EvenementController::participations()
+    public function participations(){
+        return $this->participation_env();
+    }
     public function scopePromotionsActives($query){
         return $query->where('type_evenement', 'promotion')
                      ->where('debut_evenement', '<=', now())

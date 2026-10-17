@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Etudiant;
 use App\Models\Evenement;
 use App\Models\Participation_evenement;
 use Illuminate\Http\Request;
@@ -10,14 +11,9 @@ use Illuminate\Support\Facades\DB;
 class EvenementController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * GET /api/evenement  ou  /api/evenement?statut=en_cours|a_venir|passes
+     * Liste des événements, filtrable par statut.
      */
-    public function index()
-    {
-        return Evenement::all();
-    }
-
-     // GET /api/evenements  ou  /api/evenements?statut=en_cours|a_venir|passes
     public function index(Request $request)
     {
         $query = Evenement::query();
@@ -66,16 +62,18 @@ class EvenementController extends Controller
     {
         $event = Evenement::findOrFail($id);
         $data = $request->validate([
-            'Id_evenement'    => ['required', 'regex:/^[A-Z]{3}[0-9]{4}$/', 'unique:evenement,Id_evenement'],
+            // unique ignore l'enregistrement courant ($id) : sans cela, toute
+            // mise à jour échouerait car l'Id_evenement existe déjà en base.
+            'Id_evenement'    => ['required', 'regex:/^[A-Z]{3}[0-9]{4}$/', 'unique:evenement,Id_evenement,'.$id],
             'debut_evenement' => 'required|date',
             'fin_evenement'   => 'required|date|after_or_equal:debut_evenement',
             'type_evenement'  => 'required|in:promotion,evenement,mini_jeu',
             'points_evenement'=> 'integer|min:0',
-            'taux_reduction'   => 'required_if:type_evenement,promotion|nullable|integer|between:1,100',
+            'taux_reduction'  => 'required_if:type_evenement,promotion|nullable|integer|between:1,100',
             'Id_utilisateur'  => 'required|exists:administrateur,Id_utilisateur',
         ]);
         $event->update($data);
-        return response()->json($event, 201);
+        return response()->json($event, 200);
     }
 
     /**
@@ -151,11 +149,11 @@ class EvenementController extends Controller
         return Evenement::promotionsActives()->get();
     }
 
-    // GET /api/evenements/EVT0001/participations
-    //affiche tous les participants d'un evenement precis
+    // GET /api/evenement/EVT0001/participations
+    // affiche tous les participants d'un evenement precis
     public function participations($id){
-    // Cherche l'événement (404 s'il n'existe pas), puis renvoie la liste de ses participations.
-    // ->participations (sans parenthèses) appelle la relation hasMany définie dans le modèle Evenement.
+        // Cherche l'événement (404 s'il n'existe pas), puis renvoie la liste de ses participations.
+        // ->participations (sans parenthèses) appelle la relation hasMany définie dans le modèle Evenement.
         return Evenement::findOrFail($id)->participations;
     }
 } 

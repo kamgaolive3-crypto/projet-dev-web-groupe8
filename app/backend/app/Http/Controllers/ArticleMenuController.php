@@ -72,7 +72,9 @@ class ArticleMenuController extends Controller
     {
         $article = ArticleMenu::findOrFail($id);
         $data = $request->validate([
-            'Id_article'            => ['required', 'regex:/^[A-Z]{3}[0-9]{3}$/', 'unique:article_menu,Id_article'],
+            // On ignore l'enregistrement courant ($id) dans le contrôle d'unicité,
+            // sinon toute mise à jour échouerait car l'Id_article existe déjà.
+            'Id_article'            => ['required', 'regex:/^[A-Z]{3}[0-9]{3}$/', 'unique:article_menu,Id_article,'.$id],
             'nom_article'           => 'required|string|max:150',
             'image_article'         => 'nullable|string',
             'description'           => 'nullable|string',
@@ -84,7 +86,7 @@ class ArticleMenuController extends Controller
         ]);
 
         $article->update($data);
-        return response()->json($article, 201);
+        return response()->json($article, 200);
     }
 
     /**
