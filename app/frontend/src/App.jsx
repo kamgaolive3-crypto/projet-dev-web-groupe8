@@ -15,6 +15,7 @@ import Parametre from "./vues/pagesA/Parametre";
 import ReclamationA from "./vues/pagesA/Reclamation";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import Signin from './vues/pages/page_inscription';
+import PageReset from "./vues/pages/page_reset";
 import Reclamation from "./vues/pagesE/Reclamation"
 import Historique from "./vues/pagesE/Historique"
 import { FournisseurAuth, useAuth } from "./services/auth";
@@ -70,6 +71,7 @@ export default function App() {
           {/* 3. Authentification */}
           <Route path="/page_connexion" element={<Login />} />
           <Route path="/page_inscription" element={<Signin />} />
+          <Route path="/page_reset" element={<PageReset />} />
         </Routes>
       </BrowserRouter>
     </FournisseurAuth>
