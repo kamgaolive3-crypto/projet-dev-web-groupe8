@@ -19,6 +19,6 @@ class Parametre extends Model
     ];
 
     public function administrateurs(){
-        return $this->belongsTo(Administrateur,'Id_utilisateur','Id_utilisateur');
+        return $this->belongsTo(Administrateur::class, 'Id_utilisateur', 'Id_utilisateur');
     }
 }
