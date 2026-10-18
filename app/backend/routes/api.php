@@ -12,11 +12,14 @@ use App\Http\Controllers\ReclamationController;
 use App\Http\Controllers\CookiesController;
 use App\Http\Controllers\EmployeController;
 use App\Http\Controllers\StatistiqueController;
+use App\Http\Controllers\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
 // --- Authentification (Sanctum) ---
 Route::post('auth/inscription', [AuthController::class, 'inscription']);
 Route::post('auth/connexion', [AuthController::class, 'connexion']);
+Route::post('auth/mot-de-passe-oublie', [PasswordResetController::class, 'demander']);
+Route::post('auth/mot-de-passe-reinitialiser', [PasswordResetController::class, 'reinitialiser']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('auth/deconnexion', [AuthController::class, 'deconnexion']);
     Route::get('auth/me', [AuthController::class, 'me']);
