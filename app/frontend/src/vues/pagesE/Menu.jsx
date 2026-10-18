@@ -37,6 +37,7 @@ export default function Menu() {
                     categorie: a.categories_article,
                     image: a.image_article || "/plat_du_jour.jpg",
                     disponible: a.disponibilite_article,
+                    restaurant: a.Id_restaurant, // le panier exige un seul restaurant
                 })))
             })
             .catch((e) => setErreur(e.message))
