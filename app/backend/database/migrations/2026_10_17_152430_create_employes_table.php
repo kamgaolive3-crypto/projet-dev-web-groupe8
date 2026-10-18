@@ -20,6 +20,7 @@ return new class extends Migration
             $table->date('date_embauche')->nullable();
             $table->string('Id_restaurant', 5);
             $table->string('Id_createur', 10)->nullable(); // gérant ou admin ayant créé le compte
+            $table->foreign('Id_createur')->references('Id_utilisateur')->on('utilisateur')->nullOnDelete();
             $table->dateTime('date_creation_compte')->useCurrent();
             $table->timestamps();
 
