@@ -93,7 +93,7 @@ class EmployeController extends Controller
     public function update(Request $request, string $id)
     {
         if (! in_array($request->user()->role, ['gerant', 'administrateur'], true)) {
-            return response()->json(['message' => 'Réservé au gérant ou à l'administrateur.'], 403);
+            return response()->json(['message' => 'Réservé au gérant ou à un administrateur.'], 403);
         }
 
         $data = $request->validate([
@@ -131,7 +131,7 @@ class EmployeController extends Controller
     public function destroy(Request $request, string $id)
     {
         if ($request->user()->role !== 'administrateur') {
-            return response()->json(['message' => 'Réservé à l'administrateur.'], 403);
+            return response()->json(['message' => 'Réservé à un administrateur.'], 403);
         }
 
         DB::transaction(function () use ($id) {
