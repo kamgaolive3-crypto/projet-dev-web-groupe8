@@ -8,6 +8,8 @@ use App\Http\Controllers\CommandeController;
 use App\Http\Controllers\LivraisonController;
 use App\Http\Controllers\FideliteController;
 use App\Http\Controllers\ParrainageController;
+use App\Http\Controllers\ReclamationController;
+use App\Http\Controllers\CookiesController;
 use Illuminate\Support\Facades\Route;
 
 // --- Authentification (Sanctum) ---
@@ -68,4 +70,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('parrainage/code', [ParrainageController::class, 'code']);
     Route::post('parrainage/utiliser', [ParrainageController::class, 'utiliser']);
     Route::get('parrainage/filleuls', [ParrainageController::class, 'filleuls']);
+});
+// --- Réclamations (US-021/022/038 : dépose étudiant, 3 niveaux staff) ---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('reclamation', [ReclamationController::class, 'store']);
+    Route::get('reclamation', [ReclamationController::class, 'index']);
+    Route::get('reclamation/{reclamation}', [ReclamationController::class, 'show']);
+    Route::post('reclamation/{reclamation}/traiter', [ReclamationController::class, 'traiter']);
+    Route::post('reclamation/{reclamation}/decision-gerant', [ReclamationController::class, 'decisionGerant']);
+    Route::post('reclamation/{reclamation}/traiter-admin', [ReclamationController::class, 'traiterAdmin']);
+    Route::post('reclamation/{reclamation}/decision-admin', [ReclamationController::class, 'decisionAdmin']);
+});
+
+// --- Consentement cookies RGPD (US-004) : bannière possible sans connexion ---
+Route::post('cookies', [CookiesController::class, 'store']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('cookies/moi', [CookiesController::class, 'moi']);
 });
