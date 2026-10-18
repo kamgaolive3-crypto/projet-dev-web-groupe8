@@ -2,25 +2,41 @@
 import avatar from "../../assets/profil.png"
 //importe un hook qui permet de memoriser une valeur
 import { useState } from "react";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from "../../services/auth";
 //importe la frame en glass et l'image de fond
-import GlassCard from "../../Composant/GlassCard";
-import GlassPage from "../../Composant/GlassPage";
+import GlassCard from "../../composant/GlassCard";
+import GlassPage from "../../composant/GlassPage";
 
 
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [erreur, setErreur] = useState("");
+    const navigate = useNavigate();
+    const { connexion } = useAuth();
     const regleMotDePasse = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
 
     //fonction appellée quand envoie le formulaire
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault(); // empeche le rechargement de 
         if (!regleMotDePasse.test(password)) {
             setErreur("Le mot de passe doit contenir 8 caractères, une majuscule et un chiffre");
             return;
         }
-        console.log(email, password); //plus tard: envoi a ton API PHP 
+                setErreur("");
+        try {
+            const reponse = await connexion(email, password);
+            // redirection selon le role : le staff va dans son espace, l etudiant a l accueil
+            if (reponse.role && reponse.role !== "etudiant") {
+                navigate("/TableauBord");
+            } else {
+                navigate("/");
+            }
+        } catch (err) {
+            const detail = err.champs ? Object.values(err.champs).flat().join(" - ") : null;
+            setErreur(detail || err.message || "Connexion echouee");
+        } //plus tard: envoi a ton API PHP 
     }
 
     return (
@@ -34,6 +50,7 @@ export default function Login() {
                     <img src={avatar} alt="Avatar" className="w-30 h-30" />
                 </div>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2"> {/*initialisation du formulaire*/}
+                    {erreur && (<p className="text-sm font-semibold text-red-600">{erreur}</p>)}
                     <div className="flex flex-col gap-1">
                         <label htmlFor="email" className="text-secondary">
                         Email:
