@@ -2,8 +2,11 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { FaBars, FaXmark } from "react-icons/fa6";
 import logo from "../assets/logo.png";
+import { useAuth } from "../services/auth";
 
 export default function Header() {
+    // le header affiche Connexion ou Deconnexion selon l utilisateur
+    const { user, deconnexion } = useAuth();
      // menuOuvert indique si le menu déroulant est ouvert.
     const [menuOuvert, setMenuOuvert] = useState(false);
     // useLocation récupère les informations sur l'URL actuelle.
@@ -56,8 +59,22 @@ export default function Header() {
                     <li><NavLink to="/Fideliter"className={lienStyle}>
                         fideliter</NavLink></li>
                 </ul>
-                <Link to="/page_connexion" className="hidden md:inline-flex bg-primary text-secondary px-5 py-2 mr-3 rounded-[10px] cursor-pointer hover:bg-primary-700">
-                    Connexion </Link>
+                {user ? (
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            // vraie deconnexion : revoke du token puis retour a l accueil
+                            await deconnexion();
+                            window.location.href = "/";
+                        }}
+                        className="hidden md:inline-flex bg-primary text-secondary px-5 py-2 mr-3 rounded-[10px] cursor-pointer hover:bg-primary-700"
+                    >
+                        Deconnexion ({user.prenom})
+                    </button>
+                ) : (
+                    <Link to="/page_connexion" className="hidden md:inline-flex bg-primary text-secondary px-5 py-2 mr-3 rounded-[10px] cursor-pointer hover:bg-primary-700">
+                        Connexion </Link>
+                )}
                 <button
                     type="button"
                     onClick={() => setMenuOuvert(!menuOuvert)}
@@ -156,25 +173,23 @@ export default function Header() {
                             pt-4
                         ">
 
-                            <Link
-                                to="/page_connexion"
-
-                                // Ferme le menu après le clic.
-                                onClick={fermerMenu}
-
-                                className="
-                                    block
-                                    w-full
-                                    bg-primary
-                                    text-secondary
-                                    text-center
-                                    py-2
-                                    rounded-[10px]
-                                    hover:bg-primary-700
-                                "
-                            >
-                                Connexion
-                            </Link>
+                            {user ? (
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        await deconnexion();
+                                        window.location.href = "/";
+                                    }}
+                                    className="block w-full bg-primary text-secondary text-center py-2 rounded-[10px] hover:bg-primary-700"
+                                >
+                                    Deconnexion ({user.prenom})
+                                </button>
+                            ) : (
+                                <Link to="/page_connexion" onClick={fermerMenu}
+                                    className="block w-full bg-primary text-secondary text-center py-2 rounded-[10px] hover:bg-primary-700">
+                                    Connexion
+                                </Link>
+                            )}
 
                         </li>
 
