@@ -6,6 +6,8 @@ use App\Http\Controllers\EvenementController;
 use App\Http\Controllers\ParametreController;
 use App\Http\Controllers\CommandeController;
 use App\Http\Controllers\LivraisonController;
+use App\Http\Controllers\FideliteController;
+use App\Http\Controllers\ParrainageController;
 use Illuminate\Support\Facades\Route;
 
 // --- Authentification (Sanctum) ---
@@ -53,4 +55,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('livraison/{livraison}/demarrer', [LivraisonController::class, 'demarrer']);
     Route::post('livraison/{livraison}/livrer', [LivraisonController::class, 'livrer']);
     Route::post('livraison/{livraison}/echouer', [LivraisonController::class, 'echouer']);
+});
+// --- Fidélité (US-014/015/016) ---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('fidelite/solde', [FideliteController::class, 'solde']);
+    Route::get('fidelite/historique', [FideliteController::class, 'historique']);
+    Route::post('fidelite/expiration', [FideliteController::class, 'expirer']); // staff / cron
+});
+
+// --- Parrainage (US-017/018/020) ---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('parrainage/code', [ParrainageController::class, 'code']);
+    Route::post('parrainage/utiliser', [ParrainageController::class, 'utiliser']);
+    Route::get('parrainage/filleuls', [ParrainageController::class, 'filleuls']);
 });
