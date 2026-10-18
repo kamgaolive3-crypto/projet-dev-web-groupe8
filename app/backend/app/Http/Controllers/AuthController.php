@@ -25,7 +25,8 @@ class AuthController extends Controller
             'email'         => 'required|email|max:255|unique:utilisateur,email',
             'telephone'     => ['required', 'regex:/^6[0-9]{8}$/'],
             'mot_de_passe'  => 'required|string|min:8|confirmed',
-            'localisation'  => 'nullable|string',
+            'localisation'      => 'nullable|string',
+            'code_parrainage'   => ['nullable', 'regex:/^[A-Z]{4}[0-9]{4}$/'],
         ]);
 
         $utilisateur = Utilisateur::create([
@@ -45,6 +46,18 @@ class AuthController extends Controller
             'code_parrainage' => strtoupper(Str::random(4)).random_int(1000, 9999),
             'solde_point'     => 0,
         ]);
+
+        // US-018 : utiliser un code de parrainage à l'inscription (optionnel)
+        if (! empty($data['code_parrainage'])) {
+            $parrain = Etudiant::where('code_parrainage', $data['code_parrainage'])->first();
+            if ($parrain && $parrain->Id_utilisateur !== $utilisateur->Id_utilisateur) {
+                \App\Models\Parrainer::create([
+                    'Id_filleul'           => $utilisateur->Id_utilisateur,
+                    'Id_parrain'           => $parrain->Id_utilisateur,
+                    'recompense_attribuee' => false,
+                ]);
+            }
+        }
 
         $token = $utilisateur->createToken('api')->plainTextToken;
 
