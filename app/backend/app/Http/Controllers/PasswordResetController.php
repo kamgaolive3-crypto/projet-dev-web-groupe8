@@ -6,6 +6,7 @@ use App\Models\ReinitialisationMdp;
 use App\Models\Utilisateur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class PasswordResetController extends Controller
@@ -44,9 +45,27 @@ class PasswordResetController extends Controller
             'Id_utilisateur'  => $utilisateur->Id_utilisateur,
         ]);
 
+        // envoi reel de l email : MAIL_MAILER=log en local (le mail est écrit dans
+        // storage/logs/laravel.log), plus tard un vrai SMTP en production
+        try {
+            Mail::raw(
+                "Bonjour, votre demande de reinitialisation du mot de passe a bien été enregistrée.\n"
+                . "Voici votre code de reinitialisation (valide pendant 60 minutes) :\n"
+                . $token . "\n\n"
+                . "Ne partagez jamais ce code avec qui que ce soit.",
+                function ($message) use ($utilisateur) {
+                    $message->to($utilisateur->email)
+                            ->subject("Mon Miam Miam : réinitialisation du mot de passe");
+                }
+            );
+        } catch (\Throwable $e) {
+            // non bloquant : si le serveur mail est indisponible, la demande reste armée
+        }
+
         return response()->json([
             'message'  => 'Demande enregistrée. Token valide 60 minutes.',
-            'token'    => $token, // à transmettre par email en production (voir commentaire)
+            // le token en clair ne circule que hors production : il voyage par l email par ailleurs
+            'token'    => app()->isProduction() ? null : $token,
         ], 201);
     }
 
