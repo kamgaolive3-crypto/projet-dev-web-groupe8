@@ -2,8 +2,11 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { FaBars, FaXmark } from "react-icons/fa6";
 import logo from "../assets/logo.png";
+import { useAuth } from "../services/auth";
 
 export default function Header() {
+    // le header doit connaitre l utilisateur pour la vraie deconnexion
+    const { user, deconnexion } = useAuth();
      // menuOuvert indique si le menu déroulant est ouvert.
     const [menuOuvert, setMenuOuvert] = useState(false);
     // useLocation récupère les informations sur l'URL actuelle.
@@ -16,7 +19,7 @@ export default function Header() {
         "/MenuA": "Menu",
         "/Evenement": "Evenement",
         "/Parametre": "Parametre",
-        "ReclamationA": "Reclamation",
+        "/ReclamationA": "Reclamation",
     };
     // Recherche le nom correspondant à l'URL actuelle.
     // Si l'URL n'est pas dans l'objet, affiche "Mon MiamMiam".
@@ -62,8 +65,17 @@ export default function Header() {
                     <li><NavLink to="/ReclamationA"className={lienStyle}>
                         Reclamation</NavLink></li>
                 </ul>
-                <Link to="/page_connexion" className="hidden md:inline-flex bg-primary text-secondary px-5 py-2 mr-3 rounded-[10px] cursor-pointer hover:bg-primary-700">
-                    Deconnexion </Link>
+                <button
+                    type="button"
+                    onClick={async () => {
+                        // vraie déconnexion : revoke du token côté API puis nettoyage local
+                        await deconnexion();
+                        window.location.href = "/";
+                    }}
+                    className="hidden md:inline-flex bg-primary text-secondary px-5 py-2 mr-3 rounded-[10px] cursor-pointer hover:bg-primary-700"
+                >
+                    Deconnexion {user ? "(" + user.prenom + ")" : ""}
+                </button>
                 <button
                     type="button"
                     onClick={() => setMenuOuvert(!menuOuvert)}
@@ -143,13 +155,7 @@ export default function Header() {
 
                         {/* LIEN FIDÉLITÉ */}
                         <li>
-                            <NavLink
-                                to="/Promotion"
-                                className={lienStyle}
-                                onClick={fermerMenu}
-                            >
-                                Evenement
-                            </NavLink>
+                            MARIAGE_DES_ANCRES_IMPOSSIBLE
                         </li>
 
                         <li>
