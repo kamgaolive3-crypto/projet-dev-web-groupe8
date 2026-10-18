@@ -11,6 +11,7 @@ use App\Http\Controllers\ParrainageController;
 use App\Http\Controllers\ReclamationController;
 use App\Http\Controllers\CookiesController;
 use App\Http\Controllers\EmployeController;
+use App\Http\Controllers\StatistiqueController;
 use Illuminate\Support\Facades\Route;
 
 // --- Authentification (Sanctum) ---
@@ -94,4 +95,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('employes', [EmployeController::class, 'store']);
     Route::put('employes/{employe}', [EmployeController::class, 'update']);
     Route::delete('employes/{employe}', [EmployeController::class, 'destroy']);
+});
+// --- Statistiques (US-029/032/036) + Top 10 clients (US-023, AJAX) ---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('stats/ventes-semaine', [StatistiqueController::class, 'ventesSemaine']); // staff
+    Route::get('stats/dashboard', [StatistiqueController::class, 'dashboard']);          // gérant + admin
+    Route::get('stats/top-clients', [StatistiqueController::class, 'topClients']);       // tous (leaderboard)
 });
