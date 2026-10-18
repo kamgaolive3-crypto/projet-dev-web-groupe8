@@ -1,7 +1,13 @@
 // src/utils/formaterPrix.js
-// Affiche un montant comme sur la maquette : 15000 -> "15 000 FCFA"
-const formatNombre = new Intl.NumberFormat("fr-FR");
+// Deux façons d'écrire un montant, comme sur les maquettes :
+//   page Panier   : 6000 -> "6000 Fcfa"
+//   page Fidélité : 1850 -> "1 850 F"
+const avecEspaces = new Intl.NumberFormat("fr-FR");
 
 export function formaterPrix(montant) {
-  return `${formatNombre.format(montant)} FCFA`;
+  return `${montant} Fcfa`;
+}
+
+export function formaterFrancs(montant) {
+  return `${avecEspaces.format(montant)} F`;
 }

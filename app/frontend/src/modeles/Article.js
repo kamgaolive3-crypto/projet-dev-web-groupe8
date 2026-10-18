@@ -6,9 +6,10 @@ export default class Article {
   #id;
   #nom;
   #prix;
+  #description;
   #image;
 
-  constructor({ id, nom, prix, image = "" }) {
+  constructor({ id, nom, prix, description = "", image = "" }) {
     if (!nom || nom.trim() === "") {
       throw new Error("Un article doit avoir un nom");
     }
@@ -18,6 +19,7 @@ export default class Article {
     this.#id = id;
     this.#nom = nom.trim();
     this.#prix = prix;
+    this.#description = description;
     this.#image = image;
   }
 
@@ -30,6 +32,9 @@ export default class Article {
   get prix() {
     return this.#prix;
   }
+  get description() {
+    return this.#description;
+  }
   get image() {
     return this.#image;
   }
@@ -37,7 +42,13 @@ export default class Article {
   // Transforme l'article en simple objet (pour le sauvegarder ou l'envoyer à l'API).
   // JSON.stringify() appelle cette méthode automatiquement.
   toJSON() {
-    return { id: this.#id, nom: this.#nom, prix: this.#prix, image: this.#image };
+    return {
+      id: this.#id,
+      nom: this.#nom,
+      prix: this.#prix,
+      description: this.#description,
+      image: this.#image,
+    };
   }
 
   // Recrée un Article à partir d'un simple objet.
