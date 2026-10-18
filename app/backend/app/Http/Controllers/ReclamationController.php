@@ -125,7 +125,7 @@ class ReclamationController extends Controller
         $reclamation = Reclamation::findOrFail($id);
 
         if ($reclamation->statut_reclamation !== 'observation') {
-            return response()->json(['message' => 'La réclamation doit être traitée par un employé d'abord.'], 422);
+            return response()->json(['message' => 'La réclamation doit être traitée par un employé d\'abord.'], 422);
         }
 
         DB::transaction(function () use ($reclamation, $data, $request) {
@@ -147,7 +147,7 @@ class ReclamationController extends Controller
     public function traiterAdmin(Request $request, string $id)
     {
         if ($request->user()->role !== 'administrateur') {
-            return response()->json(['message' => 'Réservé à l'administrateur.'], 403);
+            return response()->json(['message' => 'Réservé à l\'administrateur.'], 403);
         }
 
         $data = $request->validate(['reponse' => 'required|string']);
@@ -172,7 +172,7 @@ class ReclamationController extends Controller
     public function decisionAdmin(Request $request, string $id)
     {
         if ($request->user()->role !== 'administrateur') {
-            return response()->json(['message' => 'Réservé à l'administrateur.'], 403);
+            return response()->json(['message' => 'Réservé à l\'administrateur.'], 403);
         }
 
         $data = $request->validate(['decision' => 'required|in:validee,rejetee']);
