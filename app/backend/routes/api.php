@@ -1,9 +1,18 @@
 <?php
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\ArticleMenuController;
 use App\Http\Controllers\EvenementController;
 use App\Http\Controllers\ParametreController;
 use Illuminate\Support\Facades\Route;
+
+// --- Authentification (Sanctum) ---
+Route::post('auth/inscription', [AuthController::class, 'inscription']);
+Route::post('auth/connexion', [AuthController::class, 'connexion']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('auth/deconnexion', [AuthController::class, 'deconnexion']);
+    Route::get('auth/me', [AuthController::class, 'me']);
+});
 
 // --- Ressources CRUD (7 routes REST par ressource) ---
 Route::apiResource('restaurant', RestaurantController::class);
