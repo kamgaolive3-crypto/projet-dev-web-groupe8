@@ -14,7 +14,7 @@ export default function CartePlat({ plat, onAjouter, ajoute }) {
 
             <button
                 onClick={() => onAjouter(plat)}
-                className="mx-auto mt-3 block w-3/5 rounded-full bg-[#CFBD97] py-1 text-sm text-white"
+                className="mx-auto mt-3 block w-3/5 rounded-full bg-[#CFBD97] py-1 text-sm text-black transition-colors hover:bg-primary-700"
             >
                 {ajoute ? "Ajouté ✓" : "Ajouter"}
             </button>

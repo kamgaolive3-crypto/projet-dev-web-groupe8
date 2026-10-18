@@ -67,8 +67,8 @@ export default function Menu() {
                         key={c}
                         onClick={() => setCategorie(c)}
                         className={
-                            "rounded-full border border-[#CFBD97] px-4 py-1 text-xs " +
-                            (c === categorie ? "bg-[#CFBD97] text-white" : "bg-white text-gray-800")
+                            "rounded-full border border-[#CFBD97] px-4 py-1 text-xs transition-colors " +
+                            (c === categorie ? "bg-[#CFBD97] text-white" : "bg-white text-gray-800 hover:bg-[#efe6d0]")
                         }
                     >
                         {c}
@@ -85,26 +85,12 @@ export default function Menu() {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     {/* .map() fabrique une carte pour chaque plat */}
                     {platsAffiches.map((plat) => (
-                        <div key={plat.id} className="rounded-xl border border-[#CFBD97] bg-white p-3">
-                            <img
-                                src={plat.image}
-                                alt={plat.nom}
-                                className="h-44 w-full rounded-lg object-cover md:h-52"
-                            />
-
-                            {/* nom à gauche, prix à droite */}
-                            <div className="mt-2 flex items-center justify-between border-b border-[#efe6d0] pb-1 text-sm">
-                                <span>{plat.nom}</span>
-                                <span className="font-semibold text-[#b8862d]">{plat.prix} Fcfa</span>
-                            </div>
-
-                            <button
-                                onClick={() => ajouterAuPanier(plat)}
-                                className="mx-auto mt-3 block w-3/5 rounded-full bg-[#CFBD97] py-1 text-sm text-white"
-                            >
-                                {ajouteId === plat.id ? "Ajouté ✓" : "Ajouter"}
-                            </button>
-                        </div>
+                        <CartePlat
+                          key={plat.id}
+                          plat={plat}
+                          onAjouter={ajouterAuPanier}
+                          ajoute={ajouteId === plat.id}
+                        />
                     ))}
                 </div>
             )}

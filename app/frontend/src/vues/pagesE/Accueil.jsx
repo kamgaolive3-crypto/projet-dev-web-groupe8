@@ -60,7 +60,7 @@ const { ajouter: ajouterAuPanier } = usePanier()
                     <p className="text-sm">{platDuJour.prix} Fcfa</p>
                     <button
                         onClick={() => ajouterAuPanier(platDuJour)} 
-                        className="rounded-full bg-[#CFBD97] py-2 text-sm font-medium"
+                        className="rounded-full bg-[#CFBD97] py-2 text-sm text-black font-medium transition-colors hover:bg-primary-700"
                     >
                         Ajouter au panier
                         </button>
@@ -86,7 +86,8 @@ const { ajouter: ajouterAuPanier } = usePanier()
 
                         {/* bouton affiché sur chaque promotion, aligné à droite */}
                         <div className="flex justify-end">
-                            <button className="rounded-md bg-[#CFBD97] px-4 py-1 font-serif text-sm">
+                            <button className="rounded-md bg-[#CFBD97] px-4 py-1 font-serif text-sm text-black transition-colors hover:bg-primary-700"
+                            >
                                 Je participe
                             </button>
                         </div>

@@ -112,8 +112,7 @@ export default function Fidelite() {
                     <p className="text-3xl font-bold">{fcfa(client.reduction)}</p>
                     <button
                         onClick={utiliserPoints}
-                        className="rounded-full bg-[#CFBD97] px-5 py-1.5 text-sm text-white"
-                    >
+                        className="rounded-full bg-[#CFBD97] px-5 py-1.5 text-sm text-black  transition-colors hover:bg-primary-700">
                         Utiliser mes points
                     </button>
                     {/* && : le message s'affiche seulement s'il n'est pas vide */}
@@ -151,7 +150,7 @@ export default function Fidelite() {
                         <div className="mt-3 flex justify-end">
                             <button
                                 onClick={() => setCommandesToutes(!commandesToutes)}
-                                className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs text-white"
+                                className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs text-black  transition-colors hover:bg-primary-700"
                             >
                                 {commandesToutes ? "Voir moins" : "Voir plus"}
                             </button>
@@ -168,7 +167,7 @@ export default function Fidelite() {
                         <span>
                             Votre code : <b>{client.codeParrain}</b>
                         </span>
-                        <button onClick={copierCode} className="rounded-full bg-[#CFBD97] px-3 py-0.5 text-white">
+                        <button onClick={copierCode} className="rounded-full bg-[#CFBD97] px-3 py-0.5 text-black  transition-colors hover:bg-primary-700">
                             {copie ? "Copié !" : "Copier"}
                         </button>
                     </div>
@@ -197,7 +196,7 @@ export default function Fidelite() {
                         <div className="mt-3 flex justify-end">
                             <button
                                 onClick={() => setFilleulsTous(!filleulsTous)}
-                                className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs text-white"
+                                className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs text-black transition-colors hover:bg-primary-700"
                             >
                                 {filleulsTous ? "Voir moins" : "Voir plus"}
                             </button>

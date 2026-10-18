@@ -89,7 +89,7 @@ export default function Reclamation() {
                 <div className="flex justify-end">
                     <button
                         onClick={envoyer}
-                        className="rounded-full border border-[#CFBD97] bg-white px-6 py-1 text-sm"
+                        className="rounded-full border border-[#CFBD97] bg-white px-6 py-1 text-sm  transition-colors hover:bg-primary-700"
                     >
                         Envoyer
                     </button>

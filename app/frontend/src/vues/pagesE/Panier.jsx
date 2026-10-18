@@ -54,7 +54,7 @@ const confirmer = () => {
                     <p className="text-xs text-gray-600">Vérifiez vos plats avant de passer commande</p>
                 </div>
                 {/* le chemin "/historique" est à adapter à tes routes */}
-                <Link to="/Historique" className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs">
+                <Link to="/Hsistorique" className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs text-white transition-colors hover:bg-primary-700">
                     🕒 Historique des commandes
                 </Link>
             </div>
@@ -91,7 +91,7 @@ const confirmer = () => {
                                 <div className="flex items-center gap-1 text-sm">
                                     <button
                                         onClick={() => changerQuantite(article.id, article.quantite - 1)}
-                                        className="h-6 w-6 rounded-full bg-[#CFBD97]"
+                                        className="h-6 w-6 rounded-full bg-[#CFBD97]  transition-colors hover:bg-primary-700"
                                     >
                                         -
                                     </button>
@@ -171,7 +171,7 @@ const confirmer = () => {
 
                         <button
                             onClick={confirmer}
-                            className="rounded-full bg-[#CFBD97] py-2 text-sm font-medium"
+                            className="rounded-full bg-[#CFBD97] py-2 text-sm font-medium  transition-colors hover:bg-primary-700"
                         >
                             Confirmer ma commande &gt;
                         </button>
@@ -192,7 +192,7 @@ const confirmer = () => {
                         {/* le chemin "/reclamation" est à adapter à tes routes */}
                         <Link
                             to="/reclamation"
-                            className="rounded-full border border-[#CFBD97] px-4 py-1 text-xs"
+                            className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs text-white transition-colors hover:bg-primary-700"
                         >
                             Faire une réclamation &gt;
                         </Link>
