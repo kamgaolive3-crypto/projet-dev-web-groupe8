@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,10 +12,29 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('mvt_points')) {
+            return;
+        }
         Schema::create('mvt_points', function (Blueprint $table) {
-            $table->id();
+            $table->string('Id_mvt', 5)->primary();
+            $table->dateTime('date_mvt')->useCurrent();
+            $table->integer('nbres_points');
+            $table->string('type_mvt', 30); // gain, utilisation, expiration, parrainage, jeu
+            $table->dateTime('date_expiration')->nullable();
+            $table->string('Id_utilisateur', 10); // étudiant concerné
+            $table->string('Id_commande', 8)->nullable();
             $table->timestamps();
+
+            $table->index('Id_utilisateur');
+            $table->index('type_mvt');
+
+            $table->foreign('Id_utilisateur')->references('Id_utilisateur')->on('etudiant');
+            $table->foreign('Id_commande')->references('Id_commande')->on('commande');
         });
+
+        if (in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            DB::statement("ALTER TABLE `mvt_points` ADD CONSTRAINT `chk_mvt_type` CHECK (`type_mvt` IN ('gain','utilisation','expiration','parrainage','jeu'))");
+        }
     }
 
     /**

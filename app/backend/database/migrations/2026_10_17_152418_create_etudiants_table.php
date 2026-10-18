@@ -11,9 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('etudiant')) {
+            return;
+        }
         Schema::create('etudiant', function (Blueprint $table) {
-            $table->id();
+            $table->string('Id_utilisateur', 10)->primary();
+            $table->text('localisation')->nullable();
+            $table->string('code_parrainage', 8)->unique();
+            $table->integer('solde_point')->default(0);
             $table->timestamps();
+
+            $table->foreign('Id_utilisateur')
+                ->references('Id_utilisateur')->on('utilisateur')
+                ->onDelete('cascade');
         });
     }
 
