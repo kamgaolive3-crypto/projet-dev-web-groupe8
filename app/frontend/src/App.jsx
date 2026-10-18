@@ -6,6 +6,7 @@ import Fideliter from "./vues/pagesE/Fideliter"
 import LayoutE from "./composantE/Layout";
 import LayoutA from "./composantA/Layout";
 import TableauBord from "./vues/pagesA/TableauBord";
+import Statistiques from "./vues/pagesA/Statistiques";
 import Commandes from "./vues/pagesA/Commandes";
 import Livraisons from "./vues/pagesA/Livraisons";
 import Employes from "./vues/pagesA/Employes";
@@ -58,6 +59,7 @@ export default function App() {
           <Route element={<RouteStaff />}>
             <Route element={<LayoutA/>}>
               <Route path="/TableauBord" element={<TableauBord />}/>
+              <Route path="/Statistiques" element={<Statistiques />}/>
               <Route path="/Commandes" element={<Commandes />}/>
               <Route path="/Livraisons" element={<Livraisons />}/>
               <Route path="/Employes" element={<Employes />}/>
