@@ -248,9 +248,7 @@ class CommandeController extends Controller
                 MvtPoint::create([
                     'Id_mvt'         => $this->genererIdMvt(),
                     'nbres_points'   => $commande->points_utilises,
-                    'type_mvt'       => 'gain',
-                    'description'    => 'Remboursement points (annulation commande)',
-                    'Id_utilisateur' => $etudiant->Id_utilisateur,
+                    'type_mvt'       => 'gain',                    'Id_utilisateur' => $etudiant->Id_utilisateur,
                     'Id_commande'    => $commande->Id_commande,
                 ]);
             }
@@ -301,9 +299,7 @@ class CommandeController extends Controller
                 MvtPoint::create([
                     'Id_mvt'         => $this->genererIdMvt(),
                     'nbres_points'   => $commande->points_utilises,
-                    'type_mvt'       => 'gain',
-                    'description'    => 'Remboursement points (annulation)',
-                    'Id_utilisateur' => $etudiant->Id_utilisateur,
+                    'type_mvt'       => 'gain',                    'Id_utilisateur' => $etudiant->Id_utilisateur,
                     'Id_commande'    => $commande->Id_commande,
                 ]);
             }
