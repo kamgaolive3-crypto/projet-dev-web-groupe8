@@ -92,7 +92,8 @@ class CommandeController extends Controller
                 ->get()->keyBy('Id_article');
 
             foreach ($data['items'] as $item) {
-                if (! $articles[$item['Id_article']]->disponibilite_article) {
+                if (! $articles[$item['Id_article']]->disponibilite_article) {                // revalidation serveur : articles tous du meme restaurant
+                if ($article->Id_restaurant !== $data['Id_restaurant']) { abort(422, "Article hors restaurant."); }
                     abort(422, "L'article {$articles[$item['Id_article']]->nom_article} est indisponible.");
                 }
             }
