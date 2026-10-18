@@ -10,6 +10,7 @@ use App\Http\Controllers\FideliteController;
 use App\Http\Controllers\ParrainageController;
 use App\Http\Controllers\ReclamationController;
 use App\Http\Controllers\CookiesController;
+use App\Http\Controllers\EmployeController;
 use Illuminate\Support\Facades\Route;
 
 // --- Authentification (Sanctum) ---
@@ -86,4 +87,11 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('cookies', [CookiesController::class, 'store']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('cookies/moi', [CookiesController::class, 'moi']);
+});
+// --- Comptes employés (US-031/034) : gérant crée & modifie, admin CRUD complet ---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('employes', [EmployeController::class, 'index']);
+    Route::post('employes', [EmployeController::class, 'store']);
+    Route::put('employes/{employe}', [EmployeController::class, 'update']);
+    Route::delete('employes/{employe}', [EmployeController::class, 'destroy']);
 });
