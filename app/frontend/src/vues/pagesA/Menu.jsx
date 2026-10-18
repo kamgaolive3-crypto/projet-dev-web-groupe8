@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
 
+// GESTION DES MENUS (maquette /gestion-menu) : creer, modifier, masquer les articles
+// donnees : GET /api/article_menu + GET /api/restaurant (pour le select du restaurant)
+// actions : POST/PUT/DELETE /api/article_menu (US-027, personnel connecte)
+
 // les catégories possibles (mêmes valeurs que la base)
 const categories = ["plat", "boisson", "dessert", "accompagnement", "autre"];
 
@@ -14,22 +18,32 @@ const FORMULAIRE_VIDE = {
     disponibilite_article: true,
     Menu_du_jour: false,
     image_article: "",
+    Id_restaurant: "RS001",
 };
 
 export default function Menu() {
     const [articles, setArticles] = useState([])
+    const [restaurants, setRestaurants] = useState([])
     const [erreur, setErreur] = useState("")
     const [message, setMessage] = useState("")
     // le formulaire peut être en création (aucun id déjà rempli) ou en modification
     const [form, setForm] = useState(FORMULAIRE_VIDE)
     const [modeEdition, setModeEdition] = useState(false)
+    // onglet de categorie actif (Tous / plat / boisson...)
+    const [onglet, setOnglet] = useState("")
 
     const charger = () => {
         api.get("/article_menu")
             .then((liste) => setArticles(Array.isArray(liste) ? liste : liste.data || []))
             .catch((e) => setErreur(e.message))
     }
-    useEffect(charger, [])
+    useEffect(() => {
+        charger()
+        // la liste des restaurants sert au select du formulaire
+        api.get("/restaurant")
+            .then((l) => setRestaurants(Array.isArray(l) ? l : l.data || []))
+            .catch(() => setRestaurants([]))
+    }, [])
 
     // POST ou PUT selon le mode
     const enregistrer = async () => {
@@ -72,6 +86,7 @@ export default function Menu() {
             disponibilite_article: !!a.disponibilite_article,
             Menu_du_jour: !!a.Menu_du_jour,
             image_article: a.image_article ?? "",
+            Id_restaurant: a.Id_restaurant ?? "RS001",
         });
         window.scrollTo({ top: 0, behavior: "smooth" })
     }
@@ -85,6 +100,7 @@ export default function Menu() {
                 nom_article: a.nom_article,
                 prix_article: a.prix_article,
                 categories_article: a.categories_article,
+                Id_restaurant: a.Id_restaurant ?? "RS001",
                 [champ]: !a[champ],
             })
             charger()
@@ -101,20 +117,35 @@ export default function Menu() {
         } catch (e) { setErreur(e.message) }
     }
 
+    // filtre par onglet de categorie
+    const articlesAffiches = onglet
+        ? articles.filter((a) => a.categories_article === onglet)
+        : articles
+
     return (
-        <div className="flex flex-col gap-4 p-4 md:p-6">
-            <div>
-                <h1 className="font-serif text-xl font-bold">Gestion du menu</h1>
-                <p className="text-xs text-gray-600">Créer / modifier les articles et le menu du jour (US-027)</p>
+        <div className="flex flex-col gap-5 p-4 md:p-6">
+            {/* ---------- TITRE + AJOUT ---------- */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h1 className="font-serif text-2xl font-bold">Gestion des menus</h1>
+                    <p className="text-xs text-gray-600">Créer, modifier et masquer les articles du menu (US-027)</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => { setModeEdition(false); setForm(FORMULAIRE_VIDE); }}
+                    className="rounded-full bg-[#CFBD97] px-4 py-1.5 text-xs font-semibold text-white hover:brightness-95"
+                >
+                    + Ajouter un plat
+                </button>
             </div>
 
             {message && <p className="rounded-md bg-green-100 px-3 py-2 text-sm text-green-800">{message}</p>}
             {erreur && <p className="rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">{erreur}</p>}
 
-            {/* ---------- FORMULAIRE ---------- */}
+            {/* ---------- FORMULAIRE (creation ou modification) ---------- */}
             <section className="grid gap-3 rounded-xl bg-white p-4 shadow-sm md:grid-cols-2">
                 <div className="flex flex-col gap-1 text-xs">
-                    <label>ID article (3 majuscules + 3 chiffres, ex : PLT001)</label>
+                    <label>ID article (3 majuscules + 3 chiffres, ex : PLA001)</label>
                     <input value={form.Id_article} disabled={modeEdition}
                         onChange={(e) => setForm({ ...form, Id_article: e.target.value.toUpperCase() })}
                         className="rounded-md border border-[#CFBD97] px-2 py-1 disabled:bg-gray-100" />
@@ -138,7 +169,19 @@ export default function Menu() {
                         {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
-                <div className="flex flex-col gap-1 text-xs md:col-span-2">
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>Restaurant</label>
+                    <select value={form.Id_restaurant}
+                        onChange={(e) => setForm({ ...form, Id_restaurant: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1">
+                        {restaurants.map((r) => (
+                            <option key={r.Id_restaurant} value={r.Id_restaurant}>
+                                {(r.nom_restaurant ?? r.nom ?? r.Id_restaurant)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="flex flex-col gap-1 text-xs">
                     <label>Image (chemin ou URL, facultatif)</label>
                     <input value={form.image_article} onChange={(e) => setForm({ ...form, image_article: e.target.value })}
                         className="rounded-md border border-[#CFBD97] px-2 py-1" />
@@ -172,32 +215,83 @@ export default function Menu() {
                 </div>
             </section>
 
-            {/* ---------- LISTE ---------- */}
-            <div className="flex flex-col gap-2">
-                {articles.map((a) => (
-                    <div key={a.Id_article} className="flex flex-wrap items-center gap-3 rounded-xl bg-white p-3 text-xs shadow-sm">
-                        <img src={a.image_article || "/plat_du_jour.jpg"} alt={a.nom_article}
-                            className="h-12 w-12 rounded-lg object-cover" />
-                        <div className="flex-1">
-                            <p className="font-semibold">{a.Id_article} · {a.nom_article}</p>
-                            <p className="text-gray-500">{a.categories_article} · {(a.prix_article ?? 0).toLocaleString("fr-FR")} Fcfa</p>
-                        </div>
-                        <button onClick={() => basculer(a, "disponibilite_article")}
-                            className={"rounded-full px-3 py-1 " + (a.disponibilite_article ? "bg-green-100 text-green-800" : "bg-gray-200 text-gray-600")}>
-                            {a.disponibilite_article ? "Disponible" : "Épuisé"}
-                        </button>
-                        <button onClick={() => basculer(a, "Menu_du_jour")}
-                            className={"rounded-full px-3 py-1 " + (a.Menu_du_jour ? "bg-[#CFBD97] text-white" : "bg-[#f5f1e6] text-gray-600")}>
-                            {a.Menu_du_jour ? "Au menu du jour" : "Hors menu du jour"}
-                        </button>
-                        <button onClick={() => editer(a)}
-                            className="rounded-full border border-[#CFBD97] px-3 py-1">Modifier</button>
-                        <button onClick={() => supprimer(a)}
-                            className="rounded-full border border-red-300 px-3 py-1 text-red-700">Supprimer</button>
-                    </div>
+            {/* ---------- ONGLETS PAR CATEGORIE ---------- */}
+            <div className="flex flex-wrap gap-2">
+                <button onClick={() => setOnglet("")}
+                    className={"rounded-full px-4 py-1 text-xs " + (onglet === "" ? "bg-[#CFBD97] text-white" : "bg-white text-gray-700 shadow-sm")}>
+                    Tous
+                </button>
+                {categories.map((c) => (
+                    <button key={c} onClick={() => setOnglet(c)}
+                        className={"rounded-full px-4 py-1 text-xs capitalize " + (onglet === c ? "bg-[#CFBD97] text-white" : "bg-white text-gray-700 shadow-sm")}>
+                        {c}s
+                    </button>
                 ))}
-                {articles.length === 0 && <p className="text-sm text-gray-600">Aucun article — créez le premier ci-dessus.</p>}
             </div>
+
+            {/* ---------- TABLEAU ---------- */}
+            {articlesAffiches.length === 0 ? (
+                <p className="text-sm text-gray-600">Aucun article pour cette catégorie.</p>
+            ) : (
+                <div className="overflow-x-auto rounded-xl bg-white shadow-sm">
+                    <table className="w-full text-left text-sm">
+                        <thead>
+                            <tr className="border-b border-[#efe6d0] text-xs uppercase tracking-wide text-gray-500">
+                                <th className="px-4 py-3">Article</th>
+                                <th className="px-4 py-3">Prix</th>
+                                <th className="px-4 py-3">Statut</th>
+                                <th className="px-4 py-3">Menu du jour</th>
+                                <th className="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {articlesAffiches.map((a) => (
+                                <tr key={a.Id_article} className="border-b border-[#efe6d0] last:border-0">
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <img src={a.image_article || "/plat_du_jour.jpg"} alt={a.nom_article}
+                                                className="h-10 w-10 rounded-lg object-cover" />
+                                            <div>
+                                                <p className="font-semibold">{a.nom_article}</p>
+                                                <p className="text-xs text-gray-500">{a.Id_article} · {a.categories_article}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 font-bold text-[#b8862d]">
+                                        {(a.prix_article ?? 0).toLocaleString("fr-FR")} Fcfa
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <button onClick={() => basculer(a, "disponibilite_article")}
+                                            title="Cliquer pour basculer"
+                                            className={"rounded-full px-3 py-1 text-xs " + (a.disponibilite_article ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
+                                            {a.disponibilite_article ? "Disponible" : "Rupture"}
+                                        </button>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <button onClick={() => basculer(a, "Menu_du_jour")}
+                                            title="Cliquer pour basculer"
+                                            className={"rounded-full px-3 py-1 text-xs " + (a.Menu_du_jour ? "bg-[#CFBD97] text-white" : "bg-gray-200 text-gray-600")}>
+                                            {a.Menu_du_jour ? "Affiché" : "Masqué"}
+                                        </button>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex flex-wrap gap-1.5">
+                                            <button onClick={() => editer(a)}
+                                                className="rounded-full border border-[#CFBD97] px-3 py-1 text-xs hover:bg-[#f5f1e6]">
+                                                Modifier
+                                            </button>
+                                            <button onClick={() => supprimer(a)}
+                                                className="rounded-full border border-red-300 px-3 py-1 text-xs text-red-700 hover:bg-red-50">
+                                                Supprimer
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     )
 }
