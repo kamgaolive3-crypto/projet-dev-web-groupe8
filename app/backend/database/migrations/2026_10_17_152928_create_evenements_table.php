@@ -16,7 +16,7 @@ return new class extends Migration
         }
         Schema::create('evenement', function (Blueprint $table) {
             $table->string('Id_evenement', 7)->primary();
-            $table->text('affiche_evenement'); //chemin ou url de l'affiche
+            $table->text('affiche_evenement')->nullable(); // chemin ou url de l'affiche (facultatif)
             $table->dateTime('debut_evenement');
             $table->dateTime('fin_evenement');
             $table->string('type_evenement',20);
