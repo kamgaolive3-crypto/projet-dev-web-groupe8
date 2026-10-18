@@ -70,7 +70,7 @@ class StatistiqueController extends Controller
     public function dashboard(Request $request)
     {
         if (! in_array($request->user()->role, ['gerant', 'administrateur'], true)) {
-            return response()->json(['message' => 'Réservé au gérant et à l'administrateur.'], 403);
+            return response()->json(['message' => 'Réservé au gérant et aux administrateurs.'], 403);
         }
 
         $caParPeriode = function ($days) {
