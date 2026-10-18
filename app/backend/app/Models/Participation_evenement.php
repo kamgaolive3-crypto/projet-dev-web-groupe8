@@ -13,7 +13,7 @@ class Participation_evenement extends Model
         'Id_evenement',
         'date_participation',
         'points_gagnes',
-        'prix_gagner',
+        'prix_gagne',
         'Id_mvt',
     ];
 
