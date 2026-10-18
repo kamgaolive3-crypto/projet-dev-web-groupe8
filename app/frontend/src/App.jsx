@@ -13,6 +13,8 @@ import Parametre from "./vues/pagesA/Parametre";
 import ReclamationA from "./vues/pagesA/Reclamation";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Signin from './vues/pages/page_inscription'; // Import de votre page
+import Reclamation from "./vues/pagesE/Reclamation"
+import Historique from "./vues/pagesE/Historique"
 
 export default function App() {
   return (
@@ -25,6 +27,8 @@ export default function App() {
           <Route path="/Menu" element={<Menu />}/>
           <Route path="/Panier" element={<Panier />}/>
           <Route path="/Fideliter" element={<Fideliter />}/>
+          <Route path="/Reclamation" element={<Reclamation />}/>
+          <Route path="/Historique" element={<Historique />}/>
         </Route>
         <Route element={<LayoutA/>}>
           <Route path="/TableauBord" element={<TableauBord />}/>
