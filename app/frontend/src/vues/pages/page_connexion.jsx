@@ -75,9 +75,9 @@ export default function Login() {
                         ( <p className="text-xs text-green-600"> 
                         mot de passe correct</p>
                         )}
-                        <a href="#" className="self-end text-primary cursor-pointer  hover:text-primary-700">
-                            Mot de pase oublié?
-                        </a>
+                        <Link to="/page_reset" className="self-end text-primary cursor-pointer hover:text-primary-700">
+                            Mot de passe oublié ?
+                        </Link>
                     </div>
                     <div className="flex flex-col gap-1">
                         <button type="submit" 
