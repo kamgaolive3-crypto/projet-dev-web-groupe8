@@ -1,47 +1,73 @@
 //importe un hook qui permet de memoriser une valeur
-import { useState } from "react";
+import { useState, useEffect } from "react";
 //importe link : permet de changer de page sans recharger le navigateur
 import {Link} from "react-router-dom"
 // importe l'outil qui gère le panier (partagé entre toutes les pages)
 import usePanier from "../../composantE/usePanier"
 //importe le composant qui affiche une carte de plat (image, nom, prix, bouton)
 import CartePlat from "../../composantE/CartePlat"
+//cliente de l API : tout le contenu affiché vient du backend
+import { api } from "../../services/api"
+//auth : pour participer aux événements (il faut être connecté)
+import { useAuth } from "../../services/auth";
+
+//transforme un article de la base en carte de plat utilisable par la page
+const versPlat = (a) => ({
+    id: a.Id_article,
+    nom: a.nom_article,
+    prix: a.prix_article,
+    image: a.image_article || "/plat_du_jour.jpg",
+});
 
 export default function Accueil() {
-    //memorise le plat du jour (valeurs de test pour l'instant)
-//plus tard : ces valeurs viendront du gérant, via l'API PHP
-const [platDuJour] = useState({
-    id: 100, // un id qui n'existe pas dans le menu du jour
-    nom: "Salade carter à la sauce pepiaisie",
-    prix: 2500,
-    image: "/plat_du_jour.jpg"
-})
-//memorise la liste des promotions (valeurs de test pour l'instant)
-//"lien" est optionnel : s'il n'y en a pas, il n' aura pas de bouton
-const [promotions] = useState([
-    {
-        id: 1,
-        type: "Promotion :",
-        image: "/promo1.png",
-        texte: "SPÉCIALEMENT AUJOURD'HUI : -30% SUR TOUTES LES COMMANDES À PARTIR DE 3000Fcfa",
-    },
-    {
-        id:2,
-        type:"Évènements :",
-        image: "/promo2.png",
-        texte: "POUR CE SAMEDI 14 FÉVRIER, VENEZ PROFITER DE L'AMOUR. LE ZEDUC FERA UN BUFFET COMPLET POUR LA MODIQUE SOMME DE 3000 Fcfa L'ENTRÉE"
-
-    }
-])
-//memorise la liste des plats du menu du jour (valeurs de test pour l'instant)
-//plus tard : le gérant pourra ajouter, modifier ou supprimer ces plats
-const [menuDuJour] = useState([
-    {id: 1, nom: "okok salé", prix: 1000, image:"/okok salé.jpg"},
-    {id: 2, nom: "poisson braisé", prix: 2000, image:"/poisson braisé.jpg"},
-    {id: 3, nom: "poulet pané", prix: 2000, image:"/poulet pané.jpg"}
-])
+    //le plat du jour : menu_du_jour = 1 et categorie = plat (GET /api/article_menu-du-jour/plat)
+    const [platDuJour, setPlatDuJour] = useState(null)
+    //les promotions en cours depuis GET /api/promotions/actives
+    const [promotions, setPromotions] = useState([])
+    //le menu du jour complet (GET /api/article_menu-du-jour)
+    const [menuDuJour, setMenuDuJour] = useState([])
+    //message affiché après un clic sur "Je participe"
+    const [message, setMessage] = useState("")
+    //recupère l'utilisateur connecté (pour participer aux événements)
+    const { user } = useAuth()
 //récupère la fonction "ajouter" de l'outil panier, et la renomme ajouterAuPanier
 const { ajouter: ajouterAuPanier } = usePanier()
+
+    //au premier affichage : les 3 chargements d'un coup
+    useEffect(() => {
+        api.get("/article_menu-du-jour/plat") // menu du jour de la categorie plat
+            .then((liste) => setPlatDuJour(liste[0] ? versPlat(liste[0]) : null))
+            .catch(() => setPlatDuJour(null))
+
+        api.get("/promotions/actives")
+            .then((liste) => setPromotions(liste.map((e) => ({
+                id: e.Id_evenement,
+                type: e.type_evenement === "mini_jeu" ? "Mini-jeu :" : e.type_evenement === "promotion" ? "Promotion :" : "Événement :",
+                image: e.affiche_evenement || "/promo1.png",
+                texte: e.description_evenement || (e.taux_reduction ? "Réduction de " + e.taux_reduction + "%" : "Points à gagner : " + e.points_evenement),
+                points: e.points_evenement,
+            }))))
+            .catch(() => setPromotions([]))
+
+        api.get("/article_menu-du-jour") // tous les articles du menu du jour
+            .then((liste) => setMenuDuJour(liste.map(versPlat)))
+            .catch(() => setMenuDuJour([]))
+    }, [])
+
+    //participer a un mini-jeu/evenement : POST /api/evenement/{id}/participer
+    const participer = async (id) => {
+        if (!user) {
+            setMessage("Connectez-vous pour participer.")
+            return
+        }
+        try {
+            const reponse = await api.post("/evenement/" + id + "/participer")
+            setMessage("Participation enregistrée ! Points crédités : " + reponse.points_gagnes)
+        } catch (e) {
+            setMessage(e.message)
+        }
+    }
+
     return(
          <div className="flex flex-col gap-6 p-4 md:p-6">
             {/* si un plat du jour existe, on l'affiche, sinon on affiche un message */}
@@ -59,7 +85,7 @@ const { ajouter: ajouterAuPanier } = usePanier()
                     <p className="font-semibold text-[#b8862d]">{platDuJour.nom}</p>
                     <p className="text-sm">{platDuJour.prix} Fcfa</p>
                     <button
-                        onClick={() => ajouterAuPanier(platDuJour)} 
+                        onClick={() => ajouterAuPanier(platDuJour)}
                         className="rounded-full bg-[#CFBD97] py-2 text-sm font-medium"
                     >
                         Ajouter au panier
@@ -67,9 +93,11 @@ const { ajouter: ajouterAuPanier } = usePanier()
                         </div>
                         </section>
             ) : (
-                <p>Aucun plat du jour pour le moment</p>
+                <p>Le plat du jour n est pas encore publié — revenez bientôt !</p>
             )}
                         {/* ---------- PROMOTIONS ---------- */}
+                        {/* le message de participation s affiche ici */}
+                        {message && <p className="rounded-md bg-[#fffdf5] px-3 py-2 text-sm text-[#b8862d]">{message}</p>}
             {/* .map() répète ce bloc pour chaque promotion du tableau */}
             {promotions.map((promo) => (
                 <section
@@ -86,7 +114,10 @@ const { ajouter: ajouterAuPanier } = usePanier()
 
                         {/* bouton affiché sur chaque promotion, aligné à droite */}
                         <div className="flex justify-end">
-                            <button className="rounded-md bg-[#CFBD97] px-4 py-1 font-serif text-sm">
+                            <button
+                                onClick={() => participer(promo.id)}
+                                className="rounded-md bg-[#CFBD97] px-4 py-1 font-serif text-sm"
+                            >
                                 Je participe
                             </button>
                         </div>
