@@ -102,7 +102,6 @@ class CommandeController extends Controller
                 if ($article->Id_restaurant !== $data['Id_restaurant']) {
                     abort(422, "L'article {$article->nom_article} n'appartient pas a ce restaurant.");
                 }
-                }
             }
 
             // 2. Sous-total (montants en francs CFA)
