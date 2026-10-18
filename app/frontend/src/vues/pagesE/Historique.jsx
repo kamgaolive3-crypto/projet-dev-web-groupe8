@@ -44,6 +44,10 @@ export default function Historique() {
     const { user } = useAuth()
     //statut choisi dans les filtres (null = toutes les commandes)
     const [statutFiltre, setStatutFiltre] = useState(null)
+    //US-010 : commentaires en cours d écriture, par commande
+    const [commentaires, setCommentaires] = useState({})
+    //petit message de confirmation
+    const [messageOk, setMessageOk] = useState("")
 
     //au premier affichage : on charge les commandes de l utilisateur connecté
     useEffect(() => {
@@ -68,6 +72,18 @@ export default function Historique() {
             })
             .catch((e) => setErreur(e.message))
     }, [])
+
+    //US-010 : envoyer le commentaire d une commande servie
+    const envoyerCommentaire = async (id) => {
+        setErreur(""); setMessageOk("")
+        try {
+            await api.post("/commande/" + encodeURIComponent(id) + "/commentaire",
+                { commentaire: commentaires[id] || "" })
+            setMessageOk("Merci ! Votre commentaire sur " + id + " a été enregistré.")
+        } catch (e) {
+            setErreur(e.message)
+        }
+    }
 
     //si aucun filtre, on garde tout, sinon seulement les commandes du bon statut
     const commandesAffichees = statutFiltre
@@ -97,6 +113,10 @@ export default function Historique() {
                         </Link>
                     )}
                 </p>
+            )}
+
+            {messageOk && (
+                <p className="rounded-md bg-green-100 px-3 py-2 text-sm text-green-800">{messageOk}</p>
             )}
 
             {/* ---------- BOUTONS DE FILTRE ---------- */}
@@ -143,6 +163,19 @@ export default function Historique() {
                                 {c.statut}
                             </span>
                         </div>
+                        {/* US-010 : après le service, l étudiant peut laisser un commentaire */}
+                        {c.statut === "Servie" && (
+                            <div className="mt-2 flex flex-col gap-1 rounded-lg bg-[#f5f1e6] p-2 text-xs">
+                                <label>Votre commentaire sur cette commande :</label>
+                                <textarea rows={2} value={commentaires[c.id] ?? ""}
+                                    onChange={(e) => setCommentaires({ ...commentaires, [c.id]: e.target.value })}
+                                    className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                                <button onClick={() => envoyerCommentaire(c.id)}
+                                    className="self-start rounded-full bg-[#CFBD97] px-3 py-1 text-xs text-white">
+                                    Envoyer le commentaire
+                                </button>
+                            </div>
+                        )}
                     ))}
                 </div>
             )}
