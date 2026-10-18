@@ -4,6 +4,7 @@ use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\ArticleMenuController;
 use App\Http\Controllers\EvenementController;
 use App\Http\Controllers\ParametreController;
+use App\Http\Controllers\CommandeController;
 use Illuminate\Support\Facades\Route;
 
 // --- Authentification (Sanctum) ---
@@ -30,3 +31,14 @@ Route::get('promotions/actives', [EvenementController::class, 'promotionsActives
 Route::post('evenement/{id}/participer', [EvenementController::class, 'participer']);
 Route::get('evenement/{id}/participations', [EvenementController::class, 'participations']);
 
+// --- Commandes (le panier est géré côté client ; le serveur revalide tout) ---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('commande', CommandeController::class)->except(['update']);
+
+    // staff : validation et changement de statut (US-026)
+    Route::post('commande/{commande}/valider', [CommandeController::class, 'valider']);
+    Route::post('commande/{commande}/statut', [CommandeController::class, 'changerStatut']);
+
+    // étudiant : commentaire après service (US-010)
+    Route::post('commande/{commande}/commentaire', [CommandeController::class, 'commentaire']);
+});
