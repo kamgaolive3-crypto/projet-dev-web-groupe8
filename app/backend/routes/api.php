@@ -25,11 +25,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
 });
 
-// --- Ressources CRUD (7 routes REST par ressource) ---
-Route::apiResource('restaurant', RestaurantController::class);
-Route::apiResource('article_menu', ArticleMenuController::class);
-Route::apiResource('evenement', EvenementController::class);
-Route::apiResource('parametre', ParametreController::class);
+// --- Ressources CRUD ---
+// Lecture publique (consultation par tous), ecriture reservee au personnel
+// connecte (US-027/033/035/036).
+Route::get('restaurant', [RestaurantController::class, 'index']);
+Route::get('restaurant/{restaurant}', [RestaurantController::class, 'show']);
+Route::get('article_menu', [ArticleMenuController::class, 'index']);
+Route::get('evenement', [EvenementController::class, 'index']);
+Route::get('evenement/{evenement}', [EvenementController::class, 'show']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('restaurant', RestaurantController::class)->except(['index', 'show']);
+    Route::apiResource('article_menu', ArticleMenuController::class)->except(['index', 'show']);
+    Route::apiResource('evenement', EvenementController::class)->except(['index', 'show']);
+    Route::apiResource('parametre', ParametreController::class);
+});
 
 // --- Routes spécifiques article_menu (doivent être définies AVANT apiResource
 //     pour éviter le conflit avec GET /article_menu/{article_menu}) ---
