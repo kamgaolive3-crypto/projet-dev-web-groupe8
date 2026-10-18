@@ -1,10 +1,11 @@
 import avatar from "../../assets/profil.png"
 //importe un hook qui permet de memoriser une valeur
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../services/auth";
 //importe la frame en glass et l'image de fond
-import GlassCard from "../../Composant/GlassCard";
-import GlassPage from "../../Composant/GlassPage";
+import GlassCard from "../../composant/GlassCard";
+import GlassPage from "../../composant/GlassPage";
 
 
 export default function Signin() {
@@ -16,10 +17,13 @@ export default function Signin() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [erreur, setErreur] = useState("");
+    const [codeParrainage, setCodeParrainage] = useState("");
+    const navigate = useNavigate();
+    const { inscription } = useAuth();
     const regleMotDePasse = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
 
     //fonction appellée quand envoie le formulaire
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault(); // empeche le rechargement de 
         if (password !== confirmPassword) {
             setErreur("Les mots de passe ne correspondent pas");
@@ -32,7 +36,23 @@ export default function Signin() {
         }
 
         setErreur("");
-        console.log(email, password); //plus tard: envoi a ton API PHP 
+                setErreur("");
+        try {
+            await inscription({
+                nom,
+                prenom,
+                email,
+                telephone,
+                localisation,
+                mot_de_passe: password,
+                mot_de_passe_confirmation: confirmPassword,
+                code_parrainage: codeParrainage || null,
+            });
+            navigate("/");
+        } catch (err) {
+            const detail = err.champs ? Object.values(err.champs).flat().join(" - ") : null;
+            setErreur(detail || err.message || "Inscription echouee");
+        } //plus tard: envoi a ton API PHP 
     }
 
     return (
@@ -51,6 +71,7 @@ export default function Signin() {
                     </p>
                 </div>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
+                    {erreur && (<p className="text-sm font-semibold text-red-600">{erreur}</p>)}
                     <div className="flex flex-col gap-1">
                         <label htmlFor="nom" className="text-secondary">
                             Nom 
@@ -78,6 +99,13 @@ export default function Signin() {
                             Localisation 
                         </label>
                         <input id="location" type="text" required value={localisation} onChange={(e)=> setlocalisation(e.target.value)}
+                        className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
+                        <label htmlFor="code_parrainage" className="text-secondary">
+                            Code de parrainage (optionnel)
+                        </label>
+                        <input id="code_parrainage" type="text" title="4 lettres majuscules suivi de 4 chiffres"
+                        pattern="[A-Z]{4}[0-9]{4}" value={codeParrainage}
+                        onChange={(e)=> setCodeParrainage(e.target.value.toUpperCase())}
                         className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
                         <label hrmlFor="password" className="text-secondary">
                             Mot de passe
