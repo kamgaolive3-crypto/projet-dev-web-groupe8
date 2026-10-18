@@ -36,7 +36,9 @@ class RestaurantControllerTest extends TestCase
             'statut_restaurant' => 'actif',
         ];
 
-        $reponse = $this->postJson('/api/restaurant', $donnees);
+        // l ecriture est protegee par auth:sanctum : un utilisateur du personnel est requis
+        $reponse = $this->actingAs(\App\Models\Utilisateur::factory()->create(), 'sanctum')
+            ->postJson('/api/restaurant', $donnees);
 
         $reponse->assertStatus(201);
         $this->assertDatabaseHas('restaurant', ['Id_restaurant' => 'RS001']);
@@ -55,7 +57,9 @@ class RestaurantControllerTest extends TestCase
             'heure_fermeture' => '20:00:00',
         ];
 
-        $reponse = $this->postJson('/api/restaurant', $donnees);
+        // l ecriture est protegee par auth:sanctum : un utilisateur du personnel est requis
+        $reponse = $this->actingAs(\App\Models\Utilisateur::factory()->create(), 'sanctum')
+            ->postJson('/api/restaurant', $donnees);
 
         $reponse->assertStatus(422);
     }
@@ -76,9 +80,11 @@ class RestaurantControllerTest extends TestCase
     {
         $restaurant = Restaurant::factory()->create();
 
-        $reponse = $this->putJson('/api/restaurant/' . $restaurant->Id_restaurant, [
-            'nom_restaurant' => 'Nouveau Nom',
-        ]);
+        // l ecriture est protegee par auth:sanctum : un utilisateur du personnel est requis
+        $reponse = $this->actingAs(\App\Models\Utilisateur::factory()->create(), 'sanctum')
+            ->putJson('/api/restaurant/' . $restaurant->Id_restaurant, [
+                'nom_restaurant' => 'Nouveau Nom',
+            ]);
 
         $reponse->assertStatus(200);
         $this->assertDatabaseHas('restaurant', [
@@ -92,7 +98,9 @@ class RestaurantControllerTest extends TestCase
     {
         $restaurant = Restaurant::factory()->create();
 
-        $reponse = $this->deleteJson('/api/restaurant/' . $restaurant->Id_restaurant);
+        // l ecriture est protegee par auth:sanctum : seul un administrateur peut supprimer
+        $reponse = $this->actingAs(\App\Models\Utilisateur::factory()->create(), 'sanctum')
+            ->deleteJson('/api/restaurant/' . $restaurant->Id_restaurant);
 
         $reponse->assertStatus(200);
         $this->assertDatabaseMissing('restaurant', ['Id_restaurant' => $restaurant->Id_restaurant]);

@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Utilisateur;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Hash;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class UtilisateurFactory extends Factory

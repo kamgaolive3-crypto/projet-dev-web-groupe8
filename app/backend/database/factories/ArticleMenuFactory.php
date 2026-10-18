@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\ArticleMenu;
+use App\Models\Restaurant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 

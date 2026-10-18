@@ -105,7 +105,7 @@ class MigrationStructureBaseTest extends TestCase
      */
     protected function hasColumn(string $table, string $column): bool
     {
-        return (bool) \Illuminate\Support\Facades\Schema::getColumnListing($table)
+        return collect(\Illuminate\Support\Facades\Schema::getColumnListing($table))
             ->contains(fn ($col) => $col === $column);
     }
 }

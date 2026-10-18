@@ -31,7 +31,7 @@ class EvenementControllerTest extends TestCase
         $admin = \App\Models\Administrateur::factory()->create();
 
         $donnees = [
-            'Id_evenement' => 'EVT001',
+            'Id_evenement' => 'EVT0001',
             'debut_evenement' => now()->addDays(1)->toDateTimeString(),
             'fin_evenement' => now()->addDays(2)->toDateTimeString(),
             'type_evenement' => 'promotion',
@@ -41,10 +41,12 @@ class EvenementControllerTest extends TestCase
             'Id_utilisateur' => $admin->Id_utilisateur,
         ];
 
-        $reponse = $this->postJson('/api/evenement', $donnees);
+        // l ecriture est protegee par auth:sanctum : un utilisateur du personnel est requis
+        $reponse = $this->actingAs(\App\Models\Utilisateur::factory()->create(), 'sanctum')
+            ->postJson('/api/evenement', $donnees);
 
         $reponse->assertStatus(201);
-        $this->assertDatabaseHas('evenement', ['Id_evenement' => 'EVT001']);
+        $this->assertDatabaseHas('evenement', ['Id_evenement' => 'EVT0001']);
     }
 
     /** @test */
@@ -70,17 +72,19 @@ class EvenementControllerTest extends TestCase
     /** @test */
     public function un_etudiant_peut_participer_a_un_evenement_en_cours(): void
     {
-        $etudiant = Etudiant::factory()->create();
+        // solde fixe : l'assertion verifie exactement le gain de l'evenement (30 pts)
+        $etudiant = Etudiant::factory()->create(['solde_point' => 0]);
         $evenement = Evenement::factory()->create([
             'debut_evenement' => now()->subHours(1),
             'fin_evenement' => now()->addHours(1),
             'points_evenement' => 30,
-            'Id_utilisateur' => \App\Models\Administrateur::factory()->first()->Id_utilisateur ?? \App\Models\Administrateur::factory()->create()->Id_utilisateur,
+            'Id_utilisateur' => \App\Models\Administrateur::factory()->create()->Id_utilisateur,
         ]);
 
-        $reponse = $this->postJson('/api/evenement/' . $evenement->Id_evenement . '/participer', [
-            'Id_utilisateur' => $etudiant->Id_utilisateur,
-        ]);
+        // le controleur identifie l'etudiant par l'utilisateur connecte (sanctum),
+        // pas par le corps de la requete
+        $reponse = $this->actingAs(\App\Models\Utilisateur::find($etudiant->Id_utilisateur), 'sanctum')
+            ->postJson('/api/evenement/' . $evenement->Id_evenement . '/participer');
 
         $reponse->assertStatus(201);
         $this->assertDatabaseHas('participation_evenement', [
@@ -106,9 +110,8 @@ class EvenementControllerTest extends TestCase
         ]);
 
         // Première participation
-        $this->postJson('/api/evenement/' . $evenement->Id_evenement . '/participer', [
-            'Id_utilisateur' => $etudiant->Id_utilisateur,
-        ]);
+        $this->actingAs(\App\Models\Utilisateur::find($etudiant->Id_utilisateur), 'sanctum')
+            ->postJson('/api/evenement/' . $evenement->Id_evenement . '/participer');
 
         // Deuxième participation
         $reponse = $this->postJson('/api/evenement/' . $evenement->Id_evenement . '/participer', [

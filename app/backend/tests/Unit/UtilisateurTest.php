@@ -24,7 +24,7 @@ class UtilisateurTest extends TestCase
         ]);
 
         $this->assertNotNull($utilisateur->mot_de_passe);
-        $this->assertStringNotEquals('password123', $utilisateur->mot_de_passe);
+        $this->assertNotEquals('password123', $utilisateur->mot_de_passe);
     }
 
     /** @test */

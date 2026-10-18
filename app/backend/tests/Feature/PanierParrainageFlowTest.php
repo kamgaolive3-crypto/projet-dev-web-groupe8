@@ -25,6 +25,7 @@ class PanierParrainageFlowTest extends TestCase
         $restaurant = Restaurant::create([
             'Id_restaurant'      => 'RS001',
             'nom_restaurant'     => 'ZeDuc@Space',
+            'adresse_restaurant' => 'Campus UCAC-ICAM, Yaounde',
             'heure_ouverture'    => '10:00',
             'heure_fermeture'    => '23:00',
         ]);
@@ -143,14 +144,14 @@ class PanierParrainageFlowTest extends TestCase
         $this->actingAs($employeUser, 'sanctum');
 
         // valider (US-026)
-        $this->postJson("/api/commande/{$commande['Id_commande']}/valider")
+        $this->postJson("/api/commande/" . rawurlencode($commande['Id_commande']) . "/valider")
             ->assertStatus(200)
             ->assertJsonPath('statut_commande', 'validee');
 
         // en_preparation -> prete -> servie (transitions autorisées)
-        $this->postJson("/api/commande/{$commande['Id_commande']}/statut", ['statut_commande' => 'en_preparation'])->assertStatus(200);
-        $this->postJson("/api/commande/{$commande['Id_commande']}/statut", ['statut_commande' => 'prete'])->assertStatus(200);
-        $this->postJson("/api/commande/{$commande['Id_commande']}/statut", ['statut_commande' => 'servie'])->assertStatus(200);
+        $this->postJson("/api/commande/" . rawurlencode($commande['Id_commande']) . "/statut", ['statut_commande' => 'en_preparation'])->assertStatus(200);
+        $this->postJson("/api/commande/" . rawurlencode($commande['Id_commande']) . "/statut", ['statut_commande' => 'prete'])->assertStatus(200);
+        $this->postJson("/api/commande/" . rawurlencode($commande['Id_commande']) . "/statut", ['statut_commande' => 'servie'])->assertStatus(200);
 
         $this->assertDatabaseHas('commande', [
             'Id_commande'     => $commande['Id_commande'],
@@ -188,7 +189,7 @@ class PanierParrainageFlowTest extends TestCase
 
         // de en_attente on ne peut pas aller a en_preparation directement
         $this->actingAs($employeUser, 'sanctum')
-            ->postJson("/api/commande/{$commande['Id_commande']}/statut", ['statut_commande' => 'en_preparation'])
+            ->postJson("/api/commande/" . rawurlencode($commande['Id_commande']) . "/statut", ['statut_commande' => 'en_preparation'])
             ->assertStatus(422);
     }
 

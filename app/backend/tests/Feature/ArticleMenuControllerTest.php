@@ -38,7 +38,9 @@ class ArticleMenuControllerTest extends TestCase
             'Id_restaurant' => $restaurant->Id_restaurant,
         ];
 
-        $reponse = $this->postJson('/api/article_menu', $donnees);
+        // l ecriture est protegee par auth:sanctum : un utilisateur du personnel est requis
+        $reponse = $this->actingAs(\App\Models\Utilisateur::factory()->create(), 'sanctum')
+            ->postJson('/api/article_menu', $donnees);
 
         $reponse->assertStatus(201);
         $this->assertDatabaseHas('article_menu', ['Id_article' => 'PLA001']);
@@ -75,9 +77,20 @@ class ArticleMenuControllerTest extends TestCase
     {
         $article = ArticleMenu::factory()->create();
 
-        $reponse = $this->putJson('/api/article_menu/' . $article->Id_article, [
-            'nom_article' => 'Nouveau Nom',
-        ]);
+        // l ecriture est protegee par auth:sanctum : un utilisateur du personnel est requis
+        // la validation exige le payload complet (comme le formulaire du frontend)
+        $reponse = $this->actingAs(\App\Models\Utilisateur::factory()->create(), 'sanctum')
+            ->putJson('/api/article_menu/' . $article->Id_article, [
+                'Id_article'            => $article->Id_article,
+                'nom_article'           => 'Nouveau Nom',
+                'image_article'         => $article->image_article,
+                'description'           => $article->description,
+                'prix_article'          => $article->prix_article,
+                'categories_article'    => $article->categories_article,
+                'disponibilite_article' => $article->disponibilite_article,
+                'Menu_du_jour'          => $article->Menu_du_jour,
+                'Id_restaurant'         => $article->Id_restaurant,
+            ]);
 
         $reponse->assertStatus(200);
         $this->assertDatabaseHas('article_menu', [
@@ -91,7 +104,9 @@ class ArticleMenuControllerTest extends TestCase
     {
         $article = ArticleMenu::factory()->create();
 
-        $reponse = $this->deleteJson('/api/article_menu/' . $article->Id_article);
+        // l ecriture est protegee par auth:sanctum : un utilisateur du personnel est requis
+        $reponse = $this->actingAs(\App\Models\Utilisateur::factory()->create(), 'sanctum')
+            ->deleteJson('/api/article_menu/' . $article->Id_article);
 
         $reponse->assertStatus(200);
         $this->assertDatabaseMissing('article_menu', ['Id_article' => $article->Id_article]);

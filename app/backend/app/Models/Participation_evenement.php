@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Participation_evenement extends Model
 {
+    use HasFactory;
     protected $table = 'participation_evenement';
     public $timestamps = false;
     protected $fillable = [
