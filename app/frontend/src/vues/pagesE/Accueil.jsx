@@ -2,6 +2,8 @@
 import { useState } from "react";
 //importe link : permet de changer de page sans recharger le navigateur
 import {Link} from "react-router-dom"
+// importe l'outil qui gère le panier (partagé entre toutes les pages)
+import usePanier from "../../composantE/usePanier"
 
 export default function Accueil() {
     //memorise le plat du jour (valeurs de test pour l'instant)
@@ -35,11 +37,8 @@ const [menuDuJour] = useState([
     {id: 2, nom: "poisson braisé", prix: 2000, image:"/poisson braisé.jpg"},
     {id: 3, nom: "poulet pané", prix: 2000, image:"/poulet pané.jpg"}
 ])
-const [panier, setPanier] =useState([])
-
-const ajouterAuPanier = (plat) => {
-    setPanier([...panier, plat])
-}
+//récupère la fonction "ajouter" de l'outil panier, et la renomme ajouterAuPanier
+const { ajouter: ajouterAuPanier } = usePanier()
     return(
          <div className="flex flex-col gap-6 p-4 md:p-6">
             {/* si un plat du jour existe, on l'affiche, sinon on affiche un message */}
