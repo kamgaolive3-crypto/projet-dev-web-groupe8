@@ -1,41 +1,50 @@
 //importe un hook qui permet de memoriser une valeur
-import { useState } from "react"
+import { useState, useEffect } from "react"
 //importe l'outil qui gère le panier (partagé entre toutes les pages)
 import usePanier from "../../composantE/usePanier"
-//importe le composant qui affiche une carte de plat (image, nom, prix, bouton)
-import CartePlat from "../../composantE/CartePlat"
+//importe le client API (le vrai menu vient du backend Laravel)
+import { api } from "../../services/api"
 
 //les catégories affichées en haut (boutons de filtre)
-const categories = ["Plats", "Boissons", "Accompagnements"]
+//a gauche : libellé affiché, a droite : valeur en base (table article_menu)
+const categories = [
+    { label: "Plats", valeur: "plat" },
+    { label: "Boissons", valeur: "boisson" },
+    { label: "Accompagnements", valeur: "accompagnement" },
+    { label: "Desserts", valeur: "dessert" },
+]
 
 export default function Menu() {
     //récupère la fonction "ajouter" de l'outil panier
     const { ajouter } = usePanier()
 
-    //---------------- DONNEES (valeurs de test pour l'instant) ----------------
-    //plus tard : ces valeurs viendront de l'API PHP (c'est le gérant qui les modifie)
-    const [plats] = useState([
-        { id: 4, nom: "Ndolé royal", prix: 1000, categorie: "Plats", image: "/ndolé.webp" },
-        { id: 5, nom: "Eru", prix: 1000, categorie: "Plats", image: "/eru.jpg" },
-        { id: 1, nom: "Okok", prix: 1000, categorie: "Plats", image: "/okok salé.jpg" },
-        { id: 3, nom: "Poulet pané", prix: 2000, categorie: "Plats", image: "/poulet pané.jpg" },
-        { id: 6, nom: "Boulette + riz", prix: 1500, categorie: "Plats", image: "/boulette.jpg" },
-        { id: 2, nom: "Poisson braisé", prix: 2000, categorie: "Plats", image: "/poisson braisé.jpg" },
-        //-----------Boissons---------
-        {id: 7, nom: "folere", prix: 500, categorie: "Boissons", image: "/foléré.webp"},
-        {id: 8, nom: "citronnade", prix: 500, categorie: "Boissons", image: "/citronnade.webp"},
-        {id: 9, nom: "jus d'ananas", prix: 500, categorie: "Boissons", image: "/jus d'ananas.jpg"},
-        //--------Accompagnements------
-        {id: 10, nom: "plantain", prix: 500, categorie: "Accompagnements", image: "/plantain.webp"},
-        {id: 11, nom: "manioc", prix: 500, categorie: "Accompagnements", image: "/manioc.webp"},
-        {id: 12, nom: "baton", prix: 500, categorie: "Accompagnements", image: "/baton.jpg"},
-        
-        
-    ])
+    //---------------- DONNEES DU BACKEND ----------------
+    //le menu complet vient de GET /api/article_menu (créé/modifié par le staff)
+    const [plats, setPlats] = useState([])
+    //message d'erreur s'il y a eu un problème de chargement
+    const [erreur, setErreur] = useState("")
+
+    //au premier affichage de la page, on va chercher le menu
+    useEffect(() => {
+        api.get("/article_menu")
+            .then((liste) => {
+                //on transforme les champs de la base (Id_article, nom_article...)
+                //en champs utilisés par la page (id, nom, prix, categorie, image)
+                setPlats(liste.map((a) => ({
+                    id: a.Id_article,
+                    nom: a.nom_article,
+                    prix: a.prix_article,
+                    categorie: a.categories_article,
+                    image: a.image_article || "/plat_du_jour.jpg",
+                    disponible: a.disponibilite_article,
+                })))
+            })
+            .catch((e) => setErreur(e.message))
+    }, [])
 
     //---------------- ETATS DE LA PAGE ----------------
     //la catégorie choisie (au départ : Plats)
-    const [categorie, setCategorie] = useState("Plats")
+    const [categorie, setCategorie] = useState("plat")
     //l'id du plat qui vient d'être ajouté (pour afficher "Ajouté ✓" un instant)
     const [ajouteId, setAjouteId] = useState(null)
 
@@ -44,6 +53,7 @@ export default function Menu() {
 
     //fonction appellée quand on clique sur "Ajouter"
     const ajouterAuPanier = (plat) => {
+        if (!plat.disponible) return // un article indisponible ne peut pas être ajouté
         ajouter(plat) // met le plat dans le panier
         setAjouteId(plat.id)
         setTimeout(() => setAjouteId(null), 1500) // "Ajouté ✓" disparait après 1,5 seconde
@@ -59,19 +69,22 @@ export default function Menu() {
                 </p>
             </div>
 
+            {/* message d'erreur du chargement */}
+            {erreur && <p className="rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">{erreur}</p>}
+
             {/* ---------- BOUTONS DE FILTRE ---------- */}
             {/* flex-wrap : si l'écran est étroit, les boutons passent à la ligne */}
             <div className="flex flex-wrap gap-2">
                 {categories.map((c) => (
                     <button
-                        key={c}
-                        onClick={() => setCategorie(c)}
+                        key={c.valeur}
+                        onClick={() => setCategorie(c.valeur)}
                         className={
                             "rounded-full border border-[#CFBD97] px-4 py-1 text-xs " +
-                            (c === categorie ? "bg-[#CFBD97] text-white" : "bg-white text-gray-800")
+                            (c.valeur === categorie ? "bg-[#CFBD97] text-white" : "bg-white text-gray-800")
                         }
                     >
-                        {c}
+                        {c.label}
                     </button>
                 ))}
             </div>
@@ -100,9 +113,13 @@ export default function Menu() {
 
                             <button
                                 onClick={() => ajouterAuPanier(plat)}
-                                className="mx-auto mt-3 block w-3/5 rounded-full bg-[#CFBD97] py-1 text-sm text-white"
+                                disabled={!plat.disponible}
+                                className={
+                                    "mx-auto mt-3 block w-3/5 rounded-full bg-[#CFBD97] py-1 text-sm text-white " +
+                                    (plat.disponible ? "" : "opacity-50")
+                                }
                             >
-                                {ajouteId === plat.id ? "Ajouté ✓" : "Ajouter"}
+                                {ajouteId === plat.id ? "Ajouté ✓" : plat.disponible ? "Ajouter" : "Épuisé"}
                             </button>
                         </div>
                     ))}
