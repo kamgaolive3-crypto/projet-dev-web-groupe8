@@ -17,6 +17,7 @@ const versPlat = (a) => ({
     nom: a.nom_article,
     prix: a.prix_article,
     image: a.image_article || "/plat_du_jour.jpg",
+    restaurant: a.Id_restaurant, // necessaire au panier (un seul restaurant)
 });
 
 export default function Accueil() {
