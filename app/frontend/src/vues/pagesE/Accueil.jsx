@@ -4,11 +4,14 @@ import { useState } from "react";
 import {Link} from "react-router-dom"
 // importe l'outil qui gère le panier (partagé entre toutes les pages)
 import usePanier from "../../composantE/usePanier"
+//importe le composant qui affiche une carte de plat (image, nom, prix, bouton)
+import CartePlat from "../../composantE/CartePlat"
 
 export default function Accueil() {
     //memorise le plat du jour (valeurs de test pour l'instant)
 //plus tard : ces valeurs viendront du gérant, via l'API PHP
 const [platDuJour] = useState({
+    id: 100, // un id qui n'existe pas dans le menu du jour
     nom: "Salade carter à la sauce pepiaisie",
     prix: 2500,
     image: "/plat_du_jour.jpg"
@@ -43,7 +46,7 @@ const { ajouter: ajouterAuPanier } = usePanier()
          <div className="flex flex-col gap-6 p-4 md:p-6">
             {/* si un plat du jour existe, on l'affiche, sinon on affiche un message */}
             {platDuJour ? (
-                <section className="flex flex-col overflow-hidden rounded-xl border-[#CFBD97] bg-white md:flex-row">
+                <section className="flex flex-col overflow-hidden rounded-xl border border-[#CFBD97] bg-white md:flex-row">
                     {/* "relative" permet de poser le texte par-dessus l'image */}
                     <div className="relative w-full md:w-2/3">
                     <img src={platDuJour.image} alt={platDuJour.nom} className="h-56 w-full object-cover md:h-72" />
@@ -98,28 +101,12 @@ const { ajouter: ajouterAuPanier } = usePanier()
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
                     {/* .map() fabrique une carte pour chaque plat du tableau */}
                     {menuDuJour.map((plat) => (
-                        <div
-                            key={plat.id}
-                            className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
-                        >
-                            <img src={plat.image} alt={plat.nom} className="h-40 w-full object-cover md:h-56" />
-
-                            {/* nom à gauche, prix à droite */}
-                            <div className="flex items-center justify-between px-3 pt-2 text-xs md:text-sm">
-                                <span>{plat.nom}</span>
-                                <span className="font-semibold text-[#b8862d]">{plat.prix} Fcfa</span>
-                            </div>
-
-                            <div className="p-3">
-                                <button
-                                    onClick={() => ajouterAuPanier(plat)}
-                                    className="w-full rounded-full bg-[#CFBD97] py-2 text-xs font-medium md:text-sm"
-                                >
-                                    🛒 Ajouter au panier
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                       <CartePlat
+                       key={plat.id}
+                       plat={plat}
+                       onAjouter={ajouterAuPanier}
+    />
+))}  
                 </div>
             </section>
             </div>

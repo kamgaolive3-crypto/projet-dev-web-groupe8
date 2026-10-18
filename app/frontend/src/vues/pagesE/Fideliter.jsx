@@ -10,7 +10,7 @@ const VALEUR_REDUCTION = 1000    // une réduction vaut 1 000 F
 //écrit un nombre avec des espaces : 1850 devient "1 850 F"
 const fcfa = (n) => n.toLocaleString("fr-FR") + " F"
 
-export default function Fideliter() {
+export default function Fidelite() {
     //---------------- DONNEES (valeurs de test pour l'instant) ----------------
     //plus tard : ces valeurs viendront de l'API PHP
     const [client] = useState({ points: 28, reduction: 1850, codeParrain: "MIAM-2026" })
@@ -89,13 +89,16 @@ export default function Fideliter() {
             </div>
 
             {/* ---------- MES POINTS ---------- */}
+            {/* flex-col sur téléphone (empilé), md:flex-row sur ordinateur (côte à côte) */}
             <section className="flex flex-col gap-6 rounded-xl border border-[#e3dac6] bg-[#fffdf5] p-5 md:flex-row md:items-center">
-
+                {/* partie gauche : les points et la barre */}
                 <div className="flex-1">
                     <h2 className="font-serif text-sm font-semibold">Mes points</h2>
                     <p className="mt-2 text-3xl font-bold">{client.points} pts</p>
 
+                    {/* la piste claire */}
                     <div className="mt-2 h-3 w-full rounded-full bg-[#efe6d0]">
+                        {/* la partie dorée : sa largeur change avec le pourcentage */}
                         <div className="h-3 rounded-full bg-[#CFBD97]" style={{ width: pourcentage + "%" }} />
                     </div>
                     <p className="mt-2 text-xs">
@@ -103,6 +106,7 @@ export default function Fideliter() {
                     </p>
                 </div>
 
+                {/* partie droite : la réduction (un trait doré la sépare de la gauche) */}
                 <div className="flex flex-col items-center gap-2 border-t border-[#CFBD97] pt-4 md:w-1/3 md:border-l md:border-t-0 md:pl-6 md:pt-0">
                     <p className="font-serif text-sm font-semibold">Réduction disponible</p>
                     <p className="text-3xl font-bold">{fcfa(client.reduction)}</p>
@@ -112,13 +116,15 @@ export default function Fideliter() {
                     >
                         Utiliser mes points
                     </button>
+                    {/* && : le message s'affiche seulement s'il n'est pas vide */}
                     {message && <p className="text-center text-xs text-[#b8862d]">{message}</p>}
                 </div>
             </section>
 
             {/* ---------- COMMANDES + PARRAINAGE ---------- */}
-
+            {/* 1 colonne sur téléphone, 2 colonnes sur ordinateur */}
             <div className="grid gap-6 md:grid-cols-2">
+                {/* Points gagnés par commande */}
                 <section className="rounded-xl border border-[#e3dac6] bg-white p-4">
                     <h2 className="mb-2 font-serif text-sm font-semibold">Points gagnés par commande</h2>
                     <table className="w-full text-xs">
@@ -130,6 +136,7 @@ export default function Fideliter() {
                             </tr>
                         </thead>
                         <tbody>
+                            {/* .map() fabrique une ligne pour chaque commande de la liste */}
                             {commandesAffichees.map((c) => (
                                 <tr key={c.id} className="border-t border-[#efe6d0]">
                                     <td className="py-1.5">{c.date}</td>
@@ -139,6 +146,7 @@ export default function Fideliter() {
                             ))}
                         </tbody>
                     </table>
+                    {/* le bouton existe seulement s'il y a plus de 3 commandes */}
                     {commandes.length > 3 && (
                         <div className="mt-3 flex justify-end">
                             <button
@@ -151,14 +159,16 @@ export default function Fideliter() {
                     )}
                 </section>
 
+                {/* Parrainage */}
                 <section className="rounded-xl border border-[#e3dac6] bg-white p-4">
                     <h2 className="mb-2 font-serif text-sm font-semibold">Parrainage</h2>
 
+                    {/* le code de parrainage et le bouton Copier */}
                     <div className="mb-3 flex items-center justify-between rounded-md bg-[#e8dcc3] px-3 py-1.5 text-xs">
                         <span>
                             Votre code : <b>{client.codeParrain}</b>
                         </span>
-                        <button onClick={copierCode} className="rounded-full bg-[#c79a45] px-3 py-0.5 text-white">
+                        <button onClick={copierCode} className="rounded-full bg-[#CFBD97] px-3 py-0.5 text-white">
                             {copie ? "Copié !" : "Copier"}
                         </button>
                     </div>
@@ -199,7 +209,9 @@ export default function Fideliter() {
             {/* ---------- TOP 10 ---------- */}
             <section className="rounded-xl border border-[#e3dac6] bg-white p-4">
                 <h2 className="mb-2 font-serif text-sm font-semibold">Top 10 des meilleurs clients</h2>
+                {/* ordinateur : 2 colonnes de 5 (1 à 5 à gauche, 6 à 10 à droite) ; téléphone : 1 colonne */}
                 <ol className="grid gap-x-10 md:grid-flow-col md:grid-rows-5">
+                    {/* i = la position dans la liste (0, 1, 2...), donc le rang est i + 1 */}
                     {classement.map((c, i) => (
                         <li
                             key={c.nom}
