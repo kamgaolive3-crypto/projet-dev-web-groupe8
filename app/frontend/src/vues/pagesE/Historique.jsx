@@ -141,7 +141,8 @@ export default function Historique() {
             ) : (
                 <div className="flex flex-col gap-3">
                     {commandesAffichees.map((c) => (
-                        <div key={c.id} className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm">
+                        <div key={c.id} className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm">
                             {/* photo du premier plat de la commande */}
                             <img
                                 src={c.articles[0]?.image}
@@ -176,6 +177,7 @@ export default function Historique() {
                                 </button>
                             </div>
                         )}
+                        </div>
                     ))}
                 </div>
             )}

@@ -263,7 +263,7 @@ const confirmer = async () => {
                             to="/Reclamation"
                             className="rounded-full border border-[#CFBD97] px-4 py-1 text-xs"
                         >
-                            Faire une réclamation >
+                            Faire une réclamation &gt;
                         </Link>
                     </div>
                 </div>

@@ -13,6 +13,7 @@ const FORMULAIRE_VIDE = {
     fin_evenement: "",
     points_evenement: 0,
     taux_reduction: "",
+    description_evenement: "",
 };
 
 export default function Evenement() {
@@ -67,6 +68,7 @@ export default function Evenement() {
             fin_evenement: (e.fin_evenement || "").slice(0, 16),
             points_evenement: e.points_evenement ?? 0,
             taux_reduction: e.taux_reduction ?? "",
+            description_evenement: e.description_evenement ?? "",
         });
         window.scrollTo({ top: 0, behavior: "smooth" })
     }
@@ -117,6 +119,12 @@ export default function Evenement() {
                         className="rounded-md border border-[#CFBD97] px-2 py-1">
                         {types.map((t) => <option key={t} value={t}>{t}</option>)}
                     </select>
+                </div>
+                <div className="flex flex-col gap-1 text-xs md:col-span-2">
+                    <label>Description (obligatoire, affichee aux etudiants)</label>
+                    <textarea rows="2" value={form.description_evenement}
+                        onChange={(e) => setForm({ ...form, description_evenement: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
                 </div>
                 <div className="flex flex-col gap-1 text-xs">
                     <label>Début</label>
