@@ -13,6 +13,8 @@ class Cookies extends Model
     public $timestamps = false;
     protected $fillable = [
         'Id_cookies',
+        'choix_cookies',
+        'version_politique',
         'date_cookies',
         'date_expiration',
         'utilise',
