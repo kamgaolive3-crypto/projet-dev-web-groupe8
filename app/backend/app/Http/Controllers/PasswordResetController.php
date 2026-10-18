@@ -91,8 +91,11 @@ class PasswordResetController extends Controller
         }
 
         DB::transaction(function () use ($demande, $data) {
-            Utilisateur::where('Id_utilisateur', $demande->Id_utilisateur)
-                ->update(['mot_de_passe' => $data['mot_de_passe']]); // haché par le cast 'hashed'
+            // mise a jour via Eloquent (et non Query Builder) pour que le cast
+            // 'hashed' du modele hache correctement le mot de passe
+            $utilisateur = Utilisateur::findOrFail($demande->Id_utilisateur);
+            $utilisateur->mot_de_passe = $data['mot_de_passe'];
+            $utilisateur->save(); // haché par le cast 'hashed'
 
             $demande->update(['utilise' => true]); // usage unique
         });

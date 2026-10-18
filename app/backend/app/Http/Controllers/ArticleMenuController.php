@@ -74,7 +74,9 @@ class ArticleMenuController extends Controller
         $data = $request->validate([
             // On ignore l'enregistrement courant ($id) dans le contrôle d'unicité,
             // sinon toute mise à jour échouerait car l'Id_article existe déjà.
-            'Id_article'            => ['required', 'regex:/^[A-Z]{3}[0-9]{3}$/', 'unique:article_menu,Id_article,'.$id],
+            // Ignore l'enregistrement courant ($id) + nom explicite de la colonne PK
+            // (string) : sans cela, le verificateur cherche une colonne "id" inexistante
+            'Id_article'            => ['required', 'regex:/^[A-Z]{3}[0-9]{3}$/', 'unique:article_menu,Id_article,'.$id.',Id_article'],
             'nom_article'           => 'required|string|max:150',
             'image_article'         => 'nullable|string',
             'description'           => 'nullable|string',

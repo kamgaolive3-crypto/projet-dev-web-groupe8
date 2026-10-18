@@ -42,8 +42,18 @@ class EvenementController extends Controller
             'type_evenement'  => 'required|in:promotion,evenement,mini_jeu',
             'points_evenement'=> 'integer|min:0',
             'taux_reduction'  => 'required_if:type_evenement,promotion|nullable|integer|between:1,100',
-            'Id_utilisateur'  => 'required|exists:administrateur,Id_utilisateur',
+            'description_evenement' => 'required|string|max:1000',
+            // fourni par le client, sinon attribue au profil administrateur connecte
+            'Id_utilisateur'  => 'nullable|exists:administrateur,Id_utilisateur',
         ]);
+        if (empty($data['Id_utilisateur'])) {
+            $profilAdmin = $request->user()?->administrateur;
+            $data['Id_utilisateur'] = $profilAdmin?->Id_utilisateur;
+            if (! $data['Id_utilisateur']) {
+                // journal (tracabilite) : un evenement doit toujours avoir un createur admin
+                return response()->json(['message' => 'Compte administrateur requis pour creer un evenement.'], 403);
+            }
+        }
         $event = Evenement::create($data);
         return response()->json($event, 201);
     }
@@ -65,14 +75,19 @@ class EvenementController extends Controller
         $data = $request->validate([
             // unique ignore l'enregistrement courant ($id) : sans cela, toute
             // mise à jour échouerait car l'Id_evenement existe déjà en base.
-            'Id_evenement'    => ['required', 'regex:/^[A-Z]{3}[0-9]{4}$/', 'unique:evenement,Id_evenement,'.$id],
+            'Id_evenement'    => ['required', 'regex:/^[A-Z]{3}[0-9]{4}$/', 'unique:evenement,Id_evenement,'.$id.',Id_evenement'],
             'debut_evenement' => 'required|date',
             'fin_evenement'   => 'required|date|after_or_equal:debut_evenement',
             'type_evenement'  => 'required|in:promotion,evenement,mini_jeu',
             'points_evenement'=> 'integer|min:0',
             'taux_reduction'  => 'required_if:type_evenement,promotion|nullable|integer|between:1,100',
-            'Id_utilisateur'  => 'required|exists:administrateur,Id_utilisateur',
+            'description_evenement' => 'required|string|max:1000',
+            'Id_utilisateur'  => 'nullable|exists:administrateur,Id_utilisateur',
         ]);
+        // sans Id_utilisateur fourni, on conserve le createur existant (journal intact)
+        if (! array_key_exists('Id_utilisateur', $data) || $data['Id_utilisateur'] === null) {
+            unset($data['Id_utilisateur']);
+        }
         $event->update($data);
         return response()->json($event, 200);
     }
