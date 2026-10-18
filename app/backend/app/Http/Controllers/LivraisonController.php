@@ -69,7 +69,7 @@ class LivraisonController extends Controller
         }
 
         if ($commande->mode_service !== 'livraison') {
-            return response()->json(['message' => 'Cette commande n'est pas en mode livraison.'], 422);
+            return response()->json(['message' => 'Cette commande n\'est pas en mode livraison.'], 422);
         }
         if ($commande->livraison()->exists()) {
             return response()->json(['message' => 'Une livraison existe déjà pour cette commande.'], 422);
@@ -132,7 +132,7 @@ class LivraisonController extends Controller
         }
 
         if ($livraison->statut_livraison !== 'assignee') {
-            return response()->json(['message' => 'La livraison doit être assignée d'abord.'], 422);
+            return response()->json(['message' => 'La livraison doit être assignée d\'abord.'], 422);
         }
 
         // Le statut de la commande passe à en_livraison (historique synchronisé)
