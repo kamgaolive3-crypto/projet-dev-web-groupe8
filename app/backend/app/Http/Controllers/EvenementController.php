@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Etudiant;
 use App\Models\Evenement;
+use App\Models\MvtPoint;
 use App\Models\Participation_evenement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -102,13 +103,15 @@ class EvenementController extends Controller
         // 3. Vérifie les données envoyées par le frontend :
         //    l'étudiant est obligatoire et doit exister dans la table etudiant.
         //    $data contient seulement les champs validés.
-        $data = $request->validate([
-            'Id_utilisateur' => 'required|exists:etudiant,Id_utilisateur',
-        ]);
+        $utilisateur = $request->user();
+
+        if (! $utilisateur || $utilisateur->role !== 'etudiant' || ! $utilisateur->etudiant) {
+            return response()->json(['message' => 'Réservé aux étudiants connectés.'], 403);
+        }
 
         // 4. Cherche s'il existe déjà une participation de cet étudiant à cet événement.
         //    exists() renvoie true ou false, sans charger les données.
-            $dejaInscrit = Participation_evenement::where('Id_utilisateur', $data['Id_utilisateur'])
+            $dejaInscrit = Participation_evenement::where('Id_utilisateur', $utilisateur->Id_utilisateur)
                                                   ->where('Id_evenement', $id)
                                                   ->exists();
 
@@ -118,23 +121,34 @@ class EvenementController extends Controller
         }
 
         // 6. Transaction : les deux écritures ci-dessous réussissent ensemble, ou sont annulées ensemble.
-        //    "use ($evenement, $data)" donne à la fonction interne accès à ces deux variables.
-        $participation = DB::transaction(function () use ($evenement, $data) {
+        //    "use ($evenement, $utilisateur)" donne à la fonction interne accès à ces variables.
+        $participation = DB::transaction(function () use ($evenement, $utilisateur) {
+            // Journal de fidelite : trace mvt_points de type jeu (US-015/023)
+            $idMvt = null;
+            if ($evenement->points_evenement > 0) {
+                $idMvt = $this->genererIdMvt();
+                MvtPoint::create([
+                    'Id_mvt'         => $idMvt,
+                    'nbres_points'   => $evenement->points_evenement,
+                    'type_mvt'       => 'jeu',
+                    'Id_utilisateur' => $utilisateur->Id_utilisateur,
+                ]);
+            }
 
         // 6a. Enregistre la participation dans la table participation_evenement.
         //     points_gagnes copie les points de l'événement (valeur figée au moment de la participation).
         //     date_participation est remplie par MySQL (date du jour).
             $participation = Participation_evenement::create([
-                'Id_utilisateur' => $data['Id_utilisateur'],
+                'Id_utilisateur' => $utilisateur->Id_utilisateur,
                 'Id_evenement'   => $evenement->Id_evenement,
                 'points_gagnes'  => $evenement->points_evenement,
-            // Id_mvt reste NULL tant que mvt_points n'est pas branché (Membre 4)
+                'Id_mvt'         => $idMvt,
             ]);
 
         // 6b. Ajoute les points au solde de l'étudiant.
         //     increment() fait "solde_point = solde_point + X" directement en base,
         //     ce qui est plus sûr que de lire la valeur puis la réécrire.
-             Etudiant::where('Id_utilisateur', $data['Id_utilisateur'])
+             Etudiant::where('Id_utilisateur', $utilisateur->Id_utilisateur)
                      ->increment('solde_point', $evenement->points_evenement);
 
         // 6c. Renvoie la participation pour qu'elle sorte de la transaction
@@ -144,6 +158,19 @@ class EvenementController extends Controller
     // 7. Réponse au frontend : la participation créée, avec le code 201 ("créé")
     return response()->json($participation, 201);
     }
+    /**
+     * Générateur MV001 (domaine ID_MVT) sans collision
+     * (cohérent avec CommandeController / FideliteController).
+     */
+    private function genererIdMvt(): string
+    {
+        do {
+            $id = 'MV' . str_pad((string) random_int(0, 999), 3, '0', STR_PAD_LEFT);
+        } while (MvtPoint::where('Id_mvt', $id)->exists());
+
+        return $id;
+    }
+
     // GET /api/promotions/actives
     public function promotionsActives(){
         return Evenement::promotionsActives()->get();
