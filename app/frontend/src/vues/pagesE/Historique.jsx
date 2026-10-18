@@ -1,14 +1,26 @@
 //importe un hook qui permet de memoriser une valeur
-import { useState } from "react"
+import { useState, useEffect } from "react"
 //importe link : permet de changer de page sans recharger le navigateur
 import { Link } from "react-router-dom"
-//importe l'outil qui garde les commandes passées (rempli par la page Panier)
-import useCommandes from "../../composantE/useCommandes"
+//cliente API : les commandes viennent du backend (plus de données fictives)
+import { api } from "../../services/api"
+//auth : l historique ne concerne que l utilisateur connecté
+import { useAuth } from "../../services/auth"
 
 //écrit un nombre avec des espaces : 6000 devient "6 000 Fcfa"
 const fcfa = (n) => n.toLocaleString("fr-FR") + " Fcfa"
 
-//les boutons de filtre : le texte affiché, et le statut qu'ils gardent (null = tout garder)
+//traduit le statut de la base (en_attente, livree...) en texte affiché
+const libelleStatut = {
+    en_attente: "En cours",
+    en_preparation: "En cours",
+    prete: "En cours",
+    en_livraison: "En cours",
+    livree: "Livrée",
+    annulee: "Annulée",
+}
+
+//les boutons de filtre : le texte affiché, et le statut qu ils gardent (null = tout garder)
 const filtres = [
     { label: "Toutes", statut: null },
     { label: "En cours", statut: "En cours" },
@@ -24,14 +36,39 @@ const couleurs = {
 }
 
 export default function Historique() {
-    //récupère la liste des commandes (la plus récente en premier)
-    const { commandes } = useCommandes()
-
-    //---------------- ETATS DE LA PAGE ----------------
+    //les commandes viennent de GET /api/commande (les Plus récentes en premier)
+    const [commandes, setCommandes] = useState([])
+    //message d erreur (pas connecté, serveur en panne...)
+    const [erreur, setErreur] = useState("")
+    //l utilisateur connecté
+    const { user } = useAuth()
     //statut choisi dans les filtres (null = toutes les commandes)
     const [statutFiltre, setStatutFiltre] = useState(null)
 
-    //---------------- CALCULS ----------------
+    //au premier affichage : on charge les commandes de l utilisateur connecté
+    useEffect(() => {
+        if (!user) {
+            setErreur("Connectez-vous pour voir votre historique.")
+            return
+        }
+        api.get("/commande")
+            .then((liste) => {
+                //mise en forme : on ne garde que les champs affichés par la page
+                setCommandes((Array.isArray(liste) ? liste : liste.data || []).map((c) => ({
+                    id: c.Id_commande,
+                    date: (c.date_commande || "").slice(0, 10),
+                    total: c.montant_total,
+                    statut: libelleStatut[c.statut_commande] || c.statut_commande,
+                    articles: (c.articles || []).map((art) => ({
+                        nom: art.nom_article,
+                        image: art.image_article || "/plat_du_jour.jpg",
+                        quantite: art.pivot?.quantite ?? art.quantite ?? 1,
+                    })),
+                })))
+            })
+            .catch((e) => setErreur(e.message))
+    }, [])
+
     //si aucun filtre, on garde tout, sinon seulement les commandes du bon statut
     const commandesAffichees = statutFiltre
         ? commandes.filter((c) => c.statut === statutFiltre)
@@ -49,6 +86,18 @@ export default function Historique() {
                     <p className="text-xs text-gray-600">Retrouvez toutes vos commandes passées</p>
                 </div>
             </div>
+
+            {/* pas connecté ou erreur de chargement : message clair */}
+            {erreur && (
+                <p className="rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">
+                    {erreur}
+                    {!user && (
+                        <Link to="/page_connexion" className="ml-2 font-semibold underline">
+                            Se connecter
+                        </Link>
+                    )}
+                </p>
+            )}
 
             {/* ---------- BOUTONS DE FILTRE ---------- */}
             <div className="flex flex-wrap gap-2">
