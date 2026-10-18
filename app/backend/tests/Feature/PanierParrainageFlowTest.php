@@ -25,6 +25,7 @@ class PanierParrainageFlowTest extends TestCase
         $restaurant = Restaurant::create([
             'Id_restaurant'      => 'RS001',
             'nom_restaurant'     => 'ZeDuc@Space',
+            'adresse_restaurant' => 'Rue de test, Douala',
             'heure_ouverture'    => '10:00',
             'heure_fermeture'    => '23:00',
         ]);
@@ -126,6 +127,7 @@ class PanierParrainageFlowTest extends TestCase
             'mode_service'  => 'sur_place',
             'heure_recup'   => '12:00',
         ])->assertStatus(201)->json();
+        $idUrl = rawurlencode($commande['Id_commande']);
 
         // Staff employé (US-025)
         $employeUser = Utilisateur::create([
@@ -143,14 +145,14 @@ class PanierParrainageFlowTest extends TestCase
         $this->actingAs($employeUser, 'sanctum');
 
         // valider (US-026)
-        $this->postJson("/api/commande/{$commande['Id_commande']}/valider")
+        $this->postJson("/api/commande/{$idUrl}/valider")
             ->assertStatus(200)
             ->assertJsonPath('statut_commande', 'validee');
 
         // en_preparation -> prete -> servie (transitions autorisées)
-        $this->postJson("/api/commande/{$commande['Id_commande']}/statut", ['statut_commande' => 'en_preparation'])->assertStatus(200);
-        $this->postJson("/api/commande/{$commande['Id_commande']}/statut", ['statut_commande' => 'prete'])->assertStatus(200);
-        $this->postJson("/api/commande/{$commande['Id_commande']}/statut", ['statut_commande' => 'servie'])->assertStatus(200);
+        $this->postJson("/api/commande/{$idUrl}/statut", ['statut_commande' => 'en_preparation'])->assertStatus(200);
+        $this->postJson("/api/commande/{$idUrl}/statut", ['statut_commande' => 'prete'])->assertStatus(200);
+        $this->postJson("/api/commande/{$idUrl}/statut", ['statut_commande' => 'servie'])->assertStatus(200);
 
         $this->assertDatabaseHas('commande', [
             'Id_commande'     => $commande['Id_commande'],
