@@ -55,7 +55,6 @@ CREATE TABLE etudiant (
     solde_point     INT         NOT NULL DEFAULT 0,
     PRIMARY KEY (Id_utilisateur),
     UNIQUE KEY uq_etudiant_code_parrainage (code_parrainage),
-    CONSTRAINT Foreign Key (Id_parrain) REFERENCES etudiant(Id_utilisateur),
     CONSTRAINT fk_etudiant_utilisateur FOREIGN KEY (Id_utilisateur)
         REFERENCES utilisateur (Id_utilisateur) ON DELETE CASCADE,
     CONSTRAINT chk_etu_code  CHECK (REGEXP_LIKE(code_parrainage, '^[A-Z]{4}[0-9]{4}$', 'c')),
@@ -108,6 +107,7 @@ CREATE TABLE article_menu (
     Id_article            VARCHAR(6)   NOT NULL,
     nom_article           VARCHAR(150) NOT NULL,
     description           TEXT,
+    image_article         VARCHAR(255),           -- chemin ou URL de la photo (facultatif)
     prix_article          BIGINT       NOT NULL,
     categories_article    VARCHAR(255) NOT NULL,
     disponibilite_article BOOLEAN      NOT NULL DEFAULT 1,
@@ -298,6 +298,8 @@ CREATE TABLE evenement (
     debut_evenement       DATETIME    NOT NULL,
     fin_evenement         DATETIME    NOT NULL,
     type_evenement        VARCHAR(20) NOT NULL,
+    points_evenement      INT           NOT NULL DEFAULT 0,  -- points gagnes a la participation
+    taux_reduction        TINYINT UNSIGNED NULL,             -- reduction en % pour une promotion
     description_evenement TEXT,
     Id_utilisateur        VARCHAR(10) NOT NULL,  -- administrateur créateur (Creer)
     PRIMARY KEY (Id_evenement),
