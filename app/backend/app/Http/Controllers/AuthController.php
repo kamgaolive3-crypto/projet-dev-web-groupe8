@@ -24,7 +24,8 @@ class AuthController extends Controller
             'prenom'        => 'required|string|max:100',
             'email'         => 'required|email|max:255|unique:utilisateur,email',
             'telephone'     => ['required', 'regex:/^6[0-9]{8}$/'],
-            'mot_de_passe'  => 'required|string|min:8|confirmed',
+            'mot_de_passe'  => ['required', 'string', 'min:8', 'confirmed',
+                'regex:/^(?=.*[A-Z])(?=.*[0-9]).+$/'], // au moins 1 majuscule + 1 chiffre (cahier des charges)
             'localisation'      => 'nullable|string',
             'code_parrainage'   => ['nullable', 'regex:/^[A-Z]{4}[0-9]{4}$/'],
         ]);
