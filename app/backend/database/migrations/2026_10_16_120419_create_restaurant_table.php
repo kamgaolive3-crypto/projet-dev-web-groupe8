@@ -18,7 +18,7 @@ return new class extends Migration
         Schema::create('restaurant', function (Blueprint $table) {
             $table->string('Id_restaurant', 5)->primary();
             $table->string('nom_restaurant', 150);
-            $table->string('adresse_restaurant', 30);
+            $table->string('adresse_restaurant', 255); // adresse reelle -> 30 chars trop court
             $table->string('telephone_restaurant', 30)->nullable();
             $table->string('email_restaurant', 255)->nullable();
             $table->time('heure_ouverture');
