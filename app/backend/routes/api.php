@@ -5,6 +5,7 @@ use App\Http\Controllers\ArticleMenuController;
 use App\Http\Controllers\EvenementController;
 use App\Http\Controllers\ParametreController;
 use App\Http\Controllers\CommandeController;
+use App\Http\Controllers\LivraisonController;
 use Illuminate\Support\Facades\Route;
 
 // --- Authentification (Sanctum) ---
@@ -41,4 +42,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // étudiant : commentaire après service (US-010)
     Route::post('commande/{commande}/commentaire', [CommandeController::class, 'commentaire']);
+});
+
+// --- Livraisons (US-008 / US-026) ---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('livraison', LivraisonController::class)->except(['update', 'destroy']);
+
+    // cycle de vie : assignée -> en cours -> livrée / échouée
+    Route::post('livraison/{livraison}/assigner', [LivraisonController::class, 'assigner']);
+    Route::post('livraison/{livraison}/demarrer', [LivraisonController::class, 'demarrer']);
+    Route::post('livraison/{livraison}/livrer', [LivraisonController::class, 'livrer']);
+    Route::post('livraison/{livraison}/echouer', [LivraisonController::class, 'echouer']);
 });
