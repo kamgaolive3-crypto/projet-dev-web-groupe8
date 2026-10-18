@@ -155,7 +155,13 @@ export default function Header() {
 
                         {/* LIEN FIDÉLITÉ */}
                         <li>
-                            MARIAGE_DES_ANCRES_IMPOSSIBLE
+                            <NavLink
+                                to="/Evenement"
+                                className={lienStyle}
+                                onClick={fermerMenu}
+                            >
+                                Evenement
+                            </NavLink>
                         </li>
 
                         <li>
@@ -188,25 +194,17 @@ export default function Header() {
                             pt-4
                         ">
 
-                            <Link
-                                to="/page_connexion"
-
-                                // Ferme le menu après le clic.
-                                onClick={fermerMenu}
-
-                                className="
-                                    block
-                                    w-full
-                                    bg-primary
-                                    text-secondary
-                                    text-center
-                                    py-2
-                                    rounded-[10px]
-                                    hover:bg-primary-700
-                                "
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    // vraie déconnexion puis retour a l accueil
+                                    await deconnexion();
+                                    window.location.href = "/";
+                                }}
+                                className="block w-full bg-primary text-secondary text-center py-2 rounded-[10px] hover:bg-primary-700"
                             >
-                                Deconnexion
-                            </Link>
+                                Deconnexion {user ? "(" + user.prenom + ")" : ""}
+                            </button>
 
                         </li>
 
