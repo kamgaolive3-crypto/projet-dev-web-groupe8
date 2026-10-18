@@ -7,6 +7,7 @@ use App\Models\Commande;
 use App\Models\HistoriqueStatut;
 use App\Models\MvtPoint;
 use Illuminate\Http\Request;
+use App\Http\Controllers\ParrainageController;
 use Illuminate\Support\Facades\DB;
 
 class CommandeController extends Controller
@@ -167,6 +168,9 @@ class CommandeController extends Controller
 
             // 9. Historique : statut initial
             $this->enregistrerStatutHistorique($commande->Id_commande, $etudiant->Id_utilisateur, 'en_attente');
+
+            // 10. US-019 : si 1ère commande du filleul, crédite son parrain
+            ParrainageController::attribuerBonusPremiereCommande($etudiant);
 
             return $commande;
         });
