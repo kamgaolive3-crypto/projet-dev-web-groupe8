@@ -4,31 +4,31 @@ namespace App\Http\Controllers;
 
 use App\Models\ArticleMenu;
 use App\Models\Commande;
-use App\Models\HistoriqueStatut;
+use App\Models\Evenement;
 use App\Models\MvtPoint;
+use App\Services\CalculCommande;
+use App\Services\CommandeService;
+use DomainException;
 use Illuminate\Http\Request;
-use App\Http\Controllers\ParrainageController;
 use Illuminate\Support\Facades\DB;
 
 class CommandeController extends Controller
 {
-    /**
-     * Taux de fidélité (dictionnaire §10 / CAHIER §2.1.2) :
-     * 1000 F dépensés = 1 point gagné ; 15 points = 1000 F de réduction.
-     */
-    private const POINTS_PAR_REDUCTION = 15;
-    private const VALEUR_REDUCTION = 1000;   // F CFA
-    private const MONTANT_PAR_POINT = 1000;  // F CFA
+    /** Les points gagnés expirent après 12 mois (US-016). */
     private const EXPIRATION_MOIS = 12;
 
+    public function __construct(private CommandeService $commandes)
+    {
+    }
+
     /**
-     * afficher les commandes
+     * afficher les commandes (historique)
      * GET /api/commande : l'étudiant voit les siennes ; l'employé,
      * le gérant et l'administrateur voient tout (filtre ?statut=).
      */
     public function index(Request $request)
     {
-        $query = Commande::with(['articles', 'historiqueStatuts'])
+        $query = Commande::with(['articles', 'historiqueStatuts', 'paiements', 'livraison'])
             ->orderByDesc('date_commande');
 
         if ($request->user()->role === 'etudiant') {
@@ -60,11 +60,13 @@ class CommandeController extends Controller
     }
 
     /**
-     * creer une commande à partir du panier du client
+     * créer une commande à partir du panier du client
      * POST /api/commande { items: [{Id_article, quantite}], mode_service,
-     *                       heure_recup, Id_restaurant, points_utilises }
-     * Transaction : calcul montant / réduction / points, débit du solde,
-     * écriture commande + contenir + mvt_points + historique_statut.
+     *                       heure_recup, Id_restaurant, points_utilises, adresse_livraison }
+     *
+     * Tout est recalculé côté serveur (on ne fait jamais confiance au client) :
+     * sous-total, promotion, réduction par points, frais de livraison, total.
+     * Une seule transaction : si une étape échoue, rien n'est enregistré.
      */
     public function store(Request $request)
     {
@@ -77,6 +79,7 @@ class CommandeController extends Controller
             'heure_recup'           => 'nullable|required_if:mode_service,sur_place|date_format:H:i',
             'points_utilises'       => 'nullable|integer|min:0',
             'commentaire'           => 'nullable|string',
+            'adresse_livraison'     => 'nullable|string|max:255',
         ]);
 
         $utilisateur = $request->user();
@@ -86,86 +89,92 @@ class CommandeController extends Controller
             return response()->json(['message' => 'Seul un étudiant peut commander.'], 403);
         }
 
-        $commande = DB::transaction(function () use ($data, $etudiant) {
-            // 1. Prix actuels des articles (source de vérité serveur)
-            $articles = ArticleMenu::whereIn('Id_article', array_column($data['items'], 'Id_article'))
-                ->get()->keyBy('Id_article');
-
+        [$commande, $calcul] = DB::transaction(function () use ($data, $etudiant) {
+            // 1. Regrouper les lignes d'un même article (2 lignes "Poulet DG" = 1 ligne de quantité totale)
+            $lignes = [];
             foreach ($data['items'] as $item) {
-                $article = $articles[$item['Id_article']];
+                $lignes[$item['Id_article']] = ($lignes[$item['Id_article']] ?? 0) + (int) $item['quantite'];
+            }
+
+            // 2. Prix actuels des articles (source de vérité = le serveur) et sous-total
+            $articles = ArticleMenu::whereIn('Id_article', array_keys($lignes))->get()->keyBy('Id_article');
+
+            $sous_total = 0;
+            foreach ($lignes as $idArticle => $quantite) {
+                $article = $articles[$idArticle];
 
                 if (! $article->disponibilite_article) {
                     abort(422, "L'article {$article->nom_article} est indisponible.");
                 }
 
-                // revalidation serveur : un article d'un autre restaurant est refuse
+                // revalidation serveur : un article d'un autre restaurant est refusé
                 if ($article->Id_restaurant !== $data['Id_restaurant']) {
-                    abort(422, "L'article {$article->nom_article} n'appartient pas a ce restaurant.");
+                    abort(422, "L'article {$article->nom_article} n'appartient pas à ce restaurant.");
                 }
+
+                $sous_total += $article->prix_article * $quantite;
             }
 
-            // 2. Sous-total (montants en francs CFA)
-            $sous_total = 0;
-            foreach ($data['items'] as $item) {
-                $sous_total += $articles[$item['Id_article']]->prix_article * (int) $item['quantite'];
+            // 3. Calcul du montant : promotion en cours (la meilleure), points, frais de livraison
+            $taux_promotion = (int) Evenement::promotionsActives()->max('taux_reduction');
+
+            try {
+                $calcul = CalculCommande::calculer(
+                    $sous_total,
+                    $taux_promotion,
+                    (int) ($data['points_utilises'] ?? 0),
+                    (int) $etudiant->solde_point,
+                    $data['mode_service'] === 'livraison'
+                );
+            } catch (DomainException $e) {
+                abort(422, $e->getMessage());
             }
 
-            // 3. Réduction par points : multiple de 15 pts, jamais > sous-total
-            $points_utilises = (int) ($data['points_utilises'] ?? 0);
-            if ($points_utilises % self::POINTS_PAR_REDUCTION !== 0) {
-                abort(422, 'Les points doivent être utilisés par multiple de 15 (1 tranche = 1000 F).');
-            }
-            if ($points_utilises > $etudiant->solde_point) {
-                abort(422, 'Solde de points insuffisant.');
-            }
-            $reduction_points = intdiv($points_utilises, self::POINTS_PAR_REDUCTION) * self::VALEUR_REDUCTION;
-            $reduction_points = min($reduction_points, $sous_total);
-            $points_utilises  = intdiv($reduction_points, self::VALEUR_REDUCTION) * self::POINTS_PAR_REDUCTION;
-
-            // 4. Points gagnés sur ce qui est réellement payé : 1000 F = 1 point
-            $montant_total = $sous_total - $reduction_points;
-            $points_gagnes = intdiv($montant_total, self::MONTANT_PAR_POINT);
-
-            // 5. Création de la commande
+            // 4. Création de la commande
             $commande = Commande::create([
-                'Id_commande'              => $this->genererIdCommande(),
-                'montant_total'            => $montant_total,
-                'mode_service'             => $data['mode_service'],
-                'statut_commande'          => 'en_attente',
-                'points_utilises'          => $points_utilises,
-                'reduction_points'         => $reduction_points,
-                'commentaire'              => $data['commentaire'] ?? null,
-                'heure_recup'              => $data['heure_recup'] ?? null,
-                'Id_utilisateur'           => $etudiant->Id_utilisateur,
-                'Id_restaurant'            => $data['Id_restaurant'],
+                'Id_commande'     => $this->genererIdCommande(),
+                'montant_total'   => $calcul->total,
+                'mode_service'    => $data['mode_service'],
+                'statut_commande' => 'en_attente',
+                'points_utilises' => $calcul->pointsUtilises,
+                'reduction_points' => $calcul->reductionPoints,
+                'commentaire'     => $data['commentaire'] ?? null,
+                'heure_recup'     => $data['heure_recup'] ?? null,
+                'Id_utilisateur'  => $etudiant->Id_utilisateur,
+                'Id_restaurant'   => $data['Id_restaurant'],
             ]);
 
-            // 6. Lignes de commande (prix unitaire figé, association Contenir)
-            foreach ($data['items'] as $item) {
-                $commande->articles()->attach($item['Id_article'], [
-                    'quantite'      => (int) $item['quantite'],
-                    'prix_unitaire' => $articles[$item['Id_article']]->prix_article,
+            // 5. Lignes de commande (prix unitaire figé, association Contenir)
+            foreach ($lignes as $idArticle => $quantite) {
+                $commande->articles()->attach($idArticle, [
+                    'quantite'      => $quantite,
+                    'prix_unitaire' => $articles[$idArticle]->prix_article,
                 ]);
             }
 
+            // 6. Livraison : créée en même temps que la commande
+            if ($data['mode_service'] === 'livraison') {
+                $this->commandes->creerLivraison($commande, $data['adresse_livraison'] ?? null, $calcul->fraisLivraison);
+            }
+
             // 7. Débit des points utilisés + mouvement de fidélité
-            if ($points_utilises > 0) {
-                $etudiant->decrement('solde_point', $points_utilises);
+            if ($calcul->pointsUtilises > 0) {
+                $etudiant->decrement('solde_point', $calcul->pointsUtilises);
                 MvtPoint::create([
-                    'Id_mvt'          => $this->genererIdMvt(),
-                    'nbres_points'    => -$points_utilises,   // négatif = sortie
-                    'type_mvt'        => 'utilisation',
-                    'Id_utilisateur'  => $etudiant->Id_utilisateur,
-                    'Id_commande'     => $commande->Id_commande,
+                    'Id_mvt'         => $this->genererIdMvt(),
+                    'nbres_points'   => -$calcul->pointsUtilises,   // négatif = sortie
+                    'type_mvt'       => 'utilisation',
+                    'Id_utilisateur' => $etudiant->Id_utilisateur,
+                    'Id_commande'    => $commande->Id_commande,
                 ]);
             }
 
             // 8. Crédit des points gagnés (expirent dans 12 mois, US-016)
-            if ($points_gagnes > 0) {
-                $etudiant->increment('solde_point', $points_gagnes);
+            if ($calcul->pointsGagnes > 0) {
+                $etudiant->increment('solde_point', $calcul->pointsGagnes);
                 MvtPoint::create([
                     'Id_mvt'          => $this->genererIdMvt(),
-                    'nbres_points'    => $points_gagnes,
+                    'nbres_points'    => $calcul->pointsGagnes,
                     'type_mvt'        => 'gain',
                     'date_expiration' => now()->addMonths(self::EXPIRATION_MOIS),
                     'Id_utilisateur'  => $etudiant->Id_utilisateur,
@@ -174,15 +183,20 @@ class CommandeController extends Controller
             }
 
             // 9. Historique : statut initial
-            $this->enregistrerStatutHistorique($commande->Id_commande, $etudiant->Id_utilisateur, 'en_attente');
+            $this->commandes->enregistrerHistorique($commande->Id_commande, $etudiant->Id_utilisateur, 'en_attente');
 
             // 10. US-019 : si 1ère commande du filleul, crédite son parrain
             ParrainageController::attribuerBonusPremiereCommande($etudiant);
 
-            return $commande;
+            return [$commande, $calcul];
         });
 
-        return response()->json($commande->load('articles', 'historiqueStatuts'), 201);
+        // Montants utiles au front, renvoyés dans la réponse (non enregistrés dans la table commande)
+        $commande->load('articles', 'historiqueStatuts', 'livraison');
+        $commande->setAttribute('reduction_promotion', $calcul->promotion);
+        $commande->setAttribute('frais_livraison', $calcul->fraisLivraison);
+
+        return response()->json($commande, 201);
     }
 
     /**
@@ -207,7 +221,7 @@ class CommandeController extends Controller
                 'Id_valideur'     => $utilisateur->Id_utilisateur,
                 'date_validation' => now(),
             ]);
-            $this->enregistrerStatutHistorique($commande->Id_commande, $utilisateur->Id_utilisateur, 'validee');
+            $this->commandes->enregistrerHistorique($commande->Id_commande, $utilisateur->Id_utilisateur, 'validee');
         });
 
         return $commande->load('historiqueStatuts');
@@ -245,20 +259,16 @@ class CommandeController extends Controller
         }
 
         DB::transaction(function () use ($commande, $cible, $request) {
-            $commande->update(['statut_commande' => $cible]);
-            $this->enregistrerStatutHistorique($commande->Id_commande, $request->user()->Id_utilisateur, $cible);
+            $this->commandes->changerStatut($commande, $cible, $request->user()->Id_utilisateur);
 
             // Annulation : restitution des points utilisés
             if ($cible === 'annulee' && $commande->points_utilises > 0) {
-                $etudiant = $commande->etudiant;
-                $etudiant->increment('solde_point', $commande->points_utilises);
-                MvtPoint::create([
-                    'Id_mvt'         => $this->genererIdMvt(),
-                    'nbres_points'   => $commande->points_utilises,
-                    'type_mvt'       => 'gain',                    'Id_utilisateur' => $etudiant->Id_utilisateur,
-                    'Id_commande'    => $commande->Id_commande,
-                ]);
+                $this->restituerPoints($commande);
             }
+                        if ($cible === 'annulee') {
+                $this->retirerPointsGagnes($commande);
+            }
+            
         });
 
         return $commande->load('historiqueStatuts');
@@ -299,24 +309,55 @@ class CommandeController extends Controller
             return response()->json(['message' => 'Impossible : la commande est déjà traitée.'], 422);
         }
 
-        DB::transaction(function () use ($commande, $request) {
+               DB::transaction(function () use ($commande, $request) {
             if ($commande->points_utilises > 0) {
-                $etudiant = $commande->etudiant;
-                $etudiant->increment('solde_point', $commande->points_utilises);
-                MvtPoint::create([
-                    'Id_mvt'         => $this->genererIdMvt(),
-                    'nbres_points'   => $commande->points_utilises,
-                    'type_mvt'       => 'gain',                    'Id_utilisateur' => $etudiant->Id_utilisateur,
-                    'Id_commande'    => $commande->Id_commande,
-                ]);
+                $this->restituerPoints($commande);
             }
-            $commande->update(['statut_commande' => 'annulee']);
-            $this->enregistrerStatutHistorique($commande->Id_commande, $request->user()->Id_utilisateur, 'annulee');
+            $this->retirerPointsGagnes($commande);
+            $this->commandes->changerStatut($commande, 'annulee', $request->user()->Id_utilisateur);
         });
 
         return response()->json(['message' => 'Commande annulée.']);
     }
 
+    /** Rend à l'étudiant les points utilisés pour une commande annulée. */
+    private function restituerPoints(Commande $commande): void
+    {
+        $etudiant = $commande->etudiant;
+        $etudiant->increment('solde_point', $commande->points_utilises);
+        MvtPoint::create([
+            'Id_mvt'         => $this->genererIdMvt(),
+            'nbres_points'   => $commande->points_utilises,
+            'type_mvt'       => 'gain',
+            'Id_utilisateur' => $etudiant->Id_utilisateur,
+            'Id_commande'    => $commande->Id_commande,
+        ]);
+    }
+        /** Commande annulée : retire à l'étudiant les points que cette commande lui avait fait gagner. */
+    private function retirerPointsGagnes(Commande $commande): void
+    {
+        $gagnes = (int) MvtPoint::where('Id_commande', $commande->Id_commande)
+            ->where('type_mvt', 'gain')
+            ->whereNotNull('date_expiration')
+            ->sum('nbres_points');
+
+        $etudiant = $commande->etudiant;
+        $retrait = min($gagnes, (int) $etudiant->solde_point);
+
+        if ($retrait <= 0) {
+            return;
+        }
+
+        $etudiant->decrement('solde_point', $retrait);
+        MvtPoint::create([
+            'Id_mvt'         => $this->genererIdMvt(),
+            'nbres_points'   => -$retrait,
+            'type_mvt'       => 'utilisation',
+            'Id_utilisateur' => $etudiant->Id_utilisateur,
+            'Id_commande'    => $commande->Id_commande,
+        ]);
+    }
+    
     /**
      * Générateur #COM0001 (domaine ID_COM, dictionnaire §10) sans collision.
      */
@@ -339,22 +380,5 @@ class CommandeController extends Controller
         } while (MvtPoint::where('Id_mvt', $id)->exists());
 
         return $id;
-    }
-
-    /**
-     * Inscription au journal des statuts (HST00001, domaine ID_HIST).
-     */
-    private function enregistrerStatutHistorique(string $commandeId, string $utilisateurId, string $statut): void
-    {
-        do {
-            $id = 'HST' . str_pad((string) random_int(0, 99999), 5, '0', STR_PAD_LEFT);
-        } while (HistoriqueStatut::where('Id_historique', $id)->exists());
-
-        HistoriqueStatut::create([
-            'Id_historique'  => $id,
-            'nouveau_statut' => $statut,
-            'Id_commande'    => $commandeId,
-            'Id_utilisateur' => $utilisateurId,
-        ]);
     }
 }
