@@ -11,9 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('gerant')) {
+            return;
+        }
         Schema::create('gerant', function (Blueprint $table) {
-            $table->id();
+            $table->string('Id_utilisateur', 10)->primary();
+            $table->date('date_nomination')->nullable();
+            $table->string('Id_restaurant', 5);
             $table->timestamps();
+
+            $table->foreign('Id_utilisateur')
+                ->references('Id_utilisateur')->on('utilisateur')
+                ->onDelete('cascade');
+            $table->foreign('Id_restaurant')
+                ->references('Id_restaurant')->on('restaurant');
         });
     }
 
