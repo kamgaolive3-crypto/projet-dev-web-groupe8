@@ -107,12 +107,6 @@ export default function Commandes() {
         );
     }
 
-    // Remet la liste dans son état de départ et revient à la première page.
-    // Outil de TEST : à retirer avant la livraison.
-    function reinitialiser() {
-        setListe(commandes);
-        setPage(0);
-    }
     function compter(statut) {
         if (statut === null) {
             return liste.length;
@@ -232,18 +226,6 @@ export default function Commandes() {
                     />
                 </div>
             </div>
-
-            {/* Bouton de TEST : remet les statuts de départ. À supprimer avant la livraison. */}
-            <div className="mt-6 flex justify-end">
-                <button
-                    type="button"
-                    onClick={reinitialiser}
-                    className="rounded-md border border-emp-valider bg-emp-carre px-4 py-2 text-xs font-semibold text-emp-valider cursor-pointer hover:bg-emp-commande-rond"
-                >
-                    Réinitialiser
-                </button>
-            </div>
-
             {/* BLOC 4 : le tableau.
                 overflow-x-auto : sur mobile, le tableau défile horizontalement dans son cadre. */}
             <div className="mt-6 overflow-x-auto rounded-xl border border-grey-300 bg-emp-carre">
