@@ -27,7 +27,13 @@
   --color-emp-vert-carre: #DFF5DE;
   --color-emp-vert-rond: #BFEFBC;
   --color-emp-vert-emoji: #0AAF39;
-
+  --color-emp-beige-barre: #CFBF9B;   
+  --color-emp-fond-carte: #FAFAFA;    
+  --color-emp-noir-survol: #333333;   
+  --color-emp-or-icone: #F0E2B8;      
+  --color-emp-donut-boisson: #D0BC96;    
+  --color-emp-donut-dessert: #121212;
+  --color-emp-donut-principal: #D1BF82;
 }
 
 :root {
