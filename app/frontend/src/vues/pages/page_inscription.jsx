@@ -1,12 +1,11 @@
-import avatar from "../../assets/profil.png"
-//importe un hook qui permet de memoriser une valeur
+// Page d inscription selon la maquette :
+// "Nom et prenoms" (nom + prenom), Email, telephone, Localisation,
+// Mot de passe, Confirmer ; CTA "Creer un compte" beige r15 ;
+// bas de carte "Vous avez deja un compte ? Connectez-vous"
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../services/auth";
-//importe la frame en glass et l'image de fond
-import GlassCard from "../../composant/GlassCard";
-import GlassPage from "../../composant/GlassPage";
-
+import AuthFond, { AuthCarte } from "../../composant/AuthFond";
 
 export default function Signin() {
     const [nom, setnom] = useState("");
@@ -22,21 +21,23 @@ export default function Signin() {
     const { inscription } = useAuth();
     const regleMotDePasse = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
 
+    //style commun des champs (maquette : translucides r5px)
+    const champ =
+        "w-full rounded-[5px] bg-white/40 px-3 py-2.5 text-black outline-none focus:ring-2 focus:ring-or";
+    const etiquette = "font-sans text-base text-black md:text-lg";
+
     //fonction appellée quand envoie le formulaire
     const handleSubmit = async (e) => {
-        e.preventDefault(); // empeche le rechargement de 
+        e.preventDefault(); // empeche le rechargement
         if (password !== confirmPassword) {
             setErreur("Les mots de passe ne correspondent pas");
             return;
         }
-
         if (!regleMotDePasse.test(password)) {
             setErreur("Le mot de passe doit contenir 8 caractères, une majuscule et un chiffre");
             return;
         }
-
         setErreur("");
-                setErreur("");
         try {
             await inscription({
                 nom,
@@ -52,89 +53,153 @@ export default function Signin() {
         } catch (err) {
             const detail = err.champs ? Object.values(err.champs).flat().join(" - ") : null;
             setErreur(detail || err.message || "Inscription echouee");
-        } //plus tard: envoi a ton API PHP 
+        }
     }
 
     return (
-        <GlassPage>
-            {}
-            <GlassCard largeurMax="722px" hauteurMax="1000px">
-                <h1 className="text-3xl font-bold text-center mb-0">{/* titre  principal de la page*/}
-                    Bienvenue sur Mon Miam Miam 
+        <AuthFond>
+            <AuthCarte>
+                <h1 className="text-center font-sans text-2xl font-bold text-black md:text-3xl">
+                    Bienvenue sur Mon Miam Miam
                 </h1>
-                <div className="flex flex-col gap-1 mt-0 p-0">
-                    <img src={avatar} alt="avatar" className="w-30 h-30 mx-auto"/>
-                    <p className="text-secondary text-xs text-center"> Vous avez deja un compte ? {" "}
-                        <Link to="/page_connexion" className="text-primary cursor-pointer hover:text-primary-700">
-                           connectez vous.
-                        </Link>
-                    </p>
-                </div>
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
-                    {erreur && (<p className="text-sm font-semibold text-red-600">{erreur}</p>)}
+
+                <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
+                    {erreur && (
+                        <p className="rounded-[10px] bg-red-100 px-3 py-2 text-sm font-semibold text-red-700">
+                            {erreur}
+                        </p>
+                    )}
+
                     <div className="flex flex-col gap-1">
-                        <label htmlFor="nom" className="text-secondary">
-                            Nom 
+                        <label htmlFor="nom" className={etiquette}>
+                            Nom et prenoms
                         </label>
-                        <input id="nom" type="text" autoComplete="family-name" required value={nom} onChange={(e)=> setnom(e.target.value)}
-                        className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
-                        <label htmlFor="prenom" className="text-secondary">
-                            Prenom 
+                        {/* la maquette propose "Nom | prénom" : deux champs cote a cote */}
+                        <div className="flex gap-2">
+                            <input
+                                id="nom"
+                                type="text"
+                                autoComplete="family-name"
+                                required
+                                placeholder="Nom"
+                                value={nom}
+                                onChange={(e) => setnom(e.target.value)}
+                                className={champ}
+                            />
+                            <input
+                                id="prenom"
+                                type="text"
+                                autoComplete="given-name"
+                                required
+                                placeholder="prénom"
+                                value={prenom}
+                                onChange={(e) => setprenom(e.target.value)}
+                                className={champ}
+                            />
+                        </div>
+
+                        <label htmlFor="email" className={etiquette + " mt-1"}>
+                            Email
                         </label>
-                        <input id="prenom" type="text" autoComplete="given-name" required value={prenom} onChange={(e)=> setprenom(e.target.value)}
-                        className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
-                        <label htmlFor="email" className="text-secondary">
-                            Email 
+                        <input
+                            id="email"
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className={champ}
+                        />
+
+                        <label htmlFor="telephone" className={etiquette + " mt-1"}>
+                            Numéro de téléphone
                         </label>
-                        <input id="email" type="email"  required value={email} onChange={(e)=> setEmail(e.target.value)}
-                        className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
-                        <label htmlFor="telephone" className="text-secondary">
-                            Numéro de téléphone 
+                        <input
+                            id="telephone"
+                            type="tel"
+                            inputMode="numeric"
+                            pattern="6[0-9]{8}"
+                            title="Le numéro doit commencer par 6 et contenir 9 chiffres"
+                            required
+                            value={telephone}
+                            onChange={(e) => settelephone(e.target.value)}
+                            className={champ}
+                        />
+
+                        <label htmlFor="location" className={etiquette + " mt-1"}>
+                            Localisation
                         </label>
-                        <input id="telephone" type="tel" inputMode="numeric" pattern="6[0-9]{8}" 
-                        title="Le numéro doit commencer par 6 et contenir 9 chiffres"required value={telephone} 
-                        onChange={(e)=> settelephone(e.target.value)}
-                        className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
-                        <label htmlFor="location" className="text-secondary">
-                            Localisation 
-                        </label>
-                        <input id="location" type="text" required value={localisation} onChange={(e)=> setlocalisation(e.target.value)}
-                        className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
-                        <label htmlFor="code_parrainage" className="text-secondary">
+                        <input
+                            id="location"
+                            type="text"
+                            required
+                            value={localisation}
+                            onChange={(e) => setlocalisation(e.target.value)}
+                            className={champ}
+                        />
+
+                        {/* code de parrainage optionnel (le champ existe toujours dans la base) */}
+                        <label htmlFor="code_parrainage" className={etiquette + " mt-1"}>
                             Code de parrainage (optionnel)
                         </label>
-                        <input id="code_parrainage" type="text" title="4 lettres majuscules suivi de 4 chiffres"
-                        pattern="[A-Z]{4}[0-9]{4}" value={codeParrainage}
-                        onChange={(e)=> setCodeParrainage(e.target.value.toUpperCase())}
-                        className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
-                        <label hrmlFor="password" className="text-secondary">
+                        <input
+                            id="code_parrainage"
+                            type="text"
+                            title="4 lettres majuscules suivi de 4 chiffres"
+                            pattern="[A-Z]{4}[0-9]{4}"
+                            value={codeParrainage}
+                            onChange={(e) => setCodeParrainage(e.target.value.toUpperCase())}
+                            className={champ}
+                        />
+
+                        <label htmlFor="password" className={etiquette + " mt-1"}>
                             Mot de passe
                         </label>
-                        <input id="password" type="password" required value ={password} onChange={(e) => setPassword(e.target.value)}
-                        className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
-                        {password && !regleMotDePasse.test(password) && 
-                        ( <p className="text-xs text-red-600"> 
-                        Au moins 8 caractères, une majuscule et un chiffre</p>
+                        <input
+                            id="password"
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className={champ}
+                        />
+                        {password && !regleMotDePasse.test(password) && (
+                            <p className="text-xs text-red-700">
+                                Au moins 8 caractères, une majuscule et un chiffre
+                            </p>
                         )}
-                        {password && regleMotDePasse.test(password) && 
-                        ( <p className="text-xs text-green-600"> 
-                        mot de passe correct</p>
-                        )}
-                        <label hrmlFor="confirm" className="text-secondary">
-                            Confirmation du mot de passe
+
+                        <label htmlFor="confirm" className={etiquette + " mt-1"}>
+                            Confirmer le mot de passe
                         </label>
-                        <input id="confirm" type="password" required value ={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
+                        <input
+                            id="confirm"
+                            type="password"
+                            required
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className={champ}
+                        />
                         {confirmPassword && password !== confirmPassword && (
-                            <p className="text-xs text-red-600">Les mots de passe ne correspondent pas</p>
+                            <p className="text-xs text-red-700">Les mots de passe ne correspondent pas</p>
                         )}
-                        <button type="submit"
-                        className="bg-primary text-secondary mx-auto w-full max-w-50 min-h-8 rounded-[10px] cursor-pointer hover:bg-primary-700 mt-4">
-                            Créer un compte
-                        </button>
                     </div>
+
+                    {/* CTA Creer un compte : pill beige r15 (maquette 293x53) */}
+                    <button
+                        type="submit"
+                        className="mx-auto mt-3 block w-full max-w-[300px] rounded-[15px] bg-or-clair py-3 font-sans text-lg font-medium text-black transition-colors hover:bg-or md:text-[22px]"
+                    >
+                        Créer un compte
+                    </button>
+
+                    <p className="text-center font-sans text-xs text-black md:text-sm">
+                        Vous avez déjà un compte ?{" "}
+                        <Link to="/page_connexion" className="font-medium text-or-deep hover:underline">
+                            Connectez-vous
+                        </Link>
+                    </p>
                 </form>
-            </GlassCard>
-        </GlassPage>
+            </AuthCarte>
+        </AuthFond>
     )
 }

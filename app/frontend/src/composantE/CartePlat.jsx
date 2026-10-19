@@ -1,23 +1,30 @@
+// Carte de plat pour la page d accueil (grille "Menu du jours")
+// reprend le style maquette : fond blanc, coins r30, CTA beige #CFBD97 r15
+import platMaquette from "../../../public/maq/maq_plat.jpg";
+
 export default function CartePlat({ plat, onAjouter, ajoute }) {
     return (
-        <div className="rounded-xl border border-[#CFBD97] bg-white p-3">
+        <article className="flex flex-col items-center overflow-hidden rounded-[30px] bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
             <img
-                src={plat.image}
+                src={plat.image || platMaquette}
                 alt={plat.nom}
-                className="h-44 w-full rounded-lg object-cover md:h-52"
+                className="h-56 w-full rounded-[20px] object-cover md:h-[300px]"
             />
 
-            <div className="mt-2 flex items-center justify-between border-b border-[#efe6d0] pb-1 text-sm">
-                <span>{plat.nom}</span>
-                <span className="font-semibold text-[#b8862d]">{plat.prix} Fcfa</span>
-            </div>
+            <p className="mt-4 font-inria text-base text-black md:text-lg">{plat.nom}</p>
+            <p className="mt-1 font-inria text-xl text-or-deep md:text-2xl">
+                {plat.prix}Fcfa
+            </p>
+
+            <span className="mt-4 block h-[2px] w-11/12 bg-filet" />
 
             <button
+                type="button"
                 onClick={() => onAjouter(plat)}
-                className="mx-auto mt-3 block w-3/5 rounded-full bg-[#CFBD97] py-1 text-sm text-white"
+                className="mt-4 block w-full max-w-[305px] rounded-[15px] bg-or-clair py-3 font-inria text-lg text-black transition-colors hover:bg-or md:text-xl"
             >
                 {ajoute ? "Ajouté ✓" : "Ajouter"}
             </button>
-        </div>
+        </article>
     )
 }

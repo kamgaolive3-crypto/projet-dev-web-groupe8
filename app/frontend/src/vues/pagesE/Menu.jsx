@@ -1,9 +1,11 @@
-//importe un hook qui permet de memoriser une valeur
+// Page Menu reproduisant la maquette :
+// titre "Notre menu" Inria Bold 36px ; note du programme de fidelite ;
+// chips de categories (active = or #C49E4C, autres blanches, r29) ;
+// grille de cartes blanches r30 (photo, nom Inria 24px, prix or, bouton "Ajouter")
 import { useState, useEffect } from "react"
-//importe l'outil qui gère le panier (partagé entre toutes les pages)
 import usePanier from "../../composantE/usePanier"
-//importe le client API (le vrai menu vient du backend Laravel)
 import { api } from "../../services/api"
+import platMaquette from "../../../public/maq/maq_plat.jpg";
 
 //les catégories affichées en haut (boutons de filtre)
 //a gauche : libellé affiché, a droite : valeur en base (table article_menu)
@@ -35,7 +37,8 @@ export default function Menu() {
                     nom: a.nom_article,
                     prix: a.prix_article,
                     categorie: a.categories_article,
-                    image: a.image_article || "/plat_du_jour.jpg",
+                    image: a.image_article || platMaquette,
+                    description: a.description || "",
                     disponible: a.disponibilite_article,
                     restaurant: a.Id_restaurant, // le panier exige un seul restaurant
                 })))
@@ -61,28 +64,34 @@ export default function Menu() {
     }
 
     return (
-        <div className="flex flex-col gap-4 p-4 md:p-6">
+        <div className="mx-auto w-full max-w-[1320px] px-4 pb-12 pt-8 md:px-8">
             {/* ---------- TITRE ---------- */}
-            <div>
-                <h1 className="font-serif text-xl font-bold">Notre menu</h1>
-                <p className="text-xs text-gray-600">
-                    Chaque tranche de 1 000 F vous rapporte 1 point de fidélité
-                </p>
-            </div>
+            <h1 className="font-inria text-2xl font-bold text-black md:text-[36px]">
+                Notre menu
+            </h1>
+            <p className="mt-1 font-inria text-sm text-black md:text-base">
+                Chaque tranche de 1 000 F vous rapporte 1 point de fidélité
+            </p>
 
             {/* message d'erreur du chargement */}
-            {erreur && <p className="rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">{erreur}</p>}
+            {erreur && (
+                <p className="mt-4 rounded-[10px] bg-red-100 px-4 py-2 text-sm text-red-700">
+                    {erreur}
+                </p>
+            )}
 
-            {/* ---------- BOUTONS DE FILTRE ---------- */}
-            {/* flex-wrap : si l'écran est étroit, les boutons passent à la ligne */}
-            <div className="flex flex-wrap gap-2">
+            {/* ---------- CHIPS DE FILTRE (maquette : pills r29) ---------- */}
+            <div className="mt-5 flex flex-wrap gap-3">
                 {categories.map((c) => (
                     <button
                         key={c.valeur}
+                        type="button"
                         onClick={() => setCategorie(c.valeur)}
                         className={
-                            "rounded-full border border-[#CFBD97] px-4 py-1 text-xs " +
-                            (c.valeur === categorie ? "bg-[#CFBD97] text-white" : "bg-white text-gray-800")
+                            "rounded-[29px] px-6 py-2 font-inria text-base transition-colors md:text-lg " +
+                            (c.valeur === categorie
+                                ? "bg-or text-black"
+                                : "bg-white text-black hover:bg-creme-d")
                         }
                     >
                         {c.label}
@@ -93,36 +102,47 @@ export default function Menu() {
             {/* ---------- LISTE DES PLATS ---------- */}
             {/* si la catégorie est vide, on affiche un message au lieu de la grille */}
             {platsAffiches.length === 0 ? (
-                <p className="text-sm text-gray-600">Aucun article dans cette catégorie pour le moment.</p>
+                <p className="mt-8 font-inria text-encre">
+                    Aucun article dans cette catégorie pour le moment.
+                </p>
             ) : (
-                /* 1 colonne sur téléphone, 2 colonnes sur ordinateur */
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                /* 1 colonne sur téléphone, 2 colonnes sur grand écran (maquette 2 col) */
+                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                     {/* .map() fabrique une carte pour chaque plat */}
                     {platsAffiches.map((plat) => (
-                        <div key={plat.id} className="rounded-xl border border-[#CFBD97] bg-white p-3">
+                        <article
+                            key={plat.id}
+                            className="flex flex-col items-center rounded-[30px] bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                        >
                             <img
                                 src={plat.image}
                                 alt={plat.nom}
-                                className="h-44 w-full rounded-lg object-cover md:h-52"
+                                className="h-52 w-full rounded-[20px] object-cover md:h-[280px]"
                             />
 
-                            {/* nom à gauche, prix à droite */}
-                            <div className="mt-2 flex items-center justify-between border-b border-[#efe6d0] pb-1 text-sm">
-                                <span>{plat.nom}</span>
-                                <span className="font-semibold text-[#b8862d]">{plat.prix} Fcfa</span>
+                            {/* nom + prix (maquette : Inria 24px, prix or) */}
+                            <div className="mt-4 flex w-full items-center justify-between gap-3">
+                                <span className="font-inria text-lg text-black md:text-[24px]">
+                                    {plat.nom}
+                                </span>
+                                <span className="font-inria text-lg text-or md:text-[24px]">
+                                    {plat.prix}Fcfa
+                                </span>
                             </div>
 
+                            {/* bouton "Ajouter" : pill or r30 (maquette 199x32) */}
                             <button
+                                type="button"
                                 onClick={() => ajouterAuPanier(plat)}
                                 disabled={!plat.disponible}
                                 className={
-                                    "mx-auto mt-3 block w-3/5 rounded-full bg-[#CFBD97] py-1 text-sm text-white " +
+                                    "mt-4 w-full max-w-[240px] rounded-[30px] bg-or py-2 font-inria text-lg text-black transition-colors hover:bg-or-deep hover:text-white disabled:opacity-50 md:text-xl " +
                                     (plat.disponible ? "" : "opacity-50")
                                 }
                             >
                                 {ajouteId === plat.id ? "Ajouté ✓" : plat.disponible ? "Ajouter" : "Épuisé"}
                             </button>
-                        </div>
+                        </article>
                     ))}
                 </div>
             )}

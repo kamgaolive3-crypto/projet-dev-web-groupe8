@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { api } from "../services/api";
 
-// la banniere RGPD : un seul consentement par visiteur, mémorisé dans le navigateur
+// la banniere RGPD reproduit la maquette /cookies :
+// assombrissement plein ecran (noir 51%) + carte #F4F4F4 r35 centree ;
+// texte Inter + deux boutons "Tout accepter" / "Tout refuser"
+// un seul consentement par visiteur, memorise dans le navigateur
 const CLE = "cookie-consentement";
 
 export default function BanniereCookies() {
@@ -23,24 +26,40 @@ export default function BanniereCookies() {
   };
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-50 flex flex-col gap-3 rounded-2xl border border-[#CFBD97] bg-white/95 p-4 shadow-2xl md:flex-row md:items-center md:justify-between">
-      <p className="text-xs text-black md:text-sm">
-        Nous utilisons des cookies pour améliorer votre expérience (panier, session, statistiques anonymisées).
-        Voulez-vous les accepter ? Vous pouvez changer d avis à tout moment.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <button onClick={() => enregistrer("accepte")}
-          className="rounded-full bg-[#CFBD97] px-4 py-1.5 text-xs font-semibold hover:brightness-95">
-          Tout accepter
-        </button>
-        <button onClick={() => enregistrer("personnalise")}
-          className="rounded-full border border-[#CFBD97] px-4 py-1.5 text-xs hover:bg-[#CFBD97]/20">
-          Personnaliser
-        </button>
-        <button onClick={() => enregistrer("refuse")}
-          className="rounded-full border border-black px-4 py-1.5 text-xs hover:bg-gray-100">
-          Refuser
-        </button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+      {/* carte centrale #F4F4F4 r35 (maquette 899x491) */}
+      <div className="w-full max-w-[760px] rounded-[35px] bg-ligne p-6 shadow-2xl md:p-10">
+        <p className="font-sans text-lg leading-relaxed text-black md:text-[26px]">
+          Ce site utilise des cookies afin d&apos;offrir une expérience optimale
+          à ses visiteurs. Veuillez accepter les cookies pour une expérience
+          optimale.
+        </p>
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4 md:justify-end md:gap-6">
+          {/* bouton maquette : pill beige r15 */}
+          <button
+            type="button"
+            onClick={() => enregistrer("accepte")}
+            className="rounded-[15px] bg-or-clair px-7 py-3 font-sans text-base text-black transition-colors hover:bg-or md:text-xl"
+          >
+            Tout accepter
+          </button>
+          {/* reponse "personnalise" possible : meme action qu un refus partiel */}
+          <button
+            type="button"
+            onClick={() => enregistrer("personnalise")}
+            className="rounded-[15px] bg-white px-7 py-3 font-sans text-base text-black shadow-sm transition-colors hover:bg-creme-d md:text-xl"
+          >
+            Personnaliser
+          </button>
+          <button
+            type="button"
+            onClick={() => enregistrer("refuse")}
+            className="rounded-[15px] bg-white px-7 py-3 font-sans text-base text-black shadow-sm transition-colors hover:bg-creme-d md:text-xl"
+          >
+            Tout refuser
+          </button>
+        </div>
       </div>
     </div>
   );

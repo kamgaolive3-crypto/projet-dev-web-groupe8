@@ -1,8 +1,8 @@
-//importe un hook qui permet de memoriser une valeur
+// Page Fidelite reproduisant la maquette :
+// titres Inria Bold ; bande creme #FFFDF8 r29 (reduction + mes points + barre) ;
+// cartes blanches r30 : points par commande / parrainage ; grande carte top 10
 import { useState, useEffect } from "react"
-//cliente API : le solde, les points, le parrainage viennent du backend
 import { api } from "../../services/api"
-//auth : tout ceci ne concerne que l utilisateur connecté
 import { useAuth } from "../../services/auth"
 
 //---------------- REGLES DU PROGRAMME ----------------
@@ -62,7 +62,7 @@ export default function Fidelite() {
                 setFilleuls((Array.isArray(liste) ? liste : liste.data || []).map((f, i) => ({
                     id: f.Id_utilisateur ?? i,
                     nom: f.nom ?? f.prenom ?? "Filleul",
-                    statut: f.recompense_attribuee ? "inscrit(e)" : "en attente",
+                    statut: f.recompense_attribuee ? "inscrite" : "en attente",
                     points: f.recompense_attribuee ? 3 : 0,
                 })))
             })
@@ -118,92 +118,111 @@ export default function Fidelite() {
     }
 
     return (
-        <div className="flex flex-col gap-6 p-4 md:p-6">
+        <div className="mx-auto w-full max-w-[1320px] px-4 pb-12 pt-8 md:px-8">
             {/* ---------- TITRE ---------- */}
-            <div>
-                <h1 className="font-serif text-xl font-bold">Programme de fidélité</h1>
-                <p className="text-xs text-gray-600">
-                    {fcfa(FCFA_PAR_POINT)} dépensés = 1 point · {POINTS_PAR_REDUCTION} points = {fcfa(VALEUR_REDUCTION)} de réduction
-                </p>
-            </div>
+            <h1 className="font-inria text-2xl font-bold text-black md:text-[36px]">
+                Programme de fidélité
+            </h1>
+            <p className="mt-1 font-inria text-sm font-bold text-black md:text-base">
+                {fcfa(FCFA_PAR_POINT)} dépensés = 1 point &nbsp;.&nbsp; {POINTS_PAR_REDUCTION} points = {fcfa(VALEUR_REDUCTION)} de réduction
+            </p>
 
             {/* pas connecté : message + lien connexion */}
             {erreur && (
-                <p className="rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">
-                    {erreur}
+                <p className="mt-4 rounded-[10px] bg-red-100 px-4 py-3 text-sm text-red-700">
+                    {erreur}{" "}
                     {!user && (
-                        <a href="/page_connexion" className="ml-2 font-semibold underline">
+                        <a href="/page_connexion" className="font-semibold underline">
                             Se connecter
                         </a>
                     )}
                 </p>
             )}
 
-            {/* ---------- MES POINTS ---------- */}
-            {/* flex-col sur téléphone (empilé), md:flex-row sur ordinateur (côte à côte) */}
-            <section className="flex flex-col gap-6 rounded-xl border border-[#e3dac6] bg-[#fffdf5] p-5 md:flex-row md:items-center">
-                {/* partie gauche : les points et la barre */}
+            {/* ---------- BANDE REDUCTION + MES POINTS (creme r29) ---------- */}
+            <section className="mt-6 flex flex-col gap-6 rounded-[29px] bg-creme-d p-6 md:flex-row md:items-center md:p-8">
+                {/* gauche : la reduction */}
                 <div className="flex-1">
-                    <h2 className="font-serif text-sm font-semibold">Mes points</h2>
-                    <p className="mt-2 text-3xl font-bold">{solde} pts</p>
-
-                    {/* la piste claire */}
-                    <div className="mt-2 h-3 w-full rounded-full bg-[#efe6d0]">
-                        {/* la partie dorée : sa largeur change avec le pourcentage */}
-                        <div className="h-3 rounded-full bg-[#CFBD97]" style={{ width: pourcentage + "%" }} />
-                    </div>
-                    <p className="mt-2 text-xs">
-                        {pointsVersReduction}/{POINTS_PAR_REDUCTION} points vers la prochaine réduction
+                    <p className="font-inria text-lg font-bold text-black md:text-xl">
+                        Réduction disponible
                     </p>
-                </div>
-
-                {/* partie droite : la réduction (un trait doré la sépare de la gauche) */}
-                <div className="flex flex-col items-center gap-2 border-t border-[#CFBD97] pt-4 md:w-1/3 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-                    <p className="font-serif text-sm font-semibold">Réduction disponible</p>
-                    <p className="text-3xl font-bold">{fcfa(reduction)}</p>
+                    <p className="mt-2 font-inria text-3xl font-bold text-black md:text-[40px]">
+                        {fcfa(reduction)}
+                    </p>
                     <button
+                        type="button"
                         onClick={utiliserPoints}
-                        className="rounded-full bg-[#CFBD97] px-5 py-1.5 text-sm text-white"
+                        className="mt-4 rounded-[29px] bg-or px-7 py-2.5 font-inria text-base text-black transition-colors hover:bg-or-deep hover:text-white md:text-xl"
                     >
                         Utiliser mes points
                     </button>
-                    {/* && : le message s'affiche seulement s'il n'est pas vide */}
-                    {message && <p className="text-center text-xs text-[#b8862d]">{message}</p>}
+                    {message && (
+                        <p className="mt-2 font-inria text-sm text-or-deep">{message}</p>
+                    )}
+                </div>
+
+                {/* filet vertical sur desktop (maquette) */}
+                <span className="hidden h-40 w-px bg-bmie md:block" />
+
+                {/* droite : mes points + barre de progression */}
+                <div className="flex-1">
+                    <p className="font-inria text-lg font-bold text-black md:text-xl">
+                        Mes points
+                    </p>
+                    <p className="mt-2 font-inria text-3xl font-bold text-black md:text-[40px]">
+                        {solde} pts
+                    </p>
+                    {/* piste claire #F5F0E9 + remplissage or */}
+                    <div className="mt-3 h-5 w-full rounded-full bg-piste">
+                        <div
+                            className="h-5 rounded-full bg-or"
+                            style={{ width: pourcentage + "%" }}
+                        />
+                    </div>
+                    <p className="mt-2 font-inria text-sm font-bold text-black md:text-xl">
+                        {pointsVersReduction}/{POINTS_PAR_REDUCTION} points vers la prochaine réduction
+                    </p>
                 </div>
             </section>
 
-            {/* ---------- COMMANDES + PARRAINAGE ---------- */}
-            {/* 1 colonne sur téléphone, 2 colonnes sur ordinateur */}
-            <div className="grid gap-6 md:grid-cols-2">
-                {/* Points gagnés par commande */}
-                <section className="rounded-xl border border-[#e3dac6] bg-white p-4">
-                    <h2 className="mb-2 font-serif text-sm font-semibold">Points gagnés par commande</h2>
-                    <table className="w-full text-xs">
+            {/* ---------- POINTS PAR COMMANDE + PARRAINAGE ---------- */}
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                {/* Points gagnés par commande : carte blanche r30 */}
+                <section className="rounded-[30px] bg-white p-5 md:p-6">
+                    <h2 className="font-inria text-lg font-bold text-black md:text-xl">
+                        Points gagnés par commande
+                    </h2>
+                    <table className="mt-3 w-full font-inria text-sm font-bold text-black md:text-[15px]">
                         <thead>
-                            <tr className="text-left text-gray-500">
-                                <th className="py-1 font-normal">Date</th>
-                                <th className="font-normal">Montant</th>
-                                <th className="text-right font-normal">Points</th>
+                            <tr className="text-left text-encre">
+                                <th className="py-1 pr-2 font-bold">Date &nbsp;.&nbsp; Montant</th>
+                                <th className="text-right font-bold">Points</th>
                             </tr>
                         </thead>
                         <tbody>
                             {/* .map() fabrique une ligne pour chaque mouvement de points */}
                             {commandesAffichees.map((c) => (
-                                <tr key={c.id} className="border-t border-[#efe6d0]">
-                                    <td className="py-1.5">{c.date}</td>
-                                    <td>{c.montant === null ? "—" : fcfa(c.montant)}</td>
-                                    <td className="text-right font-semibold text-[#b8862d]">+{c.points}</td>
+                                <tr key={c.id} className="border-t border-ligne">
+                                    <td className="py-2">
+                                        {c.date ? c.date.slice(8, 10) + "/" + c.date.slice(5, 7) : "—"} . {c.montant === null ? "—" : fcfa(c.montant)}
+                                    </td>
+                                    <td className="text-right text-or-deep">+{c.points}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                    {commandes.length === 0 && <p className="mt-2 text-xs text-gray-500">Aucun mouvement de points pour le moment.</p>}
+                    {commandes.length === 0 && (
+                        <p className="mt-3 font-inria text-sm text-encre">
+                            Aucun mouvement de points pour le moment.
+                        </p>
+                    )}
                     {/* le bouton existe seulement s'il y a plus de 3 commandes */}
                     {commandes.length > 3 && (
                         <div className="mt-3 flex justify-end">
                             <button
+                                type="button"
                                 onClick={() => setCommandesToutes(!commandesToutes)}
-                                className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs text-white"
+                                className="rounded-[30px] bg-or px-5 py-1.5 font-inria text-sm text-black transition-colors hover:bg-or-deep hover:text-white"
                             >
                                 {commandesToutes ? "Voir moins" : "Voir plus"}
                             </button>
@@ -211,46 +230,55 @@ export default function Fidelite() {
                     )}
                 </section>
 
-                {/* Parrainage */}
-                <section className="rounded-xl border border-[#e3dac6] bg-white p-4">
-                    <h2 className="mb-2 font-serif text-sm font-semibold">Parrainage</h2>
+                {/* Parrainage : carte blanche r30 */}
+                <section className="rounded-[30px] bg-white p-5 md:p-6">
+                    <h2 className="font-inria text-lg font-bold text-black md:text-xl">
+                        Parrainage
+                    </h2>
 
-                    {/* le code de parrainage et le bouton Copier */}
-                    <div className="mb-3 flex items-center justify-between rounded-md bg-[#e8dcc3] px-3 py-1.5 text-xs">
-                        <span>
-                            Votre code : <b>{codeParrain || "non disponible"}</b>
+                    {/* le code de parrainage dans sa chip beie + Copier */}
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[30px] bg-bmie px-5 py-2">
+                        <span className="font-inria text-base font-bold text-black md:text-base">
+                            Votre code:&nbsp;&nbsp;<span className="tracking-wide">{codeParrain || "non disponible"}</span>
                         </span>
-                        <button onClick={copierCode} className="rounded-full bg-[#CFBD97] px-3 py-0.5 text-white">
+                        <button
+                            type="button"
+                            onClick={copierCode}
+                            className="rounded-[30px] bg-or px-5 py-1 font-inria text-sm text-black transition-colors hover:bg-or-deep hover:text-white"
+                        >
                             {copie ? "Copié !" : "Copier"}
                         </button>
                     </div>
 
-                    <table className="w-full text-xs">
+                    <table className="mt-3 w-full font-inria text-sm font-bold text-black md:text-base">
                         <thead>
-                            <tr className="text-left text-gray-500">
-                                <th className="py-1 font-normal">Filleul</th>
-                                <th className="font-normal">Statut</th>
-                                <th className="text-right font-normal">Points</th>
+                            <tr className="text-left text-gris-pa">
+                                <th className="py-1 pr-2 font-bold">Filleul . Statut</th>
+                                <th className="text-right font-bold">Points</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filleulsAffiches.map((f) => (
-                                <tr key={f.id} className="border-t border-[#efe6d0]">
-                                    <td className="py-1.5">{f.nom}</td>
-                                    <td>{f.statut}</td>
-                                    <td className="text-right font-semibold text-[#b8862d]">
-                                        {f.points > 0 ? "+" + f.points : 0}
+                                <tr key={f.id} className="border-t border-ligne">
+                                    <td className="py-2">{f.nom} . {f.statut}</td>
+                                    <td className="text-right text-or-deep">
+                                        {f.points > 0 ? "+" + f.points : "0"}
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                    {filleuls.length === 0 && <p className="mt-2 text-xs text-gray-500">Aucun filleul pour le moment.</p>}
+                    {filleuls.length === 0 && (
+                        <p className="mt-3 font-inria text-sm text-encre">
+                            Aucun filleul pour le moment.
+                        </p>
+                    )}
                     {filleuls.length > 2 && (
                         <div className="mt-3 flex justify-end">
                             <button
+                                type="button"
                                 onClick={() => setFilleulsTous(!filleulsTous)}
-                                className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs text-white"
+                                className="rounded-[30px] bg-or px-5 py-1.5 font-inria text-sm text-black transition-colors hover:bg-or-deep hover:text-white"
                             >
                                 {filleulsTous ? "Voir moins" : "Voir plus"}
                             </button>
@@ -260,27 +288,33 @@ export default function Fidelite() {
             </div>
 
             {/* ---------- TOP 10 ---------- */}
-            <section className="rounded-xl border border-[#e3dac6] bg-white p-4">
-                <h2 className="mb-2 font-serif text-sm font-semibold">Top 10 des meilleurs clients</h2>
+            <section className="mt-6 rounded-[30px] bg-white p-5 md:p-6">
+                <h2 className="font-inria text-lg font-bold text-black md:text-xl">
+                    Top 10 des meilleurs clients
+                </h2>
                 {/* ordinateur : 2 colonnes de 5 (1 à 5 à gauche, 6 à 10 à droite) ; téléphone : 1 colonne */}
-                <ol className="grid gap-x-10 md:grid-flow-col md:grid-rows-5">
+                <ol className="mt-2 grid gap-x-12 md:grid-flow-col md:grid-rows-5">
                     {/* i = la position dans la liste (0, 1, 2...), donc le rang est i + 1 */}
                     {classement.map((c, i) => (
                         <li
                             key={c.id}
                             className={
-                                "flex justify-between border-b border-[#efe6d0] py-2 text-sm " +
-                                (c.moi ? "font-bold text-[#b8862d]" : "")
+                                "flex justify-between border-b border-creme-d py-2.5 font-inria text-base font-bold text-black md:text-xl " +
+                                (c.moi ? "text-or-deep" : "")
                             }
                         >
                             <span>
-                                {i + 1} {c.moi ? " Vous" : " " + c.nom}
+                                {i + 1} {c.moi ? "Vous" : c.nom}
                             </span>
                             <span>{c.points} pts</span>
                         </li>
                     ))}
                 </ol>
-                {classement.length === 0 && <p className="text-xs text-gray-500">Classement indisponible pour le moment.</p>}
+                {classement.length === 0 && (
+                    <p className="mt-2 font-inria text-sm text-encre">
+                        Classement indisponible pour le moment.
+                    </p>
+                )}
             </section>
         </div>
     )
