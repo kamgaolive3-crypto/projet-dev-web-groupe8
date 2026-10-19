@@ -9,13 +9,6 @@ use Illuminate\Support\Facades\DB;
 
 class EvenementController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        return Evenement::all();
-    }
 
      // GET /api/evenements  ou  /api/evenements?statut=en_cours|a_venir|passes
     public function index(Request $request)
