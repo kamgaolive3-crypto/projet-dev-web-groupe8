@@ -13,7 +13,11 @@ import Parametre from "./vues/pagesA/Parametre";
 import ReclamationA from "./vues/pagesA/Reclamation";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Signin from './vues/pages/page_inscription'; // Import de votre page
-
+import LayoutEmp from "./composantEmp/LayoutEmp";
+import Commandes from "./vues/pagesEmp/Commandes";
+import MenuEmp from "./vues/pagesEmp/MenuEmp";
+import Reclamations from "./vues/pagesEmp/Reclamations";
+import Statistiques from "./vues/pagesEmp/Statistiques";
 export default function App() {
   return (
     <BrowserRouter>
@@ -37,7 +41,13 @@ export default function App() {
         {/* 2. Vos autres pages */}
         <Route path="/page_connexion" element={<Login />} />
         <Route path="/page_inscription" element={<Signin />} />
-      </Routes>
+        <Route element={<LayoutEmp />}>
+        <Route path="/Commandes" element={<Commandes />} />
+        <Route path="/MenuEmp" element={<MenuEmp />} />
+        <Route path="/Reclamations" element={<Reclamations />} />
+        <Route path="/Statistiques" element={<Statistiques />} />
+        </Route>
+        </Routes>
     </BrowserRouter>
   );
 }
