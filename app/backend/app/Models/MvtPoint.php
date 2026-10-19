@@ -12,6 +12,9 @@ class MvtPoint extends Model
     protected $keyType = 'string';
     public $timestamps = false;
 
+    // types de mouvement autorises (meme liste que la contrainte CHECK du schema)
+    public const TYPES = ['gain', 'utilisation', 'expiration', 'parrainage', 'jeu'];
+
     protected $fillable = [
         'Id_mvt',
         'date_mvt',

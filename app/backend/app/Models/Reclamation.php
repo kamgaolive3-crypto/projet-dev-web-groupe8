@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Administrateur;
 use Illuminate\Database\Eloquent\Model;
 
 class Reclamation extends Model
@@ -55,5 +56,15 @@ class Reclamation extends Model
 
     public function gerant(){
         return $this->belongsTo(Gerant::class, 'Id_gerant', 'Id_utilisateur');
+    }
+
+    // Circuit administrateur (integre depuis la branche de Ash) :
+    // l'admin peut aussi traiter puis decider une reclamation escaladee
+    public function adminTraitant(){
+        return $this->belongsTo(Administrateur::class, 'Id_admin_traitant', 'Id_utilisateur');
+    }
+
+    public function adminDecideur(){
+        return $this->belongsTo(Administrateur::class, 'Id_admin_decideur', 'Id_utilisateur');
     }
 }
