@@ -23,6 +23,8 @@ export default function Menu() {
     //---------------- DONNEES DU BACKEND ----------------
     //le menu complet vient de GET /api/article_menu (créé/modifié par le staff)
     const [plats, setPlats] = useState([])
+    //true pendant le premier chargement de la liste
+    const [chargement, setChargement] = useState(true)
     //message d'erreur s'il y a eu un problème de chargement
     const [erreur, setErreur] = useState("")
 
@@ -44,6 +46,7 @@ export default function Menu() {
                 })))
             })
             .catch((e) => setErreur(e.message))
+            .finally(() => setChargement(false))
     }, [])
 
     //---------------- ETATS DE LA PAGE ----------------
@@ -101,7 +104,9 @@ export default function Menu() {
 
             {/* ---------- LISTE DES PLATS ---------- */}
             {/* si la catégorie est vide, on affiche un message au lieu de la grille */}
-            {platsAffiches.length === 0 ? (
+            {chargement ? (
+                <p className="mt-8 font-inria text-encre">Chargement du menu...</p>
+            ) : platsAffiches.length === 0 ? (
                 <p className="mt-8 font-inria text-encre">
                     Aucun article dans cette catégorie pour le moment.
                 </p>

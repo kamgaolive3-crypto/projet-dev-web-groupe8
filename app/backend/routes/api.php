@@ -15,6 +15,12 @@ use App\Http\Controllers\StatistiqueController;
 use App\Http\Controllers\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
+// Repli d'authentification : un appel API sans jeton et sans header
+// "Accept: application/json" passe ici au lieux de lever une erreur 500
+// (Laravel cherche la route nommee [login] pour rediriger les invités).
+Route::get('login', fn () => response()->json(['message' => 'Non authentifie.'], 401))
+    ->name('login');
+
 // --- Authentification (Sanctum) ---
 Route::post('auth/inscription', [AuthController::class, 'inscription']);
 Route::post('auth/connexion', [AuthController::class, 'connexion']);
