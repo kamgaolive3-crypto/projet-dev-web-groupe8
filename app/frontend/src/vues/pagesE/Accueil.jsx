@@ -50,7 +50,7 @@ export default function Accueil() {
             .then((liste) => setPlatDuJour(liste[0] ? versPlat(liste[0]) : null))
             .catch(() => setPlatDuJour(null))
 
-        api.get("/promotions/actives")
+        api.get("/evenements/actifs")
             .then((liste) => setPromotions(liste.map((e) => ({
                 id: e.Id_evenement,
                 // un evenement de type promotion alimente la bande "Promotions",

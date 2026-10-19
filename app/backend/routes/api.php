@@ -54,6 +54,7 @@ Route::get('article_menu-du-jour/{categorie}', [ArticleMenuController::class, 'p
 
 // --- Routes spécifiques evenement ---
 Route::get('promotions/actives', [EvenementController::class, 'promotionsActives']);
+Route::get('evenements/actifs', [EvenementController::class, 'evenementsActifs']);
 Route::post('evenement/{id}/participer', [EvenementController::class, 'participer']);
 Route::get('evenement/{id}/participations', [EvenementController::class, 'participations']);
 

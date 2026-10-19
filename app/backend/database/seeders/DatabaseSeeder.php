@@ -22,6 +22,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // d abord les donnees de reference (comptes, restaurant, menu de base)
+        $this->contenuReference();
+
+        // puis le contenu de demonstration supplementaire (menu complet, evenements)
+        $this->call(MenuEvenementsDemoSeeder::class);
+    }
+
+    /**
+     * Données de référence de l'application Mon Miam Miam.
+     * Comptes de démonstration : mot de passe "Password1" partout.
+     */
+    private function contenuReference(): void
+    {
         $mdp = 'Password1'; // 9 caractères, 1 majuscule, 1 chiffre (règle CDC)
 
         // --- Restaurant ZeDuc@Space (sommet de la terrasse) ---

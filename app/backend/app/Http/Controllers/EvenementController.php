@@ -195,6 +195,12 @@ class EvenementController extends Controller
         return Evenement::promotionsActives()->get();
     }
 
+    // GET /api/evenements/actifs — tout ce qui tourne en ce moment
+    // (promotions en cours, mini-jeux, soirees) pour la page d'accueil
+    public function evenementsActifs(){
+        return Evenement::actifs()->orderBy('debut_evenement')->get();
+    }
+
     // GET /api/evenement/EVT0001/participations
     // affiche tous les participants d'un evenement precis
     public function participations($id){

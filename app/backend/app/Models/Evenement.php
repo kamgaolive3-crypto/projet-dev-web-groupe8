@@ -40,4 +40,12 @@ class Evenement extends Model
                      ->where('debut_evenement', '<=', now())
                      ->where('fin_evenement', '>=', now());
     }
+
+    // Tous les evenements actifs du moment (promotion, evenement, mini_jeu):
+    // sert a la page d accueil pour remplir les bandes "Evenements" et
+    // "Promotions" (GET /api/evenements/actifs).
+    public function scopeActifs($query){
+        return $query->where('debut_evenement', '<=', now())
+                     ->where('fin_evenement', '>=', now());
+    }
 }
