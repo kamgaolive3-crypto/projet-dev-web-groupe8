@@ -24,7 +24,12 @@ export default function Employes() {
 
     const charger = () => {
         api.get("/employes")
-            .then((l) => setListe(Array.isArray(l) ? l : l.data || []))
+            // le backend renvoie { employe: {...}, utilisateur: {...} } ;
+            // on aplati pour que la page lise poste, telephone, statut... a plat
+            .then((l) => {
+                const brut = Array.isArray(l) ? l : l.data || [];
+                setListe(brut.map((e) => ({ ...(e.employe || {}), ...(e.utilisateur || {}) })));
+            })
             .catch((e) => setErreur(e.message))
     }
     useEffect(charger, [])

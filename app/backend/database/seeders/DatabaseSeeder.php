@@ -77,6 +77,7 @@ class DatabaseSeeder extends Seeder
                 'email' => 'gerant@monmiammiam.cm',
                 'mot_de_passe' => $mdp,
                 'telephone' => '600000002',
+                'statut_compte' => 'actif',
             ]
         );
         Gerant::updateOrCreate(
@@ -92,6 +93,7 @@ class DatabaseSeeder extends Seeder
                 'email' => 'employe@monmiammiam.cm',
                 'mot_de_passe' => $mdp,
                 'telephone' => '600000003',
+                'statut_compte' => 'actif',
             ]
         );
         Employe::updateOrCreate(
@@ -112,6 +114,7 @@ class DatabaseSeeder extends Seeder
                 'email' => 'etudiant1@ucacicam.cm',
                 'mot_de_passe' => $mdp,
                 'telephone' => '600000004',
+                'statut_compte' => 'actif',
             ]
         );
         Etudiant::updateOrCreate(
@@ -130,6 +133,7 @@ class DatabaseSeeder extends Seeder
                 'email' => 'etudiant2@ucacicam.cm',
                 'mot_de_passe' => $mdp,
                 'telephone' => '600000005',
+                'statut_compte' => 'actif',
             ]
         );
         Etudiant::updateOrCreate(
