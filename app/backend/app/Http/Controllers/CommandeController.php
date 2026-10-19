@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ArticleMenu;
 use App\Models\Commande;
+use App\Models\Parametre;
 use App\Models\Evenement;
 use App\Models\MvtPoint;
 use App\Services\CalculCommande;
@@ -14,8 +15,6 @@ use Illuminate\Support\Facades\DB;
 
 class CommandeController extends Controller
 {
-    /** Les points gagnés expirent après 12 mois (US-016). */
-    private const EXPIRATION_MOIS = 12; // ici la valeur est pris dans les parametres
 
     public function __construct(private CommandeService $commandes)
     {
@@ -171,12 +170,13 @@ class CommandeController extends Controller
 
             // 8. Crédit des points gagnés (expirent dans 12 mois, US-016)
             if ($calcul->pointsGagnes > 0) {
+                $mois = (int) Parametre::valeur('duree_expiration_points', 12);// valeur par defaut 12 mais la valeur est pris dans les parametre definit par l'administrateur
                 $etudiant->increment('solde_point', $calcul->pointsGagnes);
                 MvtPoint::create([
                     'Id_mvt'          => $this->genererIdMvt(),
                     'nbres_points'    => $calcul->pointsGagnes,
                     'type_mvt'        => 'gain',
-                    'date_expiration' => now()->addMonths(self::EXPIRATION_MOIS),
+                    'date_expiration' => now()->addMonths($mois),
                     'Id_utilisateur'  => $etudiant->Id_utilisateur,
                     'Id_commande'     => $commande->Id_commande,
                 ]);
