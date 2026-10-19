@@ -1,0 +1,162 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Evenement;
+use App\Models\Participation_evenement;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class EvenementController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        return Evenement::all();
+    }
+
+     // GET /api/evenements  ou  /api/evenements?statut=en_cours|a_venir|passes
+    public function index(Request $request)
+    {
+        $query = Evenement::query();
+
+        match ($request->query('statut')) {
+            'en_cours' => $query->where('debut_evenement', '<=', now())
+                                ->where('fin_evenement', '>=', now()),
+            'a_venir'  => $query->where('debut_evenement', '>', now()),
+            'passes'   => $query->where('fin_evenement', '<', now()),
+            default    => null,
+        };
+
+        return $query->orderBy('debut_evenement')->get();
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'Id_evenement'    => ['required', 'regex:/^[A-Z]{3}[0-9]{4}$/', 'unique:evenement,Id_evenement'],
+            'debut_evenement' => 'required|date',
+            'fin_evenement'   => 'required|date|after_or_equal:debut_evenement',
+            'type_evenement'  => 'required|in:promotion,evenement,mini_jeu',
+            'points_evenement'=> 'integer|min:0',
+            'taux_reduction'  => 'required_if:type_evenement,promotion|nullable|integer|between:1,100',
+            'Id_utilisateur'  => 'required|exists:administrateur,Id_utilisateur',
+        ]);
+        $event = Evenement::create($data);
+        return response()->json($event, 201);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        return Evenement::findOrFail($id);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        $event = Evenement::findOrFail($id);
+        $data = $request->validate([
+            'Id_evenement'    => ['required', 'regex:/^[A-Z]{3}[0-9]{4}$/', 'unique:evenement,Id_evenement'],
+            'debut_evenement' => 'required|date',
+            'fin_evenement'   => 'required|date|after_or_equal:debut_evenement',
+            'type_evenement'  => 'required|in:promotion,evenement,mini_jeu',
+            'points_evenement'=> 'integer|min:0',
+            'taux_reduction'   => 'required_if:type_evenement,promotion|nullable|integer|between:1,100',
+            'Id_utilisateur'  => 'required|exists:administrateur,Id_utilisateur',
+        ]);
+        $event->update($data);
+        return response()->json($event, 201);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        Evenement::findOrFail($id)->delete();
+        return response () ->json(['message'=> 'evenement supprimer']);
+    }
+
+    // POST /api/evenements/EVT0001/participer
+    // $id = l'identifiant de l'événement, pris dans l'URL
+    public function participer(Request $request, $id){
+        // 1. Cherche l'événement dans la base (erreur 404 automatique s'il n'existe pas)
+        $evenement = Evenement::findOrFail($id);
+
+        // 2. Refuse si l'événement n'est pas en cours.
+        //    lt = "less than" : maintenant est AVANT le début
+        //    gt = "greater than" : maintenant est APRÈS la fin
+        //    422 = requête comprise, mais refusée par une règle métier
+        if (now()->lt($evenement->debut_evenement) || now()->gt($evenement->fin_evenement)) {
+            return response()->json(['message' => "L'événement n'est pas en cours"], 422);
+        }
+
+        // 3. Vérifie les données envoyées par le frontend :
+        //    l'étudiant est obligatoire et doit exister dans la table etudiant.
+        //    $data contient seulement les champs validés.
+        $data = $request->validate([
+            'Id_utilisateur' => 'required|exists:etudiant,Id_utilisateur',
+        ]);
+
+        // 4. Cherche s'il existe déjà une participation de cet étudiant à cet événement.
+        //    exists() renvoie true ou false, sans charger les données.
+            $dejaInscrit = Participation_evenement::where('Id_utilisateur', $data['Id_utilisateur'])
+                                                  ->where('Id_evenement', $id)
+                                                  ->exists();
+
+        // 5. Si oui, on refuse : sinon l'étudiant gagnerait les points plusieurs fois
+        if ($dejaInscrit) {
+            return response()->json(['message' => 'Vous avez déjà participé'], 422);
+        }
+
+        // 6. Transaction : les deux écritures ci-dessous réussissent ensemble, ou sont annulées ensemble.
+        //    "use ($evenement, $data)" donne à la fonction interne accès à ces deux variables.
+        $participation = DB::transaction(function () use ($evenement, $data) {
+
+        // 6a. Enregistre la participation dans la table participation_evenement.
+        //     points_gagnes copie les points de l'événement (valeur figée au moment de la participation).
+        //     date_participation est remplie par MySQL (date du jour).
+            $participation = Participation_evenement::create([
+                'Id_utilisateur' => $data['Id_utilisateur'],
+                'Id_evenement'   => $evenement->Id_evenement,
+                'points_gagnes'  => $evenement->points_evenement,
+            // Id_mvt reste NULL tant que mvt_points n'est pas branché (Membre 4)
+            ]);
+
+        // 6b. Ajoute les points au solde de l'étudiant.
+        //     increment() fait "solde_point = solde_point + X" directement en base,
+        //     ce qui est plus sûr que de lire la valeur puis la réécrire.
+             Etudiant::where('Id_utilisateur', $data['Id_utilisateur'])
+                     ->increment('solde_point', $evenement->points_evenement);
+
+        // 6c. Renvoie la participation pour qu'elle sorte de la transaction
+            return $participation;
+        });
+
+    // 7. Réponse au frontend : la participation créée, avec le code 201 ("créé")
+    return response()->json($participation, 201);
+    }
+    // GET /api/promotions/actives
+    public function promotionsActives(){
+        return Evenement::promotionsActives()->get();
+    }
+
+    // GET /api/evenements/EVT0001/participations
+    //affiche tous les participants d'un evenement precis
+    public function participations($id){
+    // Cherche l'événement (404 s'il n'existe pas), puis renvoie la liste de ses participations.
+    // ->participations (sans parenthèses) appelle la relation hasMany définie dans le modèle Evenement.
+        return Evenement::findOrFail($id)->participations;
+    }
+} 
+

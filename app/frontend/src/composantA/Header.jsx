@@ -14,7 +14,7 @@ export default function Header() {
         "/TableauBord": "TableauBord",
         "/Employes": "Employes",
         "/MenuA": "Menu",
-        "/Promotion": "Promotion",
+        "/Evenement": "Evenement",
         "/Parametre": "Parametre",
         "ReclamationA": "Reclamation",
     };
@@ -55,8 +55,8 @@ export default function Header() {
                         Employes</NavLink></li>
                     <li><NavLink to="/MenuA"className={lienStyle}>
                         Menu</NavLink></li>
-                    <li><NavLink to="/Promotion"className={lienStyle}>
-                        Promotion</NavLink></li>
+                    <li><NavLink to="/Evenement"className={lienStyle}>
+                        Evenement</NavLink></li>
                     <li><NavLink to="/Parametre"className={lienStyle}>
                         Parametre</NavLink></li>
                     <li><NavLink to="/ReclamationA"className={lienStyle}>
@@ -148,7 +148,7 @@ export default function Header() {
                                 className={lienStyle}
                                 onClick={fermerMenu}
                             >
-                                Promotion
+                                Evenement
                             </NavLink>
                         </li>
 

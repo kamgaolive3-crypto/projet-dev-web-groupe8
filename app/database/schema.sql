@@ -55,7 +55,6 @@ CREATE TABLE etudiant (
     solde_point     INT         NOT NULL DEFAULT 0,
     PRIMARY KEY (Id_utilisateur),
     UNIQUE KEY uq_etudiant_code_parrainage (code_parrainage),
-    CONSTRAINT Foreign Key (Id_parrain) REFERENCES etudiant(Id_utilisateur),
     CONSTRAINT fk_etudiant_utilisateur FOREIGN KEY (Id_utilisateur)
         REFERENCES utilisateur (Id_utilisateur) ON DELETE CASCADE,
     CONSTRAINT chk_etu_code  CHECK (REGEXP_LIKE(code_parrainage, '^[A-Z]{4}[0-9]{4}$', 'c')),
@@ -107,6 +106,7 @@ CREATE TABLE administrateur (
 CREATE TABLE article_menu (
     Id_article            VARCHAR(6)   NOT NULL,
     nom_article           VARCHAR(150) NOT NULL,
+    image_article          VARCHAR(255),
     description           TEXT,
     prix_article          BIGINT       NOT NULL,
     categories_article    VARCHAR(255) NOT NULL,
@@ -298,12 +298,16 @@ CREATE TABLE evenement (
     debut_evenement       DATETIME    NOT NULL,
     fin_evenement         DATETIME    NOT NULL,
     type_evenement        VARCHAR(20) NOT NULL,
+    points_evenement      INT NOT NULL DEFAULT 0,
+    taux_reduction        SMALLINT NULL,
     description_evenement TEXT,
     Id_utilisateur        VARCHAR(10) NOT NULL,  -- administrateur créateur (Creer)
     PRIMARY KEY (Id_evenement),
     CONSTRAINT fk_evt_admin FOREIGN KEY (Id_utilisateur) REFERENCES administrateur (Id_utilisateur),
     CONSTRAINT chk_evt_id      CHECK (REGEXP_LIKE(Id_evenement, '^[A-Z]{3}[0-9]{4}$', 'c')),
     CONSTRAINT chk_evt_periode CHECK (fin_evenement >= debut_evenement),
+    CONSTRAINT chk_point_event CHECK (points_evenement >= 0),
+    CONSTRAINT chk_taux_reduc CHECK (taux_reduction >= 0 AND taux_reduction <= 100),
     CONSTRAINT chk_evt_type    CHECK (type_evenement IN ('promotion','evenement','mini_jeu'))
 ) ENGINE=InnoDB;
 

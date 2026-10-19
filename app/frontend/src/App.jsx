@@ -8,7 +8,7 @@ import LayoutA from "./composantA/Layout";
 import TableauBord from "./vues/pagesA/TableauBord";
 import Employes from "./vues/pagesA/Employes";
 import MenuA from "./vues/pagesA/Menu";
-import Promotion from "./vues/pagesA/Promotion";
+import Evenement from "./vues/pagesA/Evenement";
 import Parametre from "./vues/pagesA/Parametre";
 import ReclamationA from "./vues/pagesA/Reclamation";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -18,6 +18,9 @@ import Commandes from "./vues/pagesEmp/Commandes";
 import MenuEmp from "./vues/pagesEmp/MenuEmp";
 import Reclamations from "./vues/pagesEmp/Reclamations";
 import Statistiques from "./vues/pagesEmp/Statistiques";
+import Reclamation from "./vues/pagesE/Reclamation"
+import Historique from "./vues/pagesE/Historique"
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -29,12 +32,14 @@ export default function App() {
           <Route path="/Menu" element={<Menu />}/>
           <Route path="/Panier" element={<Panier />}/>
           <Route path="/Fideliter" element={<Fideliter />}/>
+          <Route path="/Reclamation" element={<Reclamation />}/>
+          <Route path="/Historique" element={<Historique />}/>
         </Route>
         <Route element={<LayoutA/>}>
           <Route path="/TableauBord" element={<TableauBord />}/>
           <Route path="/Employes" element={<Employes />}/>
           <Route path="/MenuA" element={<MenuA />}/>
-          <Route path="/Promotion" element={<Promotion />}/>
+          <Route path="/Evenement" element={<Evenement />}/>
           <Route path="/Parametre" element={<Parametre />}/>
           <Route path="/ReclamationA" element={<ReclamationA />}/>
         </Route>
