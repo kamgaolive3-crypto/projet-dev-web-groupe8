@@ -2,9 +2,10 @@ import { useState } from "react";
 import { api } from "../services/api";
 
 // la banniere RGPD reproduit la maquette /cookies :
-// assombrissement plein ecran (noir 51%) + carte #F4F4F4 r35 centree ;
-// texte Inter + deux boutons "Tout accepter" / "Tout refuser"
+// assombrissement plein ecran + carte centree ; texte Inter fin ;
+// boutons "Tout accepter" / "Personnaliser" / "Tout refuser"
 // un seul consentement par visiteur, memorise dans le navigateur
+// apparition animee : l ecran s assombrit, la carte monte et se depose
 const CLE = "cookie-consentement";
 
 export default function BanniereCookies() {
@@ -26,36 +27,43 @@ export default function BanniereCookies() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-      {/* carte centrale #F4F4F4 r35 (maquette 899x491) */}
-      <div className="w-full max-w-[760px] rounded-[35px] bg-ligne p-6 shadow-2xl md:p-10">
-        <p className="font-sans text-lg leading-relaxed text-black md:text-[26px]">
-          Ce site utilise des cookies afin d&apos;offrir une expérience optimale
-          à ses visiteurs. Veuillez accepter les cookies pour une expérience
-          optimale.
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+      style={{ animation: "fade-black 0.25s ease-out both" }}
+    >
+      {/* carte centrale (maquette : #F4F4F4, coins tres ronds) */}
+      <div
+        className="w-full max-w-[560px] rounded-[26px] bg-ligne p-6 shadow-hover md:p-8"
+        style={{ animation: "toast-in 0.3s cubic-bezier(0.22,1,0.36,1) both", animationDelay: "0.1s" }}
+      >
+        <p className="font-inria text-[17px] font-bold text-black md:text-[19px]">
+          Cookies
+        </p>
+        <p className="mt-2 font-sans text-[13.5px] leading-relaxed text-encre">
+          Ce site utilise des cookies afin d&apos;offrir une expérience optimale à ses
+          visiteurs. Veuillez accepter les cookies pour une expérience optimale.
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-4 md:justify-end md:gap-6">
-          {/* bouton maquette : pill beige r15 */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 md:justify-end">
+          {/* boutons maquette : pill beige + pills blanches */}
           <button
             type="button"
             onClick={() => enregistrer("accepte")}
-            className="rounded-[15px] bg-or-clair px-7 py-3 font-sans text-base text-black transition-colors hover:bg-or md:text-xl"
+            className="miam-cta"
           >
             Tout accepter
           </button>
-          {/* reponse "personnalise" possible : meme action qu un refus partiel */}
           <button
             type="button"
             onClick={() => enregistrer("personnalise")}
-            className="rounded-[15px] bg-white px-7 py-3 font-sans text-base text-black shadow-sm transition-colors hover:bg-creme-d md:text-xl"
+            className="inline-flex h-10 cursor-pointer select-none items-center justify-center rounded-[12px] bg-white px-5 font-sans text-sm text-black shadow-card transition-all duration-150 hover:-translate-y-px hover:shadow-soft active:scale-[0.97]"
           >
             Personnaliser
           </button>
           <button
             type="button"
             onClick={() => enregistrer("refuse")}
-            className="rounded-[15px] bg-white px-7 py-3 font-sans text-base text-black shadow-sm transition-colors hover:bg-creme-d md:text-xl"
+            className="inline-flex h-10 cursor-pointer select-none items-center justify-center rounded-[12px] bg-white px-5 font-sans text-sm text-encre shadow-card transition-all duration-150 hover:-translate-y-px hover:shadow-soft active:scale-[0.97]"
           >
             Tout refuser
           </button>

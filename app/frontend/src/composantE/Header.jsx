@@ -3,8 +3,8 @@ import { useState } from "react";
 import logo from "../assets/logo.png";
 import { useAuth } from "../services/auth";
 
-// lien de nav : texte noir Inter 25px (maquette) ; la page active porte
-// une pill beige #CFBD97 ronde (radius 25px) avec le texte or #C49E4C
+// lien de nav : Inter fin ; au survol la couleur monte en or avec un
+// soulignement discret ; la page active conserve sa pill beige (maquette)
 export function LienNav({ to, fin, children }) {
     return (
         <NavLink
@@ -12,8 +12,8 @@ export function LienNav({ to, fin, children }) {
             end={fin}
             className={({ isActive }) =>
                 isActive
-                    ? "rounded-[25px] bg-or-clair px-7 py-3 font-sans text-lg text-or md:text-[22px]"
-                    : "px-7 py-3 font-sans text-lg text-black hover:text-or-deep md:text-[22px]"
+                    ? "rounded-full bg-or-clair/80 px-5 py-2 font-sans text-[15px] text-or-deep transition-colors duration-150 hover:bg-or-clair"
+                    : "rounded-full px-5 py-2 font-sans text-[15px] text-black transition-all duration-150 hover:-translate-y-px hover:text-or-deep hover:underline hover:underline-offset-4 hover:decoration-or-clair"
             }
         >
             {children}
@@ -27,7 +27,7 @@ export default function Header() {
     const [menuOuvert, setMenuOuvert] = useState(false);
     const location = useLocation();
 
-    // nom de la page courante : affiche au centre sur mobile (maquette mobile)
+    // nom de la page courante : affiche au centre sur mobile (maquette)
     const pages = {
         "/": "Accueil",
         "/Menu": "Menu",
@@ -41,16 +41,16 @@ export default function Header() {
     const fermerMenu = () => setMenuOuvert(false);
 
     return (
-        <header className="relative z-40 w-full bg-band">
-            <nav className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 px-4 py-4 md:px-8">
-                {/* logo image + nom Instrument Serif (maquette : 15px sous le bloc) */}
-                <Link to="/" className="flex flex-col gap-2">
+        <header className="relative z-40 w-full border-b border-black/[0.04] bg-band">
+            <nav className="mx-auto flex w-full max-w-[1320px] items-center justify-between gap-2 px-4 py-2.5 md:px-8">
+                {/* logo image + nom Instrument Serif (maquette) */}
+                <Link to="/" className="flex items-center gap-2.5">
                     <img
                         src={logo}
                         alt="logo Mon Miam Miam"
-                        className="h-14 w-14 rounded-[20px] object-cover md:h-16 md:w-16"
+                        className="h-10 w-10 rounded-xl object-cover md:h-11 md:w-11"
                     />
-                    <span className="whitespace-nowrap font-instrument text-sm text-black md:text-[15px]">
+                    <span className="hidden whitespace-nowrap font-instrument text-[15px] text-black sm:block">
                         Mon Miam Miam
                     </span>
                 </Link>
@@ -60,35 +60,35 @@ export default function Header() {
                     {pageActive}
                 </span>
 
-                {/* navigation desktop : pills Inter (maquette desktop) */}
-                <div className="hidden items-center gap-1 md:flex">
+                {/* navigation desktop : pills Inter (maquette) */}
+                <div className="hidden items-center gap-0.5 md:flex">
                     <LienNav to="/" fin>Accueil</LienNav>
                     <LienNav to="/Menu">Menu</LienNav>
                     <LienNav to="/Panier">Panier</LienNav>
                     <LienNav to="/Fideliter">Fidélité</LienNav>
                 </div>
 
-                {/* droite : connexion / deconnexion + nom (Inter 27px) */}
+                {/* droite : connexion / deconnexion + nom */}
                 {user ? (
-                    <div className="hidden items-center gap-6 md:flex">
+                    <div className="hidden items-center gap-4 md:flex">
                         <button
                             type="button"
                             onClick={async () => {
                                 await deconnexion();
                                 window.location.href = "/";
                             }}
-                            className="font-sans text-[22px] text-black hover:text-or-deep"
+                            className="cursor-pointer font-sans text-[14px] text-encre transition-colors duration-150 hover:text-or-deep"
                         >
                             Deconnexion
                         </button>
-                        <span className="font-sans text-[22px] text-encre">
+                        <span className="font-inria text-[14px] font-bold text-or-deep">
                             {user.prenom} {user.nom}
                         </span>
                     </div>
                 ) : (
                     <Link
                         to="/page_connexion"
-                        className="hidden rounded-[25px] bg-or-clair px-7 py-3 font-sans text-[22px] text-or md:block"
+                        className="hidden rounded-full bg-or-clair px-5 py-2 font-sans text-[14px] text-or-deep transition-all duration-150 hover:bg-or hover:shadow-soft md:inline-flex"
                     >
                         connexion
                     </Link>
@@ -98,35 +98,35 @@ export default function Header() {
                 <button
                     type="button"
                     onClick={() => setMenuOuvert(!menuOuvert)}
-                    className="flex h-10 w-10 flex-col items-center justify-center gap-[7px] md:hidden"
+                    className="flex h-9 w-9 cursor-pointer flex-col items-center justify-center gap-[5px] md:hidden"
                     aria-label={menuOuvert ? "Fermer le menu" : "Ouvrir le menu"}
                     aria-expanded={menuOuvert}
                     aria-controls="menu-mobile"
                 >
                     {menuOuvert ? (
-                        <span className="text-3xl leading-none text-black">×</span>
+                        <span className="text-xl leading-none text-black">×</span>
                     ) : (
                         <>
-                            <span className="h-[3px] w-7 bg-black" />
-                            <span className="h-[3px] w-7 bg-black" />
-                            <span className="h-[3px] w-7 bg-black" />
+                            <span className="h-[2px] w-5 bg-black" />
+                            <span className="h-[2px] w-5 bg-black" />
                         </>
                     )}
                 </button>
             </nav>
 
-            {/* tiroir mobile */}
+            {/* tiroir mobile : glisse depuis le haut (animation) */}
             {menuOuvert && (
                 <div
                     id="menu-mobile"
-                    className="absolute top-full left-0 z-50 w-full border-b border-filet bg-band shadow-lg md:hidden"
+                    className="absolute top-full left-0 z-50 w-full origin-top border-b border-black/[0.06] bg-band/95 backdrop-blur shadow-hover md:hidden"
+                    style={{ animation: "fade-up 0.18s ease-out both" }}
                 >
-                    <ul className="flex flex-col gap-1 p-4">
+                    <ul className="flex flex-col p-3">
                         <li onClick={fermerMenu}><LienNav to="/" fin>Accueil</LienNav></li>
                         <li onClick={fermerMenu}><LienNav to="/Menu">Menu</LienNav></li>
                         <li onClick={fermerMenu}><LienNav to="/Panier">Panier</LienNav></li>
                         <li onClick={fermerMenu}><LienNav to="/Fideliter">Fidélité</LienNav></li>
-                        <li className="mt-2 border-t border-filet pt-3">
+                        <li className="mt-2 border-t border-black/[0.06] pt-2">
                             {user ? (
                                 <button
                                     type="button"
@@ -134,7 +134,7 @@ export default function Header() {
                                         await deconnexion();
                                         window.location.href = "/";
                                     }}
-                                    className="block w-full rounded-[15px] bg-or-clair py-2 text-center font-sans text-base text-black"
+                                    className="block w-full cursor-pointer rounded-xl bg-or-clair py-2.5 text-center font-sans text-sm text-black"
                                 >
                                     Deconnexion ({user.prenom} {user.nom})
                                 </button>
@@ -142,7 +142,7 @@ export default function Header() {
                                 <Link
                                     to="/page_connexion"
                                     onClick={fermerMenu}
-                                    className="block w-full rounded-[15px] bg-or-clair py-2 text-center font-sans text-base text-or"
+                                    className="block w-full rounded-xl bg-or-clair py-2.5 text-center font-sans text-sm text-or-deep"
                                 >
                                     connexion
                                 </Link>

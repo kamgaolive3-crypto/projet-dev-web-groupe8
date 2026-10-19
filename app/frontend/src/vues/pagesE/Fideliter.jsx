@@ -1,6 +1,7 @@
-// Page Fidelite reproduisant la maquette :
-// titres Inria Bold ; bande creme #FFFDF8 r29 (reduction + mes points + barre) ;
-// cartes blanches r30 : points par commande / parrainage ; grande carte top 10
+// Page Fidelite reproduisant la maquette (raffinee) :
+// titres Inria Serif ; bande creme #FFFDF8 (reduction + mes points + barre
+// de progression animee) ; cartes blanches : points par commande / parrainage ;
+// grande carte top 10 avec survol de ligne
 import { useState, useEffect } from "react"
 import { api } from "../../services/api"
 import { useAuth } from "../../services/auth"
@@ -23,6 +24,8 @@ export default function Fidelite() {
     //---------------- DONNEES VENANT DU BACKEND ----------------
     //le solde de points : GET /api/fidelite/solde
     const [solde, setSolde] = useState(0)
+    //true quand le solde a ete charge (pour animer la barre une seule fois)
+    const [soldeCharge, setSoldeCharge] = useState(false)
     //les points gagnés par commande : GET /api/fidelite/historique
     const [commandes, setCommandes] = useState([])
     //mon code de parrainage : GET /api/parrainage/code
@@ -39,7 +42,10 @@ export default function Fidelite() {
             return
         }
         api.get("/fidelite/solde")
-            .then((s) => setSolde(s.solde_point ?? s.points ?? 0))
+            .then((s) => {
+                setSolde(s.solde_point ?? s.points ?? 0)
+                setSoldeCharge(true)
+            })
             .catch((e) => setErreur(e.message))
 
         api.get("/fidelite/historique")
@@ -86,7 +92,7 @@ export default function Fidelite() {
     const [filleulsTous, setFilleulsTous] = useState(false)
     //true pendant 2 secondes après un clic sur "Copier"
     const [copie, setCopie] = useState(false)
-    //message affiché sous le bouton "Utiliser mes points"
+    //toast affiché apres "Utiliser mes points"
     const [message, setMessage] = useState("")
 
     //---------------- CALCULS ----------------
@@ -105,7 +111,7 @@ export default function Fidelite() {
     const copierCode = () => {
         navigator.clipboard.writeText(codeParrain) // copie le code
         setCopie(true)
-        setTimeout(() => setCopie(false), 2000) // "Copié !" disparait après 2 secondes
+        setTimeout(() => setCopie(false), 2000) // "Copie !" disparait après 2 secondes
     }
 
     //fonction appellée quand on clique sur "Utiliser mes points"
@@ -115,21 +121,30 @@ export default function Fidelite() {
         } else {
             setMessage("Dépensez vos points au moment de confirmer votre commande (page Panier).")
         }
+        setTimeout(() => setMessage(""), 3000)
     }
 
     return (
-        <div className="mx-auto w-full max-w-[1320px] px-4 pb-12 pt-8 md:px-8">
+        <div className="mx-auto w-full max-w-[1320px] px-4 pb-14 pt-8 md:px-8">
+            {/* toast "Utiliser mes points" */}
+            {message && (
+                <p
+                    className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-black/85 px-5 py-2.5 font-sans text-[13px] text-white shadow-hover"
+                    style={{ animation: "toast-in 0.35s cubic-bezier(0.22,1,0.36,1) both" }}
+                >
+                    {message}
+                </p>
+            )}
+
             {/* ---------- TITRE ---------- */}
-            <h1 className="font-inria text-2xl font-bold text-black md:text-[36px]">
-                Programme de fidélité
-            </h1>
-            <p className="mt-1 font-inria text-sm font-bold text-black md:text-base">
-                {fcfa(FCFA_PAR_POINT)} dépensés = 1 point &nbsp;.&nbsp; {POINTS_PAR_REDUCTION} points = {fcfa(VALEUR_REDUCTION)} de réduction
+            <h1 className="miam-titre">Programme de fidélité</h1>
+            <p className="mt-1 font-inria text-[13px] text-encre">
+                {fcfa(FCFA_PAR_POINT)} dépensés = 1 point &nbsp;·&nbsp; {POINTS_PAR_REDUCTION} points = {fcfa(VALEUR_REDUCTION)} de réduction
             </p>
 
             {/* pas connecté : message + lien connexion */}
             {erreur && (
-                <p className="mt-4 rounded-[10px] bg-red-100 px-4 py-3 text-sm text-red-700">
+                <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-[13px] text-red-700">
                     {erreur}{" "}
                     {!user && (
                         <a href="/page_connexion" className="font-semibold underline">
@@ -139,90 +154,86 @@ export default function Fidelite() {
                 </p>
             )}
 
-            {/* ---------- BANDE REDUCTION + MES POINTS (creme r29) ---------- */}
-            <section className="mt-6 flex flex-col gap-6 rounded-[29px] bg-creme-d p-6 md:flex-row md:items-center md:p-8">
+            {/* ---------- BANDE REDUCTION + MES POINTS (creme) ---------- */}
+            <section
+                className="mt-5 flex flex-col gap-5 rounded-2xl bg-creme-d p-5 md:flex-row md:items-center md:p-7"
+                style={{ animation: "fade-up 0.5s cubic-bezier(0.22,1,0.36,1) both" }}
+            >
                 {/* gauche : la reduction */}
                 <div className="flex-1">
-                    <p className="font-inria text-lg font-bold text-black md:text-xl">
-                        Réduction disponible
-                    </p>
-                    <p className="mt-2 font-inria text-3xl font-bold text-black md:text-[40px]">
+                    <p className="miam-eyebrow">Réduction disponible</p>
+                    <p className="mt-1.5 font-inria text-[26px] font-bold tracking-tight text-black md:text-[32px]">
                         {fcfa(reduction)}
                     </p>
                     <button
                         type="button"
                         onClick={utiliserPoints}
-                        className="mt-4 rounded-[29px] bg-or px-7 py-2.5 font-inria text-base text-black transition-colors hover:bg-or-deep hover:text-white md:text-xl"
+                        className="miam-pill h-9 mt-3 text-[13.5px]"
                     >
                         Utiliser mes points
                     </button>
-                    {message && (
-                        <p className="mt-2 font-inria text-sm text-or-deep">{message}</p>
-                    )}
                 </div>
 
                 {/* filet vertical sur desktop (maquette) */}
-                <span className="hidden h-40 w-px bg-bmie md:block" />
+                <span className="hidden h-24 w-px bg-bmie md:block" />
 
-                {/* droite : mes points + barre de progression */}
+                {/* droite : mes points + barre de progression animee */}
                 <div className="flex-1">
-                    <p className="font-inria text-lg font-bold text-black md:text-xl">
-                        Mes points
-                    </p>
-                    <p className="mt-2 font-inria text-3xl font-bold text-black md:text-[40px]">
+                    <p className="miam-eyebrow">Mes points</p>
+                    <p className="mt-1.5 font-inria text-[26px] font-bold tracking-tight text-black md:text-[32px]">
                         {solde} pts
                     </p>
-                    {/* piste claire #F5F0E9 + remplissage or */}
-                    <div className="mt-3 h-5 w-full rounded-full bg-piste">
+                    {/* piste #F5F0E9 + remplissage or qui se remplit au chargement */}
+                    <div className="mt-2.5 h-2 w-full max-w-[420px] overflow-hidden rounded-full bg-piste">
                         <div
-                            className="h-5 rounded-full bg-or"
-                            style={{ width: pourcentage + "%" }}
+                            className="h-full rounded-full bg-or transition-[width] duration-700 ease-out"
+                            style={{ width: (soldeCharge ? pourcentage : 0) + "%" }}
                         />
                     </div>
-                    <p className="mt-2 font-inria text-sm font-bold text-black md:text-xl">
+                    <p className="mt-1.5 font-sans text-[12.5px] font-medium text-encre">
                         {pointsVersReduction}/{POINTS_PAR_REDUCTION} points vers la prochaine réduction
                     </p>
                 </div>
             </section>
 
             {/* ---------- POINTS PAR COMMANDE + PARRAINAGE ---------- */}
-            <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                {/* Points gagnés par commande : carte blanche r30 */}
-                <section className="rounded-[30px] bg-white p-5 md:p-6">
-                    <h2 className="font-inria text-lg font-bold text-black md:text-xl">
+            <div className="mt-5 grid gap-5 lg:grid-cols-2">
+                {/* Points gagnés par commande : carte blanche */}
+                <section className="miam-carte p-4 md:p-5">
+                    <h2 className="font-inria text-[16px] font-bold text-black">
                         Points gagnés par commande
                     </h2>
-                    <table className="mt-3 w-full font-inria text-sm font-bold text-black md:text-[15px]">
+                    <table className="mt-2.5 w-full font-inria text-[13.5px] text-black">
                         <thead>
-                            <tr className="text-left text-encre">
-                                <th className="py-1 pr-2 font-bold">Date &nbsp;.&nbsp; Montant</th>
-                                <th className="text-right font-bold">Points</th>
+                            <tr className="text-left text-gris-pa">
+                                <th className="py-1 pr-2 font-medium">Date · Montant</th>
+                                <th className="text-right font-medium">Points</th>
                             </tr>
                         </thead>
                         <tbody>
                             {/* .map() fabrique une ligne pour chaque mouvement de points */}
                             {commandesAffichees.map((c) => (
-                                <tr key={c.id} className="border-t border-ligne">
+                                <tr key={c.id} className="border-t border-creme-d transition-colors hover:bg-creme-d/60">
                                     <td className="py-2">
-                                        {c.date ? c.date.slice(8, 10) + "/" + c.date.slice(5, 7) : "—"} . {c.montant === null ? "—" : fcfa(c.montant)}
+                                        {c.date ? c.date.slice(8, 10) + "/" + c.date.slice(5, 7) : "—"} · {c.montant === null ? "—" : fcfa(c.montant)}
                                     </td>
-                                    <td className="text-right text-or-deep">+{c.points}</td>
+                                    <td className="text-right font-bold text-or-deep">+{c.points}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                     {commandes.length === 0 && (
-                        <p className="mt-3 font-inria text-sm text-encre">
+                        <p className="mt-2.5 font-sans text-[12.5px] text-encre">
                             Aucun mouvement de points pour le moment.
                         </p>
                     )}
                     {/* le bouton existe seulement s'il y a plus de 3 commandes */}
                     {commandes.length > 3 && (
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-2.5 flex justify-end">
                             <button
                                 type="button"
                                 onClick={() => setCommandesToutes(!commandesToutes)}
-                                className="rounded-[30px] bg-or px-5 py-1.5 font-inria text-sm text-black transition-colors hover:bg-or-deep hover:text-white"
+                                className="miam-pill h-7 px-3.5 text-[12px]"
                             >
                                 {commandesToutes ? "Voir moins" : "Voir plus"}
                             </button>
@@ -230,38 +241,38 @@ export default function Fidelite() {
                     )}
                 </section>
 
-                {/* Parrainage : carte blanche r30 */}
-                <section className="rounded-[30px] bg-white p-5 md:p-6">
-                    <h2 className="font-inria text-lg font-bold text-black md:text-xl">
+                {/* Parrainage : carte blanche */}
+                <section className="miam-carte p-4 md:p-5">
+                    <h2 className="font-inria text-[16px] font-bold text-black">
                         Parrainage
                     </h2>
 
-                    {/* le code de parrainage dans sa chip beie + Copier */}
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[30px] bg-bmie px-5 py-2">
-                        <span className="font-inria text-base font-bold text-black md:text-base">
-                            Votre code:&nbsp;&nbsp;<span className="tracking-wide">{codeParrain || "non disponible"}</span>
+                    {/* le code de parrainage dans sa chip beige */}
+                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-full bg-bmie px-4 py-1.5">
+                        <span className="font-inria text-[13.5px] text-black">
+                            Votre code :&nbsp;&nbsp;<b className="tracking-wide">{codeParrain || "non disponible"}</b>
                         </span>
                         <button
                             type="button"
                             onClick={copierCode}
-                            className="rounded-[30px] bg-or px-5 py-1 font-inria text-sm text-black transition-colors hover:bg-or-deep hover:text-white"
+                            className="miam-pill h-7 px-3.5 text-[12px]"
                         >
-                            {copie ? "Copié !" : "Copier"}
+                            {copie ? "Copié ✓" : "Copier"}
                         </button>
                     </div>
 
-                    <table className="mt-3 w-full font-inria text-sm font-bold text-black md:text-base">
+                    <table className="mt-2.5 w-full font-inria text-[13.5px] text-black">
                         <thead>
                             <tr className="text-left text-gris-pa">
-                                <th className="py-1 pr-2 font-bold">Filleul . Statut</th>
-                                <th className="text-right font-bold">Points</th>
+                                <th className="py-1 pr-2 font-medium">Filleul · Statut</th>
+                                <th className="text-right font-medium">Points</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filleulsAffiches.map((f) => (
-                                <tr key={f.id} className="border-t border-ligne">
-                                    <td className="py-2">{f.nom} . {f.statut}</td>
-                                    <td className="text-right text-or-deep">
+                                <tr key={f.id} className="border-t border-creme-d transition-colors hover:bg-creme-d/60">
+                                    <td className="py-2">{f.nom} · {f.statut}</td>
+                                    <td className="text-right font-bold text-or-deep">
                                         {f.points > 0 ? "+" + f.points : "0"}
                                     </td>
                                 </tr>
@@ -269,16 +280,16 @@ export default function Fidelite() {
                         </tbody>
                     </table>
                     {filleuls.length === 0 && (
-                        <p className="mt-3 font-inria text-sm text-encre">
+                        <p className="mt-2.5 font-sans text-[12.5px] text-encre">
                             Aucun filleul pour le moment.
                         </p>
                     )}
                     {filleuls.length > 2 && (
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-2.5 flex justify-end">
                             <button
                                 type="button"
                                 onClick={() => setFilleulsTous(!filleulsTous)}
-                                className="rounded-[30px] bg-or px-5 py-1.5 font-inria text-sm text-black transition-colors hover:bg-or-deep hover:text-white"
+                                className="miam-pill h-7 px-3.5 text-[12px]"
                             >
                                 {filleulsTous ? "Voir moins" : "Voir plus"}
                             </button>
@@ -288,19 +299,19 @@ export default function Fidelite() {
             </div>
 
             {/* ---------- TOP 10 ---------- */}
-            <section className="mt-6 rounded-[30px] bg-white p-5 md:p-6">
-                <h2 className="font-inria text-lg font-bold text-black md:text-xl">
+            <section className="miam-carte mt-5 p-4 md:p-5">
+                <h2 className="font-inria text-[16px] font-bold text-black">
                     Top 10 des meilleurs clients
                 </h2>
-                {/* ordinateur : 2 colonnes de 5 (1 à 5 à gauche, 6 à 10 à droite) ; téléphone : 1 colonne */}
-                <ol className="mt-2 grid gap-x-12 md:grid-flow-col md:grid-rows-5">
+                {/* ordinateur : 2 colonnes de 5 ; téléphone : 1 colonne */}
+                <ol className="mt-1 grid gap-x-10 md:grid-flow-col md:grid-rows-5">
                     {/* i = la position dans la liste (0, 1, 2...), donc le rang est i + 1 */}
                     {classement.map((c, i) => (
                         <li
                             key={c.id}
                             className={
-                                "flex justify-between border-b border-creme-d py-2.5 font-inria text-base font-bold text-black md:text-xl " +
-                                (c.moi ? "text-or-deep" : "")
+                                "flex justify-between border-b border-creme-d px-1 py-2 font-inria text-[14.5px] transition-colors hover:bg-creme-d/60 md:text-[15.5px] " +
+                                (c.moi ? "font-bold text-or-deep" : "text-black")
                             }
                         >
                             <span>
@@ -311,7 +322,7 @@ export default function Fidelite() {
                     ))}
                 </ol>
                 {classement.length === 0 && (
-                    <p className="mt-2 font-inria text-sm text-encre">
+                    <p className="mt-1.5 font-sans text-[12.5px] text-encre">
                         Classement indisponible pour le moment.
                     </p>
                 )}

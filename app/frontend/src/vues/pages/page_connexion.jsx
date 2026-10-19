@@ -1,7 +1,6 @@
-// Page de connexion selon la maquette :
-// titre "Bienvenue sur Mon Miam Miam" (Inter Bold 30px) ;
-// labels Inter Regular 20px ; champs translucides r5px ;
-// lien "Mot de passe oublié ?" or ; CTA "Se connecter" beige r15px
+// Page de connexion selon la maquette (raffinee) :
+// titre "Bienvenue sur Mon Miam Miam" ; labels fins ; champs translucides
+// avec focus or ; lien "Mot de passe oublié ?" ; CTA "Se connecter" beige
 import { useState } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "../../services/auth";
@@ -39,72 +38,69 @@ export default function Login() {
 
     return (
         <AuthFond>
-            <AuthCarte>
-                <h1 className="text-center font-sans text-2xl font-bold text-black md:text-3xl">
+            <AuthCarte erreur={!!erreur}>
+                <h1 className="text-center font-sans text-[19px] font-bold tracking-tight text-black md:text-[22px]">
                     Bienvenue sur Mon Miam Miam
                 </h1>
 
-                <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+                <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3.5">
                     {erreur && (
-                        <p className="rounded-[10px] bg-red-100 px-3 py-2 text-sm font-semibold text-red-700">
+                        <p className="rounded-xl bg-red-50 px-3 py-2 text-[13px] font-medium text-red-700">
                             {erreur}
                         </p>
                     )}
 
                     <div className="flex flex-col gap-1">
-                        <label htmlFor="email" className="font-sans text-base text-black md:text-lg">
-                            Email
-                        </label>
+                        <label htmlFor="email" className="miam-etiquette">Email</label>
                         <input
                             id="email"
                             type="email"
                             required
+                            autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full rounded-[5px] bg-white/40 px-3 py-2.5 text-black outline-none focus:ring-2 focus:ring-or"
+                            className="miam-champ"
                         />
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <label htmlFor="password" className="font-sans text-base text-black md:text-lg">
-                            Mot de passe
-                        </label>
+                        <label htmlFor="password" className="miam-etiquette">Mot de passe</label>
                         <input
                             id="password"
                             type="password"
                             required
-                            value={password}
+                            autoComplete="current-password"
                             pattern="(?=.*[A-Z])(?=.*[0-9]).{8,}"
                             title="Au moins 8 caractères, une majuscule et un chiffre"
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full rounded-[5px] bg-white/40 px-3 py-2.5 text-black outline-none focus:ring-2 focus:ring-or"
+                            className="miam-champ"
                         />
                         {password && !regleMotDePasse.test(password) && (
-                            <p className="text-xs text-red-700">
+                            <p className="text-[11.5px] text-red-700">
                                 Au moins 8 caractères, une majuscule et un chiffre
                             </p>
                         )}
-                        {/* lien maquette : Inter Bold 20px or */}
+                        {/* lien maquette : or */}
                         <Link
                             to="/page_reset"
-                            className="self-end font-sans text-sm font-bold text-or-clair hover:underline md:text-lg"
+                            className="self-end font-sans text-[12.5px] font-semibold text-or transition-colors hover:text-or-deep hover:underline"
                         >
                             Mot de passe oublié ?
                         </Link>
                     </div>
 
-                    {/* CTA Se connecter : pill beige r15 (maquette 293x53, Inter Medium 24px) */}
+                    {/* CTA Se connecter : pill beige (maquette) */}
                     <button
                         type="submit"
-                        className="mx-auto mt-2 block w-full max-w-[300px] rounded-[15px] bg-or-clair py-3 font-sans text-lg font-medium text-black transition-colors hover:bg-or md:text-[22px]"
+                        className="miam-cta mt-1 h-11 w-full text-[15px]"
                     >
                         Se connecter
                     </button>
 
-                    <p className="text-center font-sans text-sm text-black md:text-base">
+                    <p className="text-center font-sans text-[13px] text-black">
                         Vous n&apos;avez pas de compte ?{" "}
-                        <Link to="/page_inscription" className="font-medium text-or hover:underline">
-                            Créer un nouveau compte
+                        <Link to="/page_inscription" className="font-medium text-or-deep hover:underline">
+                            Créer un compte
                         </Link>
                     </p>
                 </form>

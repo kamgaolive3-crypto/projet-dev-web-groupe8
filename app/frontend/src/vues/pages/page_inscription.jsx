@@ -1,7 +1,7 @@
-// Page d inscription selon la maquette :
-// "Nom et prenoms" (nom + prenom), Email, telephone, Localisation,
-// Mot de passe, Confirmer ; CTA "Creer un compte" beige r15 ;
-// bas de carte "Vous avez deja un compte ? Connectez-vous"
+// Page d inscription selon la maquette (raffinee) :
+// Nom et prenoms (Nom | prenom), Email, telephone, Localisation,
+// Code de parrainage optionnel, Mot de passe, Confirmer ;
+// CTA "Créer un compte" beige ; bas de carte "Connectez-vous"
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../services/auth";
@@ -20,11 +20,6 @@ export default function Signin() {
     const navigate = useNavigate();
     const { inscription } = useAuth();
     const regleMotDePasse = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
-
-    //style commun des champs (maquette : translucides r5px)
-    const champ =
-        "w-full rounded-[5px] bg-white/40 px-3 py-2.5 text-black outline-none focus:ring-2 focus:ring-or";
-    const etiquette = "font-sans text-base text-black md:text-lg";
 
     //fonction appellée quand envoie le formulaire
     const handleSubmit = async (e) => {
@@ -58,61 +53,63 @@ export default function Signin() {
 
     return (
         <AuthFond>
-            <AuthCarte>
-                <h1 className="text-center font-sans text-2xl font-bold text-black md:text-3xl">
+            <AuthCarte erreur={!!erreur}>
+                <h1 className="text-center font-sans text-[19px] font-bold tracking-tight text-black md:text-[22px]">
                     Bienvenue sur Mon Miam Miam
                 </h1>
 
-                <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
+                <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-2.5">
                     {erreur && (
-                        <p className="rounded-[10px] bg-red-100 px-3 py-2 text-sm font-semibold text-red-700">
+                        <p className="rounded-xl bg-red-50 px-3 py-2 text-[13px] font-medium text-red-700">
                             {erreur}
                         </p>
                     )}
 
-                    <div className="flex flex-col gap-1">
-                        <label htmlFor="nom" className={etiquette}>
-                            Nom et prenoms
-                        </label>
-                        {/* la maquette propose "Nom | prénom" : deux champs cote a cote */}
-                        <div className="flex gap-2">
+                    {/* nom + prenom cote a cote (maquette "Nom | prénom") */}
+                    <div className="flex gap-2">
+                        <div className="flex w-1/2 flex-col gap-1">
+                            <label htmlFor="nom" className="miam-etiquette">Nom</label>
                             <input
                                 id="nom"
                                 type="text"
                                 autoComplete="family-name"
                                 required
-                                placeholder="Nom"
+                                placeholder="SOUME"
                                 value={nom}
                                 onChange={(e) => setnom(e.target.value)}
-                                className={champ}
+                                className="miam-champ"
                             />
+                        </div>
+                        <div className="flex w-1/2 flex-col gap-1">
+                            <label htmlFor="prenom" className="miam-etiquette">Prenom</label>
                             <input
                                 id="prenom"
                                 type="text"
                                 autoComplete="given-name"
                                 required
-                                placeholder="prénom"
+                                placeholder="Louis"
                                 value={prenom}
                                 onChange={(e) => setprenom(e.target.value)}
-                                className={champ}
+                                className="miam-champ"
                             />
                         </div>
+                    </div>
 
-                        <label htmlFor="email" className={etiquette + " mt-1"}>
-                            Email
-                        </label>
+                    <div className="flex flex-col gap-1">
+                        <label htmlFor="email" className="miam-etiquette">Email</label>
                         <input
                             id="email"
                             type="email"
                             required
+                            autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className={champ}
+                            className="miam-champ"
                         />
+                    </div>
 
-                        <label htmlFor="telephone" className={etiquette + " mt-1"}>
-                            Numéro de téléphone
-                        </label>
+                    <div className="flex flex-col gap-1">
+                        <label htmlFor="telephone" className="miam-etiquette">Numéro de téléphone</label>
                         <input
                             id="telephone"
                             type="tel"
@@ -122,24 +119,26 @@ export default function Signin() {
                             required
                             value={telephone}
                             onChange={(e) => settelephone(e.target.value)}
-                            className={champ}
+                            className="miam-champ"
                         />
+                    </div>
 
-                        <label htmlFor="location" className={etiquette + " mt-1"}>
-                            Localisation
-                        </label>
+                    <div className="flex flex-col gap-1">
+                        <label htmlFor="location" className="miam-etiquette">Localisation</label>
                         <input
                             id="location"
                             type="text"
                             required
                             value={localisation}
                             onChange={(e) => setlocalisation(e.target.value)}
-                            className={champ}
+                            className="miam-champ"
                         />
+                    </div>
 
-                        {/* code de parrainage optionnel (le champ existe toujours dans la base) */}
-                        <label htmlFor="code_parrainage" className={etiquette + " mt-1"}>
-                            Code de parrainage (optionnel)
+                    {/* code de parrainage optionnel (le champ existe toujours dans la base) */}
+                    <div className="flex flex-col gap-1">
+                        <label htmlFor="code_parrainage" className="miam-etiquette">
+                            Code de parrainage <span className="font-normal text-gris-pa">(optionnel)</span>
                         </label>
                         <input
                             id="code_parrainage"
@@ -148,51 +147,53 @@ export default function Signin() {
                             pattern="[A-Z]{4}[0-9]{4}"
                             value={codeParrainage}
                             onChange={(e) => setCodeParrainage(e.target.value.toUpperCase())}
-                            className={champ}
+                            className="miam-champ"
                         />
+                    </div>
 
-                        <label htmlFor="password" className={etiquette + " mt-1"}>
-                            Mot de passe
-                        </label>
+                    <div className="flex flex-col gap-1">
+                        <label htmlFor="password" className="miam-etiquette">Mot de passe</label>
                         <input
                             id="password"
                             type="password"
+                            autoComplete="new-password"
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className={champ}
+                            className="miam-champ"
                         />
                         {password && !regleMotDePasse.test(password) && (
-                            <p className="text-xs text-red-700">
+                            <p className="text-[11.5px] text-red-700">
                                 Au moins 8 caractères, une majuscule et un chiffre
                             </p>
                         )}
+                    </div>
 
-                        <label htmlFor="confirm" className={etiquette + " mt-1"}>
-                            Confirmer le mot de passe
-                        </label>
+                    <div className="flex flex-col gap-1">
+                        <label htmlFor="confirm" className="miam-etiquette">Confirmer le mot de passe</label>
                         <input
                             id="confirm"
                             type="password"
+                            autoComplete="new-password"
                             required
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className={champ}
+                            className="miam-champ"
                         />
                         {confirmPassword && password !== confirmPassword && (
-                            <p className="text-xs text-red-700">Les mots de passe ne correspondent pas</p>
+                            <p className="text-[11.5px] text-red-700">Les mots de passe ne correspondent pas</p>
                         )}
                     </div>
 
-                    {/* CTA Creer un compte : pill beige r15 (maquette 293x53) */}
+                    {/* CTA Creer un compte : pill beige (maquette) */}
                     <button
                         type="submit"
-                        className="mx-auto mt-3 block w-full max-w-[300px] rounded-[15px] bg-or-clair py-3 font-sans text-lg font-medium text-black transition-colors hover:bg-or md:text-[22px]"
+                        className="miam-cta mt-1 h-11 w-full text-[15px]"
                     >
                         Créer un compte
                     </button>
 
-                    <p className="text-center font-sans text-xs text-black md:text-sm">
+                    <p className="text-center font-sans text-[13px] text-black">
                         Vous avez déjà un compte ?{" "}
                         <Link to="/page_connexion" className="font-medium text-or-deep hover:underline">
                             Connectez-vous
