@@ -268,6 +268,7 @@ class CommandeController extends Controller
                         if ($cible === 'annulee') {
                 $this->retirerPointsGagnes($commande);
             }
+            
         });
 
         return $commande->load('historiqueStatuts');
@@ -308,11 +309,11 @@ class CommandeController extends Controller
             return response()->json(['message' => 'Impossible : la commande est déjà traitée.'], 422);
         }
 
-        DB::transaction(function () use ($commande, $request) {
+               DB::transaction(function () use ($commande, $request) {
             if ($commande->points_utilises > 0) {
                 $this->restituerPoints($commande);
             }
-                        $this->retirerPointsGagnes($commande);
+            $this->retirerPointsGagnes($commande);
             $this->commandes->changerStatut($commande, 'annulee', $request->user()->Id_utilisateur);
         });
 
@@ -335,11 +336,12 @@ class CommandeController extends Controller
         /** Commande annulée : retire à l'étudiant les points que cette commande lui avait fait gagner. */
     private function retirerPointsGagnes(Commande $commande): void
     {
-                $gagnes = (int) MvtPoint::where('Id_commande', $commande->Id_commande)
+        $gagnes = (int) MvtPoint::where('Id_commande', $commande->Id_commande)
             ->where('type_mvt', 'gain')
             ->whereNotNull('date_expiration')
             ->sum('nbres_points');
-                    $etudiant = $commande->etudiant;
+
+        $etudiant = $commande->etudiant;
         $retrait = min($gagnes, (int) $etudiant->solde_point);
 
         if ($retrait <= 0) {
@@ -355,7 +357,7 @@ class CommandeController extends Controller
             'Id_commande'    => $commande->Id_commande,
         ]);
     }
-
+    
     /**
      * Générateur #COM0001 (domaine ID_COM, dictionnaire §10) sans collision.
      */
