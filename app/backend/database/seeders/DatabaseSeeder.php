@@ -175,6 +175,8 @@ class DatabaseSeeder extends Seeder
             ['Id_parametre' => 'PR001', 'cle' => 'taux_comparaison_points', 'valeur' => '1000 F depenses = 1 point'],
             ['Id_parametre' => 'PR002', 'cle' => 'taux_reduction_points', 'valeur' => '15 points = 1000 F'],
             ['Id_parametre' => 'PR003', 'cle' => 'duree_validite_points', 'valeur' => '12 mois'],
+            // cle numerique lue par CommandeController pour l'expiration des points
+            ['Id_parametre' => 'PR004', 'cle' => 'duree_expiration_points', 'valeur' => '12'],
         ];
         foreach ($params as $p) {
             Parametre::updateOrCreate(

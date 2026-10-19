@@ -6,6 +6,7 @@ use App\Models\ArticleMenu;
 use App\Models\Commande;
 use App\Models\Evenement;
 use App\Models\MvtPoint;
+use App\Models\Parametre;
 use App\Services\CalculCommande;
 use App\Services\CommandeService;
 use DomainException;
@@ -14,8 +15,20 @@ use Illuminate\Support\Facades\DB;
 
 class CommandeController extends Controller
 {
-    /** Les points gagnés expirent après 12 mois (US-016). */
-    private const EXPIRATION_MOIS = 12;
+    /**
+     * Duree de validite des points gagnes (US-016).
+     * Priorite a la valeur configuree par l'administrateur dans la table
+     * parametre (cle "duree_expiration_points", eg. "12") ;
+     * repli = 12 mois si le parametre est absent ou invalide.
+     */
+    private function dureeExpirationPoints(): int
+    {
+        $valeur = Parametre::whereIn('cle', ['duree_expiration_points', 'duree_validite_points'])
+            ->value('valeur');
+        $mois = (int) preg_replace('/[^0-9]/', '', (string) $valeur);
+
+        return $mois > 0 ? $mois : 12;
+    }
 
     public function __construct(private CommandeService $commandes)
     {
@@ -176,7 +189,7 @@ class CommandeController extends Controller
                     'Id_mvt'          => $this->genererIdMvt(),
                     'nbres_points'    => $calcul->pointsGagnes,
                     'type_mvt'        => 'gain',
-                    'date_expiration' => now()->addMonths(self::EXPIRATION_MOIS),
+                    'date_expiration' => now()->addMonths($this->dureeExpirationPoints()),
                     'Id_utilisateur'  => $etudiant->Id_utilisateur,
                     'Id_commande'     => $commande->Id_commande,
                 ]);
