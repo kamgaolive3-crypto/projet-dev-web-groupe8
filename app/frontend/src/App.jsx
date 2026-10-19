@@ -17,6 +17,13 @@ import ReclamationA from "./vues/pagesA/Reclamation";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import Signin from './vues/pages/page_inscription';
 import PageReset from "./vues/pages/page_reset";
+// espace employe (pages pagesEmp, integrees depuis main — aliasees car les
+// noms Commandes/Statistiques existent deja dans l'espace gestion pagesA)
+import LayoutEmp from "./composantEmp/LayoutEmp";
+import CommandesEmp from "./vues/pagesEmp/Commandes";
+import MenuEmp from "./vues/pagesEmp/MenuEmp";
+import ReclamationsEmp from "./vues/pagesEmp/Reclamations";
+import StatistiquesEmp from "./vues/pagesEmp/Statistiques";
 import Reclamation from "./vues/pagesE/Reclamation"
 import Historique from "./vues/pagesE/Historique"
 import { FournisseurAuth, useAuth } from "./services/auth";
@@ -68,6 +75,15 @@ export default function App() {
               <Route path="/Parametre" element={<Parametre />}/>
               <Route path="/ReclamationA" element={<ReclamationA />}/>
             </Route>
+
+            {/* espace employe (integre depuis main, chemins renomes pour ne pas
+                entrer en collision avec /Commandes et /Statistiques du gerant) */}
+            <Route element={<LayoutEmp />}>
+              <Route path="/CommandesEmp" element={<CommandesEmp />}/>
+              <Route path="/MenuEmp" element={<MenuEmp />}/>
+              <Route path="/ReclamationsEmp" element={<ReclamationsEmp />}/>
+              <Route path="/StatistiquesEmp" element={<StatistiquesEmp />}/>
+            </Route>
           </Route>
 
           {/* 3. Authentification */}
@@ -77,5 +93,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </FournisseurAuth>
+
   );
 }
