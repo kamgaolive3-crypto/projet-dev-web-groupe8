@@ -8,6 +8,32 @@
   --color-secondary: #000;
   --color-grey: #F3F3F3;
   --color-grey-300: #c2c2c2;
+  --color-emp-fond: #f8f7f6
+  --color-emp-carre: #FFFDF8;
+  --color-emp-pab: #F2F2F2;
+  --color-emp-type: #D9D9D9;
+  --color-emp-barre-carre: #EFE8E8;
+  --color-emp-trace-pab: #535353;
+  --color-emp-valider: #C1A76D;
+  --color-emp-or-disque: #CFBF82;
+  --color-emp-commande-carre: #F7EEDC;
+  --color-emp-commande-rond: #EFE0B8;
+  --color-emp-attente-carre: #F7E2E2;
+  --color-emp-attente-rond: #F1B3B5;
+  --color-emp-attente-emoji: #FF0F0F;
+  --color-emp-bleu-carre: #E3F5F6;
+  --color-emp-bleu-rond: #AEFAFA;
+  --color-emp-bleu-emoji: #066FF9;
+  --color-emp-vert-carre: #DFF5DE;
+  --color-emp-vert-rond: #BFEFBC;
+  --color-emp-vert-emoji: #0AAF39;
+  --color-emp-beige-barre: #CFBF9B;   
+  --color-emp-fond-carte: #FAFAFA;    
+  --color-emp-noir-survol: #333333;   
+  --color-emp-or-icone: #F0E2B8;      
+  --color-emp-donut-boisson: #D0BC96;    
+  --color-emp-donut-dessert: #121212;
+  --color-emp-donut-principal: #D1BF82;
 }
 
 :root {
