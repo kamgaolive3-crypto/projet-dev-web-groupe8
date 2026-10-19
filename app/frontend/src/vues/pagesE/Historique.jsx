@@ -126,8 +126,8 @@ export default function Historique() {
                         key={f.label}
                         onClick={() => setStatutFiltre(f.statut)}
                         className={
-                            "rounded-full border border-[#CFBD97] px-4 py-1 text-xs " +
-                            (f.statut === statutFiltre ? "bg-[#CFBD97] text-white" : "bg-white text-gray-800")
+                            "rounded-full border border-[#CFBD97] px-4 py-1 text-xs transition-colors " +
+                            (f.statut === statutFiltre ? "bg-[#CFBD97] text-white" : "bg-white text-gray-800 hover:bg-[#efe6d0]")
                         }
                     >
                         {f.label}
