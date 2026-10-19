@@ -1,11 +1,13 @@
-// La page d accueil reproduit la maquette "Accueil" :
-// 1. grille "Menu du jours" (3 cartes raffinees + CTA beige)
-// 2. hero "Plat du jour" (photo plein cadre + bandeau clair discret)
+// La page d accueil reproduit la maquette "Accueil" (rafinee) :
+// 1. grille "Menu du jours" (cartes + puce "Du jour" + CTA beige)
+// 2. hero "Plat du jour" (photo plein cadre, voile de lisibilite,
+//    bandeau verre : nom Instrument Serif + badge de prix or)
 // 3. bandes Evenements / Promotions (#E8E8E8)
 // tout le contenu affiche vient du backend (articles, evenements)
 import { useState, useEffect } from "react";
 import usePanier from "../../composantE/usePanier"
 import CartePlat from "../../composantE/CartePlat"
+import TitreSection from "../../composantE/TitreSection"
 import { api } from "../../services/api"
 import { useAuth } from "../../services/auth";
 
@@ -22,6 +24,7 @@ const versPlat = (a) => ({
     prix: a.prix_article,
     image: a.image_article || platMaquette,
     description: a.description || "",
+    menuDuJour: !!a.Menu_du_jour,
     restaurant: a.Id_restaurant, // necessaire au panier (un seul restaurant)
 });
 
@@ -32,7 +35,7 @@ export default function Accueil() {
     const [promotions, setPromotions] = useState([])
     //le menu du jour complet (GET /api/article_menu-du-jour)
     const [menuDuJour, setMenuDuJour] = useState([])
-    //message affiche apres un clic sur "Je participe"
+    //message affiche apres un clic sur "Je participe" (toast)
     const [message, setMessage] = useState("")
     //recupere l'utilisateur connecte (pour participer aux evenements)
     const { user } = useAuth()
@@ -84,6 +87,7 @@ export default function Accueil() {
         } catch (e) {
             setMessage(e.message)
         }
+        setTimeout(() => setMessage(""), 3200)
     }
 
     //les bandes affichees : evenements puis promotions (ordre de la maquette)
@@ -91,7 +95,7 @@ export default function Accueil() {
 
     return (
         <div className="mx-auto w-full max-w-[1320px] px-4 pb-14 pt-8 md:px-8">
-            {/* message de participation / erreur (toast) */}
+            {/* toast de participation / erreur */}
             {message && (
                 <p
                     className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-black/85 px-5 py-2.5 text-center font-sans text-[13px] text-white shadow-hover"
@@ -103,11 +107,12 @@ export default function Accueil() {
 
             {/* ---------- 1. MENU DU JOURS ---------- */}
             <section>
-                <div className="flex items-baseline justify-between gap-3">
-                    <h2 className="miam-titre">Menu du jours</h2>
-                    <span className="hidden miam-eyebrow sm:block">Chaque jour, de nouveaux plats</span>
-                </div>
-                <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <TitreSection
+                    eyebrow="Frais du jour"
+                    titre="Menu du jours"
+                    note="Chaque jour, de nouveaux plats"
+                />
+                <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {menuDuJour.length === 0 ? (
                         <p className="font-inria text-[14px] text-encre">
                             Le menu du jour n&apos;est pas encore publie — revenez bientot !
@@ -126,39 +131,40 @@ export default function Accueil() {
                 </div>
             </section>
 
-            {/* ---------- 2. PLAT DU JOUR (hero photo + bandeau clair) ---------- */}
+            {/* ---------- 2. PLAT DU JOUR (hero photo + bandeau verre) ---------- */}
             {platDuJour && (
                 <section
                     className="relative mt-10 overflow-hidden rounded-2xl shadow-soft"
                     style={{ animation: "fade-up 0.5s cubic-bezier(0.22,1,0.36,1) both" }}
                 >
-                    {/* photo de fond */}
+                    {/* photo de fond + voile de lisibilite en haut a gauche */}
                     <img
                         src={heroMaquette}
                         alt={platDuJour.nom}
                         className="h-64 w-full object-cover md:h-[400px]"
                     />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/20" />
                     {/* etiquette blanche en haut a gauche (maquette) */}
-                    <span className="absolute left-5 top-5 font-sans text-[20px] font-medium tracking-tight text-white drop-shadow-sm md:left-8 md:top-7 md:text-[26px]">
+                    <span className="absolute left-5 top-5 font-sans text-[20px] font-medium tracking-tight text-white md:left-8 md:top-7 md:text-[26px]">
                         Plat du jour:
                     </span>
-                    {/* bandeau d information au bas de la photo (verre clair discret) */}
-                    <div className="absolute inset-x-3 bottom-3 flex flex-col gap-2.5 rounded-xl bg-white/90 px-4 py-3 backdrop-blur md:inset-x-5 md:bottom-5 md:flex-row md:items-center md:justify-between md:px-6 md:py-4">
+                    {/* bandeau verre au bas de la photo */}
+                    <div className="absolute inset-x-3 bottom-3 flex flex-col gap-3 rounded-xl bg-white/90 px-4 py-3.5 backdrop-blur md:inset-x-5 md:bottom-5 md:flex-row md:items-center md:justify-between md:px-6 md:py-4">
                         <div>
                             <p className="miam-eyebrow">Découvrez notre plat du jour</p>
-                            <div className="mt-0.5 flex items-baseline gap-3">
-                                <p className="font-inria text-[19px] font-bold text-black md:text-[22px]">
+                            <div className="mt-1 flex flex-wrap items-center gap-2.5">
+                                <p className="font-instrument text-[22px] leading-none text-black md:text-[27px]">
                                     {platDuJour.nom}
                                 </p>
-                                <p className="font-inria text-[17px] font-bold tracking-tight text-or-deep">
+                                <span className="miam-prix-badge">
                                     {platDuJour.prix}Fcfa
-                                </p>
+                                </span>
                             </div>
                         </div>
                         <button
                             type="button"
                             onClick={() => ajouter(platDuJour)}
-                            className="miam-cta self-start md:self-auto"
+                            className="miam-cta-or self-start md:self-auto"
                         >
                             {platDuJour.id === ajouteId ? "Ajouté ✓" : "Ajouter au panier"}
                         </button>
@@ -167,34 +173,45 @@ export default function Accueil() {
             )}
 
             {/* ---------- 3. BANDES EVENEMENTS / PROMOTIONS ---------- */}
-            {bandes.map((promo) => (
-                <section
-                    key={promo.id}
-                    className="mt-8 flex flex-col gap-4 rounded-xl bg-zone p-4 md:flex-row md:items-center md:gap-5"
-                >
-                    {/* affiche a gauche (maquette) */}
-                    <img
-                        src={promo.image}
-                        alt={promo.etiquette}
-                        className="h-32 w-full rounded-lg object-cover md:h-[104px] md:w-[150px]"
-                    />
-                    {/* textes : titre Inria Bold + petite etiquette */}
-                    <div className="flex flex-1 flex-col gap-1.5">
-                        <span className="miam-eyebrow">{promo.etiquette}</span>
-                        <p className="font-inria text-[17px] font-bold leading-snug text-black md:text-[20px]">
-                            {promo.texte}
-                        </p>
-                    </div>
-                    {/* CTA "Je participe" */}
-                    <button
-                        type="button"
-                        onClick={() => participer(promo.id)}
-                        className="miam-cta self-start md:self-auto"
-                    >
-                        Je participe
-                    </button>
-                </section>
-            ))}
+            <section className="mt-10">
+                {bandes.length > 0 && (
+                    <div className="mb-4"><TitreSection eyebrow="A ne pas manquer" titre="Evenements & Promotions" /></div>
+                )}
+                <div className="flex flex-col gap-4">
+                    {bandes.map((promo) => (
+                        <div
+                            key={promo.id}
+                            className="flex flex-col gap-4 rounded-xl bg-zone/90 p-4 transition-colors duration-200 hover:bg-[#EFEDE9] md:flex-row md:items-center md:gap-5"
+                        >
+                            {/* affiche a gauche (ratio fixe, masquee sur base) */}
+                            <img
+                                src={promo.image}
+                                alt={promo.etiquette}
+                                className="aspect-[4/3] w-full rounded-lg object-cover md:h-[92px] md:w-[124px]"
+                            />
+                            {/* textes : petite majuscule + titre Instrument */}
+                            <div className="flex flex-1 flex-col gap-1">
+                                <span className="font-sans text-[10.5px] font-semibold uppercase tracking-[0.14em] text-encre/70">
+                                    {promo.etiquette}
+                                </span>
+                                <p className="font-instrument text-[19px] leading-snug text-black md:text-[23px]">
+                                    {promo.texte}
+                                </p>
+                            </div>
+                            {/* filet vertical sur desktop */}
+                            <span className="hidden h-12 w-px bg-black/10 md:block" />
+                            {/* CTA "Je participe" */}
+                            <button
+                                type="button"
+                                onClick={() => participer(promo.id)}
+                                className="miam-cta self-start md:self-auto"
+                            >
+                                Je participe
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </section>
         </div>
     )
 }

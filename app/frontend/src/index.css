@@ -185,8 +185,20 @@ code {
     @apply font-sans text-[13px] font-medium text-black;
   }
 
-  /* filet de separ mansions fin et chaud (au lieu du gris froid) */
+  /* filet de separateur fin et chaud (au lieu du gris froid) */
   .miam-filet {
     @apply h-px w-full bg-[#EAE3D6];
+  }
+
+  /* badge "Du jour" : puce blanche flottante sur la photo */
+  .miam-badge-jour {
+    @apply rounded-full bg-white/95 px-3 py-1 font-sans text-[10.5px] font-semibold
+           uppercase tracking-[0.12em] text-or-deep shadow-soft backdrop-blur-sm;
+  }
+
+  /* badge de prix : or fonce, texte clair (hero) */
+  .miam-prix-badge {
+    @apply rounded-full bg-or-deep px-3 py-1 font-inria text-[13px] font-bold
+           tracking-tight text-white;
   }
 }

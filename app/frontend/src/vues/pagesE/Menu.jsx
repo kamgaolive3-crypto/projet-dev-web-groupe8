@@ -1,9 +1,11 @@
-// Page Menu reproduisant la maquette :
-// titre "Notre menu" Inria Serif ; note du programme de fidelite ;
-// chips de categories (active = or, autres blanches) ;
-// grille de cartes blanches (photo ratio 4/3, nom Inria, prix or, pill "Ajouter")
+// Page Menu reproduisant la maquette (rafinee) :
+// titres editoriaux (eyebrow + Instrument Serif) ;
+// chips de categories COLLANTES au scroll avec compteur d'articles ;
+// grille de cartes (photo ratio 3/2, nom Inria, prix or, pill "Ajouter",
+// puce "Du jour" quand Menu_du_jour = 1)
 import { useState, useEffect } from "react"
 import usePanier from "../../composantE/usePanier"
+import TitreSection from "../../composantE/TitreSection"
 import { api } from "../../services/api"
 import platMaquette from "../../../public/maq/maq_plat.jpg";
 
@@ -42,6 +44,7 @@ export default function Menu() {
                     image: a.image_article || platMaquette,
                     description: a.description || "",
                     disponible: a.disponibilite_article,
+                    menuDuJour: !!a.Menu_du_jour,
                     restaurant: a.Id_restaurant, // le panier exige un seul restaurant
                 })))
             })
@@ -54,11 +57,17 @@ export default function Menu() {
     const [categorie, setCategorie] = useState("plat")
     //l'id du plat qui vient d'être ajouté (pour afficher "Ajouté ✓" un instant)
     const [ajouteId, setAjouteId] = useState(null)
-    //toast de confirmation (remplace le texte de l'ancien bouton)
+    //toast de confirmation
     const [toast, setToast] = useState("")
 
     //garde seulement les plats de la catégorie choisie
     const platsAffiches = plats.filter((p) => p.categorie === categorie)
+
+    //nombre d'articles par categorie : sert au compteur des chips
+    const comptes = {}
+    categories.forEach((c) => {
+        comptes[c.valeur] = plats.filter((p) => p.categorie === c.valeur).length
+    })
 
     //fonction appellée quand on clique sur "Ajouter"
     const ajouterAuPanier = (plat) => {
@@ -83,10 +92,11 @@ export default function Menu() {
             )}
 
             {/* ---------- TITRE ---------- */}
-            <h1 className="miam-titre">Notre menu</h1>
-            <p className="mt-1 font-inria text-[13.5px] text-encre">
-                Chaque tranche de 1 000 F vous rapporte 1 point de fidélité
-            </p>
+            <TitreSection
+                eyebrow="À la carte"
+                titre="Notre menu"
+                note="Chaque tranche de 1 000 F = 1 point de fidélité"
+            />
 
             {/* message d'erreur du chargement */}
             {erreur && (
@@ -95,27 +105,39 @@ export default function Menu() {
                 </p>
             )}
 
-            {/* ---------- CHIPS DE FILTRE (maquette : pills) ---------- */}
-            <div className="mt-5 flex flex-wrap gap-2">
-                {categories.map((c) => (
-                    <button
-                        key={c.valeur}
-                        type="button"
-                        onClick={() => setCategorie(c.valeur)}
-                        className={
-                            "cursor-pointer select-none rounded-full px-4 py-1.5 font-inria text-[14px] transition-all duration-150 active:scale-[0.96] " +
-                            (c.valeur === categorie
-                                ? "bg-or text-black shadow-card"
-                                : "bg-white text-encre shadow-card hover:-translate-y-px hover:text-or-deep")
-                        }
-                    >
-                        {c.label}
-                    </button>
-                ))}
+            {/* ---------- CHIPS DE FILTRE (collantes + compteur) ---------- */}
+            <div className="sticky top-0 z-20 -mx-4 mt-4 bg-creme/85 px-4 py-2.5 backdrop-blur-md md:-mx-8 md:px-8">
+                <div className="flex flex-wrap gap-2">
+                    {categories.map((c) => (
+                        <button
+                            key={c.valeur}
+                            type="button"
+                            onClick={() => setCategorie(c.valeur)}
+                            className={
+                                "flex cursor-pointer select-none items-center gap-1.5 rounded-full py-1.5 pl-4 pr-2.5 font-inria text-[14px] transition-all duration-150 active:scale-[0.96] " +
+                                (c.valeur === categorie
+                                    ? "bg-or text-black shadow-card"
+                                    : "bg-white text-encre shadow-card hover:-translate-y-px hover:text-or-deep")
+                            }
+                        >
+                            {c.label}
+                            {/* compteur du nombre d'articles de la categorie */}
+                            <span
+                                className={
+                                    "rounded-full px-1.5 py-0.5 font-sans text-[10.5px] font-semibold " +
+                                    (c.valeur === categorie
+                                        ? "bg-black/10 text-black"
+                                        : "bg-creme text-gris-pa")
+                                }
+                            >
+                                {comptes[c.valeur]}
+                            </span>
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* ---------- LISTE DES PLATS ---------- */}
-            {/* si la catégorie est vide, on affiche un message au lieu de la grille */}
             {chargement ? (
                 <p className="mt-8 font-inria text-[14px] text-encre">Chargement du menu...</p>
             ) : platsAffiches.length === 0 ? (
@@ -124,44 +146,60 @@ export default function Menu() {
                 </p>
             ) : (
                 /* 1 colonne sur téléphone, 2 colonnes sur grand écran (maquette 2 col) */
-                <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2">
                     {/* .map() fabrique une carte pour chaque plat */}
                     {platsAffiches.map((plat, i) => (
                         <article
                             key={categorie + plat.id}
-                            className="miam-carte group flex flex-col overflow-hidden p-3.5"
+                            className="miam-carte group flex overflow-hidden p-3.5"
                             style={{ animation: "fade-up 0.45s cubic-bezier(0.22,1,0.36,1) both", animationDelay: Math.min(i * 60, 360) + "ms" }}
                         >
-                            <div className="overflow-hidden rounded-lg">
+                            {/* image a gauche (ratio fixe 4/5, zoom au survol) */}
+                            <div className="relative w-[42%] shrink-0 overflow-hidden rounded-lg">
                                 <img
                                     src={plat.image}
                                     alt={plat.nom}
-                                    className="aspect-[16/9] w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04]"
+                                    className="h-full min-h-40 w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04]"
                                 />
+                                {/* puce "Du jour" (liaison Menu_du_jour en base) */}
+                                {plat.menuDuJour && (
+                                    <span className="miam-badge-jour absolute left-2 top-2">
+                                        Du jour
+                                    </span>
+                                )}
                             </div>
 
-                            {/* nom + prix (maquette : Inria, prix or) */}
-                            <div className="mt-3 flex items-baseline justify-between gap-3 px-0.5">
-                                <span className="font-inria text-[16px] text-black">{plat.nom}</span>
-                                <span className="font-inria text-[15px] font-bold tracking-tight text-or-deep">
+                            {/* contenu a droite : nom, desc, prix, ligne, pill */}
+                            <div className="flex min-w-0 flex-1 flex-col pl-3.5">
+                                <h3 className="font-inria text-[16px] leading-snug text-black">
+                                    {plat.nom}
+                                </h3>
+                                {plat.description && (
+                                    <p className="mt-0.5 line-clamp-2 font-sans text-[12px] leading-snug text-encre">
+                                        {plat.description}
+                                    </p>
+                                )}
+                                {/* prix pousse en bas de la carte */}
+                                <p className="mt-auto pt-2 font-inria text-[15px] font-bold tabular-nums tracking-tight text-or-deep">
                                     {plat.prix}Fcfa
-                                </span>
-                            </div>
-                            {plat.description && (
-                                <p className="mt-0.5 px-0.5 font-sans text-[12.5px] text-encre">
-                                    {plat.description}
                                 </p>
-                            )}
 
-                            {/* pill "Ajouter" : or pleine (maquette) */}
-                            <button
-                                type="button"
-                                onClick={() => ajouterAuPanier(plat)}
-                                disabled={!plat.disponible}
-                                className="miam-pill mt-3.5 h-9 w-full max-w-[200px] self-center"
-                            >
-                                {ajouteId === plat.id ? "Ajouté ✓" : plat.disponible ? "Ajouter" : "Épuisé"}
-                            </button>
+                                <span className="miam-filet mt-2.5" />
+
+                                {/* pill "Ajouter" : or pleine (maquette) */}
+                                <button
+                                    type="button"
+                                    onClick={() => ajouterAuPanier(plat)}
+                                    disabled={!plat.disponible}
+                                    className="miam-pill mt-2.5 h-9 justify-center"
+                                >
+                                    {ajouteId === plat.id
+                                        ? "Ajouté ✓"
+                                        : plat.disponible
+                                            ? <span className="flex items-center gap-1.5"><span className="text-base leading-none">+</span> Ajouter</span>
+                                            : "Épuisé"}
+                                </button>
+                            </div>
                         </article>
                     ))}
                 </div>
