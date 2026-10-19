@@ -4,11 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Commande;
 use App\Models\Livraison;
+use App\Services\CalculCommande;
+use App\Services\CommandeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class LivraisonController extends Controller
 {
+    public function __construct(private CommandeService $commandes)
+    {
+    }
+
     /**
      * afficher les livraisons
      * GET /api/livraison : l'étudiant voit les siennes ; le personnel voit tout
@@ -48,8 +54,9 @@ class LivraisonController extends Controller
     }
 
     /**
-     * creer la livraison d'une commande (US-008 : mode_service = livraison)
+     * créer la livraison d'une commande (US-008 : mode_service = livraison)
      * POST /api/livraison
+     * (en général la livraison est déjà créée avec la commande : cette route sert de rattrapage)
      */
     public function store(Request $request)
     {
@@ -67,7 +74,6 @@ class LivraisonController extends Controller
             && $commande->Id_utilisateur !== $utilisateur->Id_utilisateur) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
-
         if ($commande->mode_service !== 'livraison') {
             return response()->json(['message' => 'Cette commande n\'est pas en mode livraison.'], 422);
         }
@@ -75,16 +81,17 @@ class LivraisonController extends Controller
             return response()->json(['message' => 'Une livraison existe déjà pour cette commande.'], 422);
         }
 
-        $livraison = Livraison::create([
-            'Id_livraison'      => $this->genererIdLivraison(),
-            'adresse_livraison' => $data['adresse_livraison']
-                ?? $commande->etudiant->localisation
-                ?? 'Adresse à préciser',
-            'frais_livraison'   => $data['frais_livraison'] ?? 0,
-            'statut_livraison'  => 'en_attente',
-            'date_prevue'       => $data['date_prevue'] ?? null,
-            'Id_commande'       => $commande->Id_commande,
-        ]);
+        // Les frais ne sont jamais choisis par l'étudiant : seul le personnel peut les modifier.
+        $frais = $utilisateur->role === 'etudiant'
+            ? CalculCommande::FRAIS_LIVRAISON
+            : ($data['frais_livraison'] ?? CalculCommande::FRAIS_LIVRAISON);
+
+        $livraison = $this->commandes->creerLivraison(
+            $commande,
+            $data['adresse_livraison'] ?? null,
+            $frais,
+            $data['date_prevue'] ?? null
+        );
 
         return response()->json($livraison, 201);
     }
@@ -125,22 +132,21 @@ class LivraisonController extends Controller
         $livraison = Livraison::findOrFail($id);
         $utilisateur = $request->user();
 
-        $autorisé = $utilisateur->role !== 'etudiant'
+        $autorise = $utilisateur->role !== 'etudiant'
             || $livraison->Id_utilisateur === $utilisateur->Id_utilisateur;
-        if (! $autorisé) {
+        if (! $autorise) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
-
         if ($livraison->statut_livraison !== 'assignee') {
             return response()->json(['message' => 'La livraison doit être assignée d\'abord.'], 422);
         }
 
-        // Le statut de la commande passe à en_livraison (historique synchronisé)
-        DB::transaction(function () use ($livraison) {
+        // Le statut de la commande passe à en_livraison, et l'historique est écrit
+        DB::transaction(function () use ($livraison, $utilisateur) {
             $livraison->update(['statut_livraison' => 'en_cours']);
             $commande = $livraison->commande;
             if ($commande->statut_commande === 'prete') {
-                $commande->update(['statut_commande' => 'en_livraison']);
+                $this->commandes->changerStatut($commande, 'en_livraison', $utilisateur->Id_utilisateur);
             }
         });
 
@@ -156,25 +162,23 @@ class LivraisonController extends Controller
         $livraison = Livraison::findOrFail($id);
         $utilisateur = $request->user();
 
-        $autorisé = $utilisateur->role !== 'etudiant'
+        $autorise = $utilisateur->role !== 'etudiant'
             || $livraison->Id_utilisateur === $utilisateur->Id_utilisateur;
-        if (! $autorisé) {
+        if (! $autorise) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
-
         if ($livraison->statut_livraison !== 'en_cours') {
             return response()->json(['message' => 'La livraison doit être en cours.'], 422);
         }
 
-        DB::transaction(function () use ($livraison) {
+        DB::transaction(function () use ($livraison, $utilisateur) {
             $livraison->update([
                 'statut_livraison' => 'livree',
                 'date_livraison'   => now(),
             ]);
-
             $commande = $livraison->commande;
             if (in_array($commande->statut_commande, ['en_livraison', 'prete', 'validee', 'en_preparation'], true)) {
-                $commande->update(['statut_commande' => 'servie']);
+                $this->commandes->changerStatut($commande, 'servie', $utilisateur->Id_utilisateur);
             }
         });
 
@@ -199,17 +203,5 @@ class LivraisonController extends Controller
         $livraison->update(['statut_livraison' => 'echouee']);
 
         return $livraison;
-    }
-
-    /**
-     * Générateur LIV0001 (domaine ID_LIV, dictionnaire §10) sans collision.
-     */
-    private function genererIdLivraison(): string
-    {
-        do {
-            $id = 'LIV' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-        } while (Livraison::where('Id_livraison', $id)->exists());
-
-        return $id;
     }
 }

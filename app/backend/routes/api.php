@@ -115,3 +115,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('stats/dashboard', [StatistiqueController::class, 'dashboard']);          // gérant + admin
     Route::get('stats/top-clients', [StatistiqueController::class, 'topClients']);       // tous (leaderboard)
 });
+
+use App\Http\Controllers\PaiementController;
+
+// --- Paiements (Membre 3) : l'étudiant enregistre, le personnel vérifie ---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('paiement', [PaiementController::class, 'index']);
+    Route::get('paiement/{paiement}', [PaiementController::class, 'show']);
+    Route::post('commande/{commande}/paiement', [PaiementController::class, 'store']);
+    Route::post('paiement/{paiement}/verifier', [PaiementController::class, 'verifier']);
+});
