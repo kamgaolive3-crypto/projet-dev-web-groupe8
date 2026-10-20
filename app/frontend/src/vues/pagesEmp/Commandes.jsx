@@ -135,9 +135,12 @@ export default function Commandes() {
     }
 
     // filtre date appliqué AVANT la recherche/pagination (périodes glissantes).
-    const aujourdhui = new Date().toISOString().slice(0, 10);
-    const limiteSemaine = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-    const limiteMois = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    // dates LOCALES : toISOString passerait en UTC et decalerait d un jour
+    const isoLocal = (d) =>
+        d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const aujourdhui = isoLocal(new Date());
+    const limiteSemaine = isoLocal(new Date(Date.now() - 7 * 86400000));
+    const limiteMois = isoLocal(new Date(Date.now() - 30 * 86400000));
     const listeFiltree = liste.filter((c) => {
         if (!periode || periode === "" || !c.date) return true;
         if (periode === "aujourdhui") return c.date === aujourdhui;

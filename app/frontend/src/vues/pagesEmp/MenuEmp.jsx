@@ -82,13 +82,14 @@ export default function MenuEmp() {
                 categories_article: a.categories_article,
                 disponibilite_article: !a.disponibilite_article,
                 Menu_du_jour: a.Menu_du_jour,
+                Id_restaurant: a.Id_restaurant, // requis par la validation du backend
             });
             plat.brut = { ...a, disponibilite_article: !a.disponibilite_article };
             setMessage(plat.nom + " : " + (plat.disponible ? "indisponible" : "disponible") + ".");
             setErreur("");
         } catch (e) {
-            // ...roll back if the backend rejects
-            setListe(liste.map((p) => (p.id === id ? { ...p, disponible: !p.disponible } : p)));
+            // ...repli : on remet la disponibilite d ORIGINE du plat
+            setListe((il) => il.map((p) => (p.id === id ? { ...p, disponible: !!plat.brut.disponibilite_article } : p)));
             setErreur(e.message);
         }
     }

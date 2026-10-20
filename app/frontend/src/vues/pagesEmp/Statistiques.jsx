@@ -55,12 +55,15 @@ export default function Statistiques() {
                 const parStatuts = new Map((stats.par_statut ?? []).map((s) => [s.statut_commande, s.total]));
 
                 // 7 jours contigus (periode[0]..periode[1]), 0 par défaut
+                // NB : formatage manuel — toISOString passerait en UTC et decalerait d un jour
+                const isoLocal = (d) =>
+                    d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
                 const joursSemaine = [];
                 if (debut) {
                     for (let i = 0; i < 7; i++) {
                         const d = new Date(debut + "T00:00:00");
                         d.setDate(d.getDate() + i);
-                        const iso = d.toISOString().slice(0, 10);
+                        const iso = isoLocal(d);
                         const sql = parJour.find((j) => (j.jour || "").slice(0, 10) === iso);
                         joursSemaine.push({
                             jour: NOMS_JOURS[d.getDay()],

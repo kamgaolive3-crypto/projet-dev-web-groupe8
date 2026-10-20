@@ -48,6 +48,21 @@ export default function Reclamations() {
     const [liste, setListe] = useState([]);
     const [erreur, setErreur] = useState("");
     const [message, setMessage] = useState("");
+
+    // Filtre par période appliqué AVANT la recherche/pagination.
+    const [periode, setPeriode] = useState("");
+    // dates LOCALES : toISOString passerait en UTC et decalerait d un jour
+    const isoLocal = (d) =>
+        d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const aujourdhui = isoLocal(new Date());
+    const limiteSemaine = isoLocal(new Date(Date.now() - 7 * 86400000));
+    const listeFiltree = liste.filter((c) => {
+        if (!periode || !c.dateISO) return true;
+        if (periode === "aujourdhui") return c.dateISO === aujourdhui;
+        if (periode === "semaine") return c.dateISO >= limiteSemaine;
+        return true;
+    });
+
     // Hook partagé : recherche, filtres (clé = champ des données), pagination
     const { recherche, changerRecherche, filtres, changerFiltre, page, setPage, nombrePages, elementsPage: listeAffichee } =
         useRecherchePagination(listeFiltree, ["numero", "sujet", "etudiant"], PAR_PAGE);
@@ -72,17 +87,6 @@ export default function Reclamations() {
             .catch((e) => setErreur(e.message));
     }
     useEffect(charger, []);
-
-    // Filtre par période appliqué AVANT la recherche/pagination.
-    const [periode, setPeriode] = useState("");
-    const aujourdhui = new Date().toISOString().slice(0, 10);
-    const limiteSemaine = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-    const listeFiltree = liste.filter((c) => {
-        if (!periode || !c.dateISO) return true;
-        if (periode === "aujourdhui") return c.dateISO === aujourdhui;
-        if (periode === "semaine") return c.dateISO >= limiteSemaine;
-        return true;
-    });
 
     // Compte sur la liste complète (null = tout)
     function compter(statut) {

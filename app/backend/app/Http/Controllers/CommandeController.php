@@ -229,11 +229,16 @@ class CommandeController extends Controller
         }
 
         DB::transaction(function () use ($commande, $utilisateur) {
-            $commande->update([
+            // Id_valideur ne peut contenir qu un EMPLOYE (cle etrangere vers employe) :
+            // un gerant/admin valide sans remplir cette colonne, l historique garde qui a valide.
+            $maj = [
                 'statut_commande' => 'validee',
-                'Id_valideur'     => $utilisateur->Id_utilisateur,
                 'date_validation' => now(),
-            ]);
+            ];
+            if ($utilisateur->role === 'employe') {
+                $maj['Id_valideur'] = $utilisateur->Id_utilisateur;
+            }
+            $commande->update($maj);
             $this->commandes->enregistrerHistorique($commande->Id_commande, $utilisateur->Id_utilisateur, 'validee');
         });
 

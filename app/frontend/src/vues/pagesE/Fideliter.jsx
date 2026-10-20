@@ -48,12 +48,16 @@ export default function Fidelite() {
             })
             .catch((e) => setErreur(e.message))
 
-        api.get("/fidelite/historique")
-            .then((liste) => {
+        // l historique ne contient pas le montant : on le recupere sur les commandes
+        // liees (m.Id_commande) pour remplir la colonne « Montant » de la maquette
+        Promise.all([api.get("/fidelite/historique"), api.get("/commande")])
+            .then(([liste, cmds]) => {
+                const filCmds = Array.isArray(cmds) ? cmds : (cmds.data || []);
+                const montants = new Map(filCmds.map((c) => [c.Id_commande, c.montant_total]));
                 setCommandes((Array.isArray(liste) ? liste : liste.data || []).map((m, i) => ({
                     id: m.Id_mvt ?? i,
                     date: (m.date_mvt || "").slice(0, 10),
-                    montant: m.montant ?? null,
+                    montant: m.montant ?? montants.get(m.Id_commande) ?? null,
                     points: Math.abs(m.nbres_points ?? m.points ?? 0),
                 })))
             })

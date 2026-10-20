@@ -13,9 +13,11 @@ const fcfa = (n) => n.toLocaleString("fr-FR") + " Fcfa"
 //traduit le statut de la base (en_attente, livree...) en texte affiché
 const libelleStatut = {
     en_attente: "En cours",
+    validee: "En cours",
     en_preparation: "En cours",
     prete: "En cours",
     en_livraison: "En cours",
+    servie: "Livrée",
     livree: "Livrée",
     annulee: "Annulée",
 }

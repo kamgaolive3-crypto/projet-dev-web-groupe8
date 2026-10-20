@@ -42,8 +42,14 @@ export default function TableauBord() {
     }
 
     // le nombre de commandes par statut sert a la carte "volume cuisine"
+    // attention : /stats/dashboard renvoie un OBJET {en_attente: 1, ...}
+    // alors que /stats/ventes-semaine renvoie un TABLEAU [{statut_commande, total}]
+    const brutStatuts = dashboard?.commandes_par_statut ?? ventes.par_statut ?? [];
+    const listeStatuts = Array.isArray(brutStatuts)
+        ? brutStatuts
+        : Object.entries(brutStatuts).map(([statut_commande, total]) => ({ statut_commande, total }));
     const parStatut = {};
-    (dashboard?.commandes_par_statut || ventes.par_statut || []).forEach((s) => {
+    listeStatuts.forEach((s) => {
         parStatut[s.statut_commande ?? Object.keys(s)[0]] = s.total ?? Object.values(s)[0];
     });
     const enCuisine = Number(parStatut.en_preparation || 0) + Number(parStatut.prete || 0);
