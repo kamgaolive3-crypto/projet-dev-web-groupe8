@@ -105,36 +105,10 @@ export default function Accueil() {
                 </p>
             )}
 
-            {/* ---------- 1. MENU DU JOURS ---------- */}
-            <section>
-                <TitreSection
-                    eyebrow="Frais du jour"
-                    titre="Menu du jours"
-                    note="Chaque jour, de nouveaux plats"
-                />
-                <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {menuDuJour.length === 0 ? (
-                        <p className="font-inria text-[14px] text-encre">
-                            Le menu du jour n&apos;est pas encore publie — revenez bientot !
-                        </p>
-                    ) : (
-                        menuDuJour.slice(0, 3).map((plat, i) => (
-                            <CartePlat
-                                key={plat.id}
-                                plat={plat}
-                                onAjouter={ajouter}
-                                ajoute={plat.id === ajouteId}
-                                delai={i * 80}
-                            />
-                        ))
-                    )}
-                </div>
-            </section>
-
-            {/* ---------- 2. PLAT DU JOUR (hero photo + bandeau verre) ---------- */}
+            {/* ---------- 1. PLAT DU JOUR (hero photo + bandeau verre) ---------- */}
             {platDuJour && (
                 <section
-                    className="relative mt-10 overflow-hidden rounded-2xl shadow-soft"
+                    className="relative mt-5 overflow-hidden rounded-2xl shadow-soft"
                     style={{ animation: "fade-up 0.5s cubic-bezier(0.22,1,0.36,1) both" }}
                 >
                     {/* photo de fond + voile de lisibilite en haut a gauche */}
@@ -171,6 +145,32 @@ export default function Accueil() {
                     </div>
                 </section>
             )}
+
+            {/* ---------- 2. MENU DU JOURS ---------- */}
+            <section className={platDuJour ? "mt-12" : ""}>
+                <TitreSection
+                    eyebrow="Frais du jour"
+                    titre="Menu du jours"
+                    note="Chaque jour, de nouveaux plats"
+                />
+                <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {menuDuJour.length === 0 ? (
+                        <p className="font-inria text-[14px] text-encre">
+                            Le menu du jour n&apos;est pas encore publie — revenez bientot !
+                        </p>
+                    ) : (
+                        menuDuJour.slice(0, 3).map((plat, i) => (
+                            <CartePlat
+                                key={plat.id}
+                                plat={plat}
+                                onAjouter={ajouter}
+                                ajoute={plat.id === ajouteId}
+                                delai={i * 80}
+                            />
+                        ))
+                    )}
+                </div>
+            </section>
 
             {/* ---------- 3. BANDES EVENEMENTS / PROMOTIONS ---------- */}
             <section className="mt-10">
