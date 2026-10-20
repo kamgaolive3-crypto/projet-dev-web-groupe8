@@ -41,7 +41,7 @@ class CommandeController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Commande::with(['articles', 'historiqueStatuts', 'paiements', 'livraison'])
+        $query = Commande::with(['articles', 'etudiant.utilisateur', 'historiqueStatuts', 'paiements', 'livraison'])
             ->orderByDesc('date_commande');
 
         if ($request->user()->role === 'etudiant') {

@@ -2,7 +2,10 @@
 
 import { FaCartShopping, FaStopwatch, FaKitchenSet, FaCircleCheck, FaMagnifyingGlass, FaRegCalendar, FaChevronDown } from "react-icons/fa6";
 // useState : mémorise la liste des commandes (pour que les statuts puissent changer).
-import { useState } from "react";
+// useEffect : recharge les commandes depuis le backend au premier rendu.
+import { useState, useEffect } from "react";
+// api : petit client HTTP qui ajoute le token + l'URL du backend (voir services/api.js).
+import { api } from "../../services/api";
 // Les deux flèches de bas de tableau (composant partagé par les 3 pages de tableau).
 import Pagination from "../../composantEmp/Pagination";
 // Hook partagé : gère la recherche, les filtres et la pagination (voir hooks/useRecherchePagination.js).
@@ -37,7 +40,7 @@ const cartes = [
     },
     {
         titre: "Prêtes",
-        statut: "À valider", // commande terminée, en attente d'être servie
+        statut: "Prête", // cuisine terminée, en attente d'être servie
         detail: "À livrer / Servir",
         Icone: FaCircleCheck,
         fond: "bg-emp-vert-carre",
@@ -49,28 +52,42 @@ const cartes = [
 // Les titres de colonnes du tableau (écrits une seule fois, utilisés dans <thead>).
 const colonnes = ["N° commande", "Étudiant", "Heure", "Type", "Plats", "Montant", "Statut", "Actions"];
 
-// Commandes de test issues de la maquette. À remplacer par les données du backend.
-// Chaque commande a un `statut` qui doit exister dans `etapes` et `stylesStatut` plus bas.
-const commandes = [
-    { numero: "CMD-00125", etudiant: "Reine Meni Dom", heure: "12:15", type: "Sur place", plat: "Poulet braisé", montant: 2500, statut: "En attente" },
-    { numero: "CMD-011", etudiant: "Junior Tamibe", heure: "12:08", type: "Livraison", plat: "Spaghetti sauté", montant: 2000, statut: "En attente" },
-    { numero: "CMD-00123", etudiant: "Olive Kamga", heure: "11:55", type: "Sur place", plat: "Poisson grillé", montant: 2500, statut: "En préparation" },
-    { numero: "CMD-00122", etudiant: "Diana Fossap", heure: "11:48", type: "Livraison", plat: "L'okok salé", montant: 2000, statut: "À valider" },
-    { numero: "CMD-00121", etudiant: "Emery Tagne", heure: "11:30", type: "Sur place", plat: "Riz sauté", montant: 1000, statut: "Servie" },
-];
+// La liste vient du backend : GET /api/commande (le personnel voit tout).
+// Chaque ligne `commande` garde les champs affichés (numero, etudiant, heure,
+// type, plat, montant, statut) + la date brute pour le filtre par période.
+
+// libellés lisibles pour les statuts de la base (memes mots que le filtre).
+const libelles = {
+    en_attente: "En attente",
+    validee: "Validée",
+    en_preparation: "En préparation",
+    prete: "Prête",
+    en_livraison: "En livraison",
+    servie: "Servie",
+    annulee: "Annulée",
+};
 
 // Couleurs de la pastille de chaque statut (fond + texte).
 const stylesStatut = {
     "En attente": "bg-emp-attente-rond text-emp-attente-emoji",
+    "Validée": "bg-emp-bleu-rond text-emp-bleu-emoji",
     "En préparation": "bg-emp-bleu-rond text-emp-bleu-emoji",
-    "À valider": "bg-emp-commande-rond text-emp-valider",
+    "En livraison": "bg-emp-bleu-rond text-emp-bleu-emoji",
+    "Prête": "bg-emp-commande-rond text-emp-valider",
     "Servie": "bg-emp-vert-rond text-emp-vert-emoji",
+    "Annulée": "bg-emp-attente-rond text-emp-attente-emoji",
 };
+
+// Étapes : texte du bouton + statut suivant du backend (`code`).
+// La base impose l'ordre : en_attente -> validee -> en_preparation -> prete -> servie.
 const etapes = {
-    "En attente": { bouton: "Préparer", suivant: "En préparation" },
-    "En préparation": { bouton: "Terminer", suivant: "À valider" },
-    "À valider": { bouton: "Valider", suivant: "Servie" },
-    "Servie": { bouton: "Valider", suivant: null },
+    "En attente": { bouton: "Valider", suivant: "Validée", code: "validee" },
+    "Validée": { bouton: "Préparer", suivant: "En préparation", code: "en_preparation" },
+    "En préparation": { bouton: "Terminer", suivant: "Prête", code: "prete" },
+    "Prête": { bouton: "Servir", suivant: "Servie", code: "servie" },
+    "En livraison": { bouton: "Servir", suivant: "Servie", code: "servie" },
+    "Servie": { bouton: "Terminé", suivant: null, code: null },
+    "Annulée": { bouton: "—", suivant: null, code: null },
 };
 
 // Nombre de commandes affichées par page.
@@ -79,32 +96,75 @@ const PAR_PAGE = 6;
 export default function Commandes() {
     // ===== LOGIQUE =====
 
-    // liste : les commandes affichées. setListe : fonction pour les modifier.
-    // Au départ, liste contient les commandes de test écrites plus haut.
-    const [liste, setListe] = useState(commandes);
+    // liste : les commandes du backend (aran graphées pour le tableau).
+    const [liste, setListe] = useState([]);
+    // periode : filtre date du select (« aujourd'hui / semaine / mois »).
+    const [periode, setPeriode] = useState("");
+    const [erreur, setErreur] = useState("");
+    const [message, setMessage] = useState("");
+    // detail : numéro de commande dont le détail est déplié (null = aucun).
+    const [detail, setDetail] = useState(null);
+
+    // charger() : GET /api/commande puis transformation vers les champs du tableau.
+    function charger() {
+        api.get("/commande")
+            .then((brut) => {
+                const fil = Array.isArray(brut) ? brut : (brut.data ?? brut.commandes ?? []);
+                setListe(fil.map(mapCommande));
+                setErreur("");
+            })
+            .catch((e) => setErreur(e.message));
+    }
+    useEffect(charger, []);
+
+    // mapCommande : transforme une commande du backend en ligne du tableau.
+    function mapCommande(c) {
+        const nom = c.etudiant?.utilisateur
+            ? (c.etudiant.utilisateur.prenom + " " + c.etudiant.utilisateur.nom).trim()
+            : c.Id_utilisateur;
+        return {
+            numero: c.Id_commande,
+            etudiant: nom,
+            heure: (c.date_commande || "").slice(11, 16),
+            date: (c.date_commande || "").slice(0, 10),
+            type: (c.mode_service === "livraison" || c.livraison) ? "Livraison" : "Sur place",
+            plat: (c.articles || []).map((a) => (a.pivot?.quantite ?? a.quantite ?? 1) + "x " + a.nom_article).join(", "),
+            montant: (c.montant_total ?? 0).toLocaleString("fr-FR") + " Fcfa",
+            statut: libelles[c.statut_commande] || c.statut_commande,
+        };
+    }
+
+    // filtre date appliqué AVANT la recherche/pagination (périodes glissantes).
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    const limiteSemaine = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    const limiteMois = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const listeFiltree = liste.filter((c) => {
+        if (!periode || periode === "" || !c.date) return true;
+        if (periode === "aujourdhui") return c.date === aujourdhui;
+        if (periode === "semaine") return c.date >= limiteSemaine;
+        if (periode === "mois") return c.date >= limiteMois;
+        return true;
+    });
+
     const {
         recherche, changerRecherche,
         filtres, changerFiltre,
         page, setPage, nombrePages,
         elementsPage: listeAffichee,
-    } = useRecherchePagination(liste, ["numero", "etudiant", "plat"], PAR_PAGE);
+    } = useRecherchePagination(listeFiltree, ["numero", "etudiant", "plat"], PAR_PAGE);
 
     // Appelée au clic sur le bouton d'action d'une ligne :
-    // passe la commande au statut suivant (voir `etapes`).
-    function avancer(numero) {
-        setListe(
-            // On parcourt toutes les commandes...
-            liste.map((commande) => {
-                // ...on ne touche qu'à celle qui a le bon numéro
-                // et qui a encore une étape suivante.
-                if (commande.numero === numero && etapes[commande.statut].suivant) {
-                    // On crée une copie avec le nouveau statut (on ne modifie jamais l'original).
-                    return { ...commande, statut: etapes[commande.statut].suivant };
-                }
-                // Les autres restent identiques.
-                return commande;
-            })
-        );
+    // envoie le statut suivant au backend, puis recharge toute la liste.
+    async function avancer(numero) {
+        const ligne = liste.find((commande) => commande.numero === numero);
+        const etape = etapes[ligne?.statut];
+        if (!ligne || !etape?.suivant) return;
+        setMessage(""); setErreur("");
+        try {
+            await api.post("/commande/" + encodeURIComponent(numero) + "/statut", { statut_commande: etape.code });
+            setMessage("Commande " + numero + " : " + etape.suivant.toLowerCase() + ".");
+            charger();
+        } catch (e) { setErreur(e.message); }
     }
 
     function compter(statut) {
@@ -129,6 +189,13 @@ export default function Commandes() {
                 </div>
             </div>
 
+            {erreur !== "" && (
+                <p className="mb-4 rounded-md bg-red-100 px-4 py-2 text-sm text-red-700">{erreur}</p>
+            )}
+            {message !== "" && (
+                <p className="mb-4 rounded-md bg-emp-vert-rond px-4 py-2 text-sm text-emp-vert-emoji">{message}</p>
+            )}
+
             {/* BLOC 2 : les 4 cartes de résumé.
                 grid-cols-2 : 2 colonnes sur mobile. md:grid-cols-4 : 4 sur ordinateur. */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -150,6 +217,31 @@ export default function Commandes() {
                     </div>
                 ))}
             </div>
+
+            {/* Bandeau de détail : s'affiche quand « Voir » est cliqué sur une ligne. */}
+            {detail !== null && (
+                <div className="mb-4 rounded-xl border border-emp-valider bg-emp-carre px-4 py-3 text-sm">
+                    <div className="flex items-center justify-between">
+                        <p className="font-semibold">Commande {detail}</p>
+                        <button type="button" onClick={() => setDetail(null)} className="text-xs text-secondary cursor-pointer">
+                            Fermer
+                        </button>
+                    </div>
+                    {(() => {
+                        const ligne = liste.find((c) => c.numero === detail);
+                        if (!ligne) return null;
+                        return (
+                            <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-secondary md:grid-cols-3">
+                                <p><span className="font-medium">Étudiant :</span> {ligne.etudiant}</p>
+                                <p><span className="font-medium">Heure :</span> {ligne.heure}</p>
+                                <p><span className="font-medium">Type :</span> {ligne.type}</p>
+                                <p><span className="font-medium">Montant :</span> {ligne.montant}</p>
+                                <p className="col-span-2 md:col-span-3"><span className="font-medium">Plats :</span> {ligne.plat || "—"}</p>
+                            </div>
+                        );
+                    })()}
+                </div>
+            )}
 
             {/* BLOC 3 : recherche + filtres.
                 flex-col : empilés sur mobile. md:flex-row : côte à côte sur ordinateur. */}
@@ -198,9 +290,11 @@ export default function Commandes() {
                     >
                         <option value="Tous">Statut : Tous</option>
                         <option value="En attente">En attente</option>
+                        <option value="Validée">Validée</option>
                         <option value="En préparation">En préparation</option>
-                        <option value="À valider">À valider</option>
+                        <option value="Prête">Prête</option>
                         <option value="Servie">Servie</option>
+                        <option value="Annulée">Annulée</option>
                     </select>
                     <FaChevronDown
                         size={12}
@@ -208,17 +302,22 @@ export default function Commandes() {
                     />
                 </div>
 
-                {/* Filtre Date : NON BRANCHÉ (les commandes n'ont pas de date, seulement une heure).
-                    À brancher quand le backend enverra de vraies dates. */}
+                {/* Filtre Date : périodes glissantes calculées côté client
+                    (aujourd'hui = mêmes jour ; semaine = 7 derniers jours ; mois = 30). */}
                 <div className="relative md:w-56 md:shrink-0">
                     <FaRegCalendar
                         size={14}
                         className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-secondary"
                     />
-                    <select className="w-full appearance-none rounded-md bg-emp-type py-3 pl-9 pr-4 text-sm cursor-pointer">
-                        <option>Aujourd'hui</option>
-                        <option>Cette semaine</option>
-                        <option>Ce mois</option>
+                    <select
+                        value={periode}
+                        onChange={(e) => setPeriode(e.target.value)}
+                        className="w-full appearance-none rounded-md bg-emp-type py-3 pl-9 pr-4 text-sm cursor-pointer"
+                    >
+                        <option value="">Toutes les dates</option>
+                        <option value="aujourdhui">Aujourd'hui</option>
+                        <option value="semaine">Cette semaine</option>
+                        <option value="mois">Ce mois</option>
                     </select>
                     <FaChevronDown
                         size={12}
@@ -275,10 +374,10 @@ export default function Commandes() {
                                 {/* Cellule des actions : Voir + bouton d'avancement */}
                                 <td className="px-4 py-5">
                                     <div className="flex items-center gap-8">
-                                        {/* TODO : « Voir » doit ouvrir le détail de la commande
-                                            (plats, quantités, prix, étudiant). Aucune action pour l'instant. */}
+                                        {/* « Voir » déplie le détail de la commande (plats, montants...). */}
                                         <button
                                             type="button"
+                                            onClick={() => setDetail(detail === commande.numero ? null : commande.numero)}
                                             className="rounded-md border border-emp-valider bg-emp-carre px-4 py-1.5 text-xs font-semibold text-emp-valider cursor-pointer hover:bg-emp-commande-rond"
                                         >
                                             Voir
