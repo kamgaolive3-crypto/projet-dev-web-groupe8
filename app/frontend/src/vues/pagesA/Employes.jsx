@@ -158,7 +158,7 @@ export default function Employes() {
                                 const nomComplet = (e.utilisateur?.prenom ?? e.prenom ?? "") + " " + (e.utilisateur?.nom ?? e.nom ?? "")
                                 const email = e.utilisateur?.email ?? e.email ?? ""
                                 const actif = e.statut_compte === "actif"
-                                const cree = e.date_embauche ?? (e.utilisateur?.created_at ?? "").slice(0, 10) ?? ""
+                                const cree = (e.date_embauche ?? e.utilisateur?.created_at ?? "").slice(0, 10) || ""
                                 return (
                                     <tr key={id} className="border-b border-[#efe6d0] last:border-0">
                                         <td className="px-4 py-3">
