@@ -15,6 +15,10 @@ const FRAIS_LIVRAISON = 1000
 //écrit un nombre avec des espaces : 6000 devient "6 000 Fcfa"
 const fcfa = (n) => n.toLocaleString("fr-FR") + " Fcfa"
 
+//renvoie le libellé lisible d'un code de moyen de paiement de l API
+const labelMoyen = (code) =>
+    ({ MOMO: "MTN Mobile Money", OM: "Orange Money", CARTE: "carte bancaire" }[code] || code)
+
 export default function Panier() {
     //récupère ce dont on a besoin dans l outil panier
     const { panier, changerQuantite, retirer, vider, total } = usePanier()
@@ -28,6 +32,13 @@ export default function Panier() {
     const [heure, setHeure] = useState("17:00")
     //points de fidélité à dépenser (multiple de 15 = 1 réduction de 1000 F)
     const [points, setPoints] = useState(0)
+    //moyen de paiement choisi (valeurs attendues par l API : MOMO, OM, CARTE)
+    const [paiement, setPaiement] = useState("MOMO")
+    const MOYENS = [
+        { valeur: "MOMO", label: "MTN Mobile Money" },
+        { valeur: "OM", label: "Orange Money" },
+        { valeur: "CARTE", label: "Carte bancaire" },
+    ]
     //message affiché après avoir confirmé la commande
     const [message, setMessage] = useState("")
     //message d'erreur (ex : requêtes refusées ou pas connecté)
@@ -73,11 +84,23 @@ export default function Panier() {
                 heure_recup: mode === "surPlace" ? heure : null,
                 points_utilises: pointsUtilises,
             })
-            //2. on vide le panier
+            //2. paiement : on enregistre le moyen choisi (US paiement, membre 3)
+            // POST /api/commande/{id}/paiement : le statut passe en "en attente de validation"
+            let libellePaiement = ""
+            try {
+                const pai = await api.post("/commande/" + commande.Id_commande + "/paiement", {
+                    mode_paiement: paiement,
+                })
+                libellePaiement = " — paiement " + labelMoyen(pai.mode_paiement) + " enregistré (en attente de validation)"
+            } catch (e) {
+                // la commande reste valable : on signale juste que le paiement n a pas pris
+                libellePaiement = " (attention : paiement non enregistré — " + e.message + ")"
+            }
+            //3. on vide le panier
             vider()
             setPoints(0)
-            //3. on affiche la confirmation avec le vrai numero de commande renvoyé par l API
-            setMessage("Commande " + commande.Id_commande + " enregistrée ! Vous avez gagné des points.")
+            //4. on affiche la confirmation avec le vrai numero de commande renvoyé par l API
+            setMessage("Commande " + commande.Id_commande + " enregistrée" + libellePaiement + " ! Vous avez gagné des points.")
         } catch (e) {
             // validation Laravel : { Id_restaurant: [...], items.0.quantite: [...] }
             const detail = e.champs ? Object.values(e.champs).flat().join(" - ") : null
@@ -269,6 +292,23 @@ export default function Panier() {
                                         onChange={(e) => setPoints(e.target.value)}
                                         className="miam-champ bg-white ring-black/10"
                                     />
+                                </label>
+                                {/* moyen de paiement (US paiement — le champ qui manquait) */}
+                                <label className="flex flex-col gap-1">
+                                    <span className="font-sans text-[12px] font-medium text-encre">
+                                        Moyen de paiement
+                                    </span>
+                                    <select
+                                        value={paiement}
+                                        onChange={(e) => setPaiement(e.target.value)}
+                                        className="miam-champ bg-white ring-black/10"
+                                    >
+                                        {MOYENS.map((m) => (
+                                            <option key={m.valeur} value={m.valeur}>
+                                                {m.label}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </label>
                             </div>
                         </div>

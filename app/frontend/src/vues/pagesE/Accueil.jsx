@@ -28,6 +28,13 @@ const versPlat = (a) => ({
     restaurant: a.Id_restaurant, // necessaire au panier (un seul restaurant)
 });
 
+// format "13 oct 2026" pour une date ISO renvoyee par l API
+const dateCourte = (iso) => {
+    const d = new Date(iso)
+    if (isNaN(d)) return ""
+    return d.getDate() + " " + ["jan","fev","mar","avr","mai","juin","juil","aout","sep","oct","nov","dec"][d.getMonth()]
+}
+
 export default function Accueil() {
     //le plat du jour : menu_du_jour = 1 et categorie = plat (GET /api/article_menu-du-jour/plat)
     const [platDuJour, setPlatDuJour] = useState(null)
@@ -60,6 +67,11 @@ export default function Accueil() {
                 image: e.affiche_evenement || (e.type_evenement === "promotion" ? promoMaquette : eventMaquette),
                 texte: e.description_evenement || (e.taux_reduction ? "Réduction de " + e.taux_reduction + "%" : "Points a gagner : " + e.points_evenement),
                 points: e.points_evenement,
+                // fenetre de dates lisible : "13 oct → 27 oct"
+                dates: e.debut_evenement && e.fin_evenement ? {
+                    debut: dateCourte(e.debut_evenement),
+                    fin: dateCourte(e.fin_evenement),
+                } : null,
             }))))
             .catch(() => setPromotions([]))
 
@@ -104,6 +116,59 @@ export default function Accueil() {
                     {message}
                 </p>
             )}
+
+            {/* ---------- 0. EVENEMENTS & PROMOTIONS EN COURS (avant le menu, cf demande client) ---------- */}
+            <section>
+                {bandes.length > 0 && (
+                    <div className="mb-4"><TitreSection eyebrow="A ne pas manquer" titre="Evenements & Promotions" /></div>
+                )}
+                {bandes.length === 0 && (
+                    <p className="font-inria text-[13px] text-encre/70">
+                        Aucune promotion ni evenement en cours pour le moment.
+                    </p>
+                )}
+                <div className="flex flex-col gap-4">
+                    {bandes.map((promo) => (
+                        <div
+                            key={promo.id}
+                            className="flex flex-col gap-4 rounded-xl bg-zone/90 p-4 transition-colors duration-200 hover:bg-[#EFEDE9] md:flex-row md:items-center md:gap-5"
+                        >
+                            {/* affiche a gauche (ratio fixe, masquee sur base) */}
+                            <img
+                                src={promo.image}
+                                alt={promo.etiquette}
+                                className="aspect-[4/3] w-full rounded-lg object-cover md:h-[92px] md:w-[124px]"
+                            />
+                            {/* textes : petite majuscule + titre Instrument + fenetre de dates */}
+                            <div className="flex flex-1 flex-col gap-1">
+                                <span className="font-sans text-[10.5px] font-semibold uppercase tracking-[0.14em] text-encre/70">
+                                    {promo.etiquette}
+                                </span>
+                                <p className="font-instrument text-[19px] leading-snug text-black md:text-[23px]">
+                                    {promo.texte}
+                                </p>
+                                {/* dates : l event est actif DU... AU... (lisible pour le client) */}
+                                {promo.dates && (
+                                    <span className="font-sans text-[11.5px] text-encre/70">
+                                        Du {promo.dates.debut} au {promo.dates.fin}
+                                        {promo.points ? " — " + promo.points + " points" : ""}
+                                    </span>
+                                )}
+                            </div>
+                            {/* filet vertical sur desktop */}
+                            <span className="hidden h-12 w-px bg-black/10 md:block" />
+                            {/* CTA "Je participe" */}
+                            <button
+                                type="button"
+                                onClick={() => participer(promo.id)}
+                                className="miam-cta self-start md:self-auto"
+                            >
+                                Je participe
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </section>
 
             {/* ---------- 1. PLAT DU JOUR (hero photo + bandeau verre) ---------- */}
             {platDuJour && (
@@ -169,47 +234,6 @@ export default function Accueil() {
                             />
                         ))
                     )}
-                </div>
-            </section>
-
-            {/* ---------- 3. BANDES EVENEMENTS / PROMOTIONS ---------- */}
-            <section className="mt-10">
-                {bandes.length > 0 && (
-                    <div className="mb-4"><TitreSection eyebrow="A ne pas manquer" titre="Evenements & Promotions" /></div>
-                )}
-                <div className="flex flex-col gap-4">
-                    {bandes.map((promo) => (
-                        <div
-                            key={promo.id}
-                            className="flex flex-col gap-4 rounded-xl bg-zone/90 p-4 transition-colors duration-200 hover:bg-[#EFEDE9] md:flex-row md:items-center md:gap-5"
-                        >
-                            {/* affiche a gauche (ratio fixe, masquee sur base) */}
-                            <img
-                                src={promo.image}
-                                alt={promo.etiquette}
-                                className="aspect-[4/3] w-full rounded-lg object-cover md:h-[92px] md:w-[124px]"
-                            />
-                            {/* textes : petite majuscule + titre Instrument */}
-                            <div className="flex flex-1 flex-col gap-1">
-                                <span className="font-sans text-[10.5px] font-semibold uppercase tracking-[0.14em] text-encre/70">
-                                    {promo.etiquette}
-                                </span>
-                                <p className="font-instrument text-[19px] leading-snug text-black md:text-[23px]">
-                                    {promo.texte}
-                                </p>
-                            </div>
-                            {/* filet vertical sur desktop */}
-                            <span className="hidden h-12 w-px bg-black/10 md:block" />
-                            {/* CTA "Je participe" */}
-                            <button
-                                type="button"
-                                onClick={() => participer(promo.id)}
-                                className="miam-cta self-start md:self-auto"
-                            >
-                                Je participe
-                            </button>
-                        </div>
-                    ))}
                 </div>
             </section>
         </div>
