@@ -48,6 +48,8 @@ export default function Reclamations() {
     const [liste, setListe] = useState([]);
     const [erreur, setErreur] = useState("");
     const [message, setMessage] = useState("");
+    // fenêtre « proposer une solution » : { numero, texte } ou null
+    const [solution, setSolution] = useState(null);
 
     // Filtre par période appliqué AVANT la recherche/pagination.
     const [periode, setPeriode] = useState("");
@@ -99,21 +101,33 @@ export default function Reclamations() {
         const etape = etapes[ligne?.statut];
         if (!ligne || !etape?.action) return;
         setMessage(""); setErreur("");
+        if (etape.action === "traiter") {
+            // Open -> In progress : on ouvre la fenêtre de solution (le personnel rédige)
+            setSolution({ numero, texte: "" });
+            return;
+        }
+        // In progress -> Resolved/Rejected : décision du gérant
+        const decisionValidee = window.confirm("Réclamation " + numero + " : OK, valider ? (Annuler = rejeter)");
         try {
-            if (etape.action === "traiter") {
-                // Open -> In progress : le personnel rédige une première réponse
-                const reponse = window.prompt("Première réponse au client pour la réclamation n°" + numero + " :");
-                if (!reponse) return; // annulé
-                await api.post("/reclamation/" + encodeURIComponent(numero) + "/traiter", { reponse: reponse });
-                setMessage("Réclamation " + numero + " prise en charge.");
-            } else {
-                // In progress -> Resolved/Rejected : décision du gérant
-                const decisionValidee = window.confirm("Réclamation " + numero + " : OK, valider ? (Annuler = rejeter)");
-                await api.post("/reclamation/" + encodeURIComponent(numero) + "/decision-gerant", { decision: decisionValidee ? "validee" : "rejetee" });
-                setMessage("Réclamation " + numero + (decisionValidee ? " résolue." : " rejetée."));
-            }
+            await api.post("/reclamation/" + encodeURIComponent(numero) + "/decision-gerant", { decision: decisionValidee ? "validee" : "rejetee" });
+            setMessage("Réclamation " + numero + (decisionValidee ? " résolue." : " rejetée."));
             charger();
         } catch (e) { setErreur(e.message); }
+    }
+
+    // Envoi de la solution rédigée dans la fenêtre (POST /api/reclamation/{id}/traiter)
+    async function proposerSolution() {
+        if (!solution?.texte.trim()) return;
+        setMessage(""); setErreur("");
+        try {
+            await api.post("/reclamation/" + encodeURIComponent(solution.numero) + "/traiter", { reponse: solution.texte });
+            setMessage("Solution proposée pour la réclamation " + solution.numero + " — elle passe au gérant pour décision.");
+            setSolution(null);
+            charger();
+        } catch (e) {
+            setErreur(e.message);
+            setSolution(null);
+        }
     }
     return (
         <div className="p-4 md:p-6">
@@ -131,6 +145,43 @@ export default function Reclamations() {
             )}
             {message !== "" && (
                 <p className="mb-4 rounded-md bg-emp-vert-rond px-4 py-2 text-sm text-emp-vert-emoji">{message}</p>
+            )}
+
+            {/* Fenêtre « Proposer une solution » (remplace l ancien window.prompt) */}
+            {solution && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                    <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-lg">
+                        <h3 className="font-bold">Proposer une solution</h3>
+                        <p className="mt-1 text-sm text-secondary">
+                            Réclamation <b>{solution.numero}</b> — votre réponse est envoyée au client,
+                            la réclamation passe ensuite devant le gérant.
+                        </p>
+                        <textarea
+                            autoFocus
+                            rows={4}
+                            value={solution.texte}
+                            onChange={(e) => setSolution({ ...solution, texte: e.target.value })}
+                            placeholder="Ex : plat offert, nouveau plat préparé, réduction sur la prochaine commande…"
+                            className="mt-3 w-full rounded-md border border-primary px-3 py-2 text-sm outline-none"
+                        />
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setSolution(null)}
+                                className="cursor-pointer rounded-md bg-emp-type px-4 py-2 text-sm font-semibold text-secondary hover:bg-emp-attente-rond"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="button"
+                                onClick={proposerSolution}
+                                className="cursor-pointer rounded-md bg-primary-700 px-4 py-2 text-sm font-semibold text-secondary hover:bg-primary-800"
+                            >
+                                Envoyer la solution
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Cartes (nombres calculés) */}
