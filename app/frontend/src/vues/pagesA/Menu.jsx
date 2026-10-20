@@ -41,7 +41,18 @@ export default function Menu() {
         charger()
         // la liste des restaurants sert au select du formulaire
         api.get("/restaurant")
-            .then((l) => setRestaurants(Array.isArray(l) ? l : l.data || []))
+            .then((l) => {
+                const brut = Array.isArray(l) ? l : (l.data || l.restaurants || []);
+                setRestaurants(brut)
+                // toujours ancrer le formulaire sur un vrai Id_restaurant existant
+                const premier = (brut[0] || {}).Id_restaurant ?? (brut[0] || {}).id_restaurant ?? (brut[0] || {}).id;
+                if (premier) setForm((f) => ({
+                    ...f,
+                    Id_restaurant: brut.some((r) => (r.Id_restaurant ?? r.id_restaurant ?? r.id) === f.Id_restaurant)
+                        ? f.Id_restaurant
+                        : premier,
+                }));
+            })
             .catch(() => setRestaurants([]))
     }, [])
 
@@ -174,15 +185,20 @@ export default function Menu() {
                     <select value={form.Id_restaurant}
                         onChange={(e) => setForm({ ...form, Id_restaurant: e.target.value })}
                         className="rounded-md border border-[#CFBD97] px-2 py-1">
-                        {restaurants.map((r) => (
-                            <option key={r.Id_restaurant} value={r.Id_restaurant}>
-                                {(r.nom_restaurant ?? r.nom ?? r.Id_restaurant)}
-                            </option>
-                        ))}
+                        {restaurants.map((r) => {
+                            const idResto = r.Id_restaurant ?? r.id_restaurant ?? r.id;
+                            // jamais le nom d'affichage comme value : l'API valide le vrai Id
+                            if (idResto == null) return null;
+                            return (
+                                <option key={idResto} value={idResto}>
+                                    {(r.nom_restaurant ?? r.nom ?? idResto)}
+                                </option>
+                            );
+                        })}
                     </select>
                 </div>
                 <div className="flex flex-col gap-1 text-xs">
-                    <label>Image (chemin ou URL, facultatif)</label>
+                    <label>Image (chemin ou URL, ex : /img/plats/eru.jpg)</label>
                     <input value={form.image_article} onChange={(e) => setForm({ ...form, image_article: e.target.value })}
                         className="rounded-md border border-[#CFBD97] px-2 py-1" />
                 </div>
