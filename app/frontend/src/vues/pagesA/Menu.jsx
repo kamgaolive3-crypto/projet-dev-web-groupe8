@@ -128,6 +128,25 @@ export default function Menu() {
         } catch (e) { setErreur(e.message) }
     }
 
+    // upload d image du formulaire (dossier plats) : envoi du fichier, le
+    // serveur renvoie le chemin exact a enregistrer (plus de chemin a inventer)
+    const [envoiImage, setEnvoiImage] = useState(false)
+    const choisirImage = async (fichier) => {
+        if (!fichier) return
+        setEnvoiImage(true); setMessage(""); setErreur("")
+        const fd = new FormData()
+        fd.append("image", fichier)
+        try {
+            const rep = await api.envoiFichier("/upload_image", fd)
+            setForm((f) => ({ ...f, image_article: rep.chemin }))
+            setMessage("Image enregistrée : " + rep.chemin)
+        } catch (e) {
+            setErreur(e.message || "Image refusée par le serveur")
+        } finally {
+            setEnvoiImage(false)
+        }
+    }
+
     // filtre par onglet de categorie
     const articlesAffiches = onglet
         ? articles.filter((a) => a.categories_article === onglet)
@@ -198,8 +217,22 @@ export default function Menu() {
                     </select>
                 </div>
                 <div className="flex flex-col gap-1 text-xs">
-                    <label>Image (chemin ou URL, ex : /img/plats/eru.jpg)</label>
+                    <label>Photo du plat (fichier jpg/png — upload direct)</label>
+                    <input type="file" accept="image/jpeg,image/png,image/webp"
+                        onChange={(e) => choisirImage(e.target.files?.[0])}
+                        disabled={envoiImage}
+                        className="rounded-md border border-[#CFBD97] px-1 py-1 file:mr-2 file:cursor-pointer file:rounded-l-md file:border-0 file:bg-[#CFBD97] file:px-2 file:text-white" />
+                    {envoiImage && <span className="text-[11px] text-gray-500">Envoi de l&apos;image...</span>}
+                    {/* preview de l image choisie/uploadée */}
+                    {form.image_article && (
+                        <div className="flex items-center gap-2">
+                            <img src={form.image_article} alt="aperçu" className="h-9 w-9 rounded object-cover" />
+                            <span className="text-[11px] text-gray-500">{form.image_article}</span>
+                        </div>
+                    )}
+                    {/* repli : saisie manuelle du chemin (URL externe par exemple) */}
                     <input value={form.image_article} onChange={(e) => setForm({ ...form, image_article: e.target.value })}
+                        placeholder="ou chemin / URL, ex : /img/plats/eru.jpg"
                         className="rounded-md border border-[#CFBD97] px-2 py-1" />
                 </div>
                 <div className="flex flex-col gap-1 text-xs md:col-span-2">
@@ -284,10 +317,11 @@ export default function Menu() {
                                         </button>
                                     </td>
                                     <td className="px-4 py-3">
+                                        {/* un clic ajoute/retire le plat du menu du jour (US-025) */}
                                         <button onClick={() => basculer(a, "Menu_du_jour")}
-                                            title="Cliquer pour basculer"
-                                            className={"rounded-full px-3 py-1 text-xs " + (a.Menu_du_jour ? "bg-[#CFBD97] text-white" : "bg-gray-200 text-gray-600")}>
-                                            {a.Menu_du_jour ? "Affiché" : "Masqué"}
+                                            title={a.Menu_du_jour ? "Retirer du menu du jour" : "Ajouter ce plat existant au menu du jour"}
+                                            className={"rounded-full px-3 py-1 text-xs " + (a.Menu_du_jour ? "bg-[#CFBD97] text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300")}>
+                                            {a.Menu_du_jour ? "Du jour ✓" : "Pas du jour"}
                                         </button>
                                     </td>
                                     <td className="px-4 py-3">

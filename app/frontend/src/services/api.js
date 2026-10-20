@@ -68,4 +68,25 @@ export const api = {
   post: (url, corps) => appel("POST", url, corps),
   put: (url, corps) => appel("PUT", url, corps),
   del: (url) => appel("DELETE", url),
+  // envoi multipart (upload de fichiers) : le corps est un FormData,
+  // SANS Content-Type manuel (le navigateur doit y mettre la boundary)
+  envoiFichier: async (url, formData) => {
+    const options = { method: "POST", headers: { Accept: "application/json" }, body: formData };
+    const token = getToken();
+    if (token) options.headers.Authorization = "Bearer " + token;
+
+    const reponse = await fetch(BASE + url, options);
+    const texte = await reponse.text();
+    let donnees = null;
+    if (texte) {
+      try { donnees = JSON.parse(texte); } catch { donnees = texte; }
+    }
+    if (!reponse.ok) {
+      const erreur = new Error(donnees?.message || "Erreur serveur (code " + reponse.status + ")");
+      erreur.status = reponse.status;
+      erreur.champs = donnees?.errors || null;
+      throw erreur;
+    }
+    return donnees;
+  },
 };

@@ -14,6 +14,7 @@ const FORMULAIRE_VIDE = {
     points_evenement: 0,
     taux_reduction: "",
     description_evenement: "",
+    affiche_evenement: "",
 };
 
 export default function Evenement() {
@@ -69,6 +70,7 @@ export default function Evenement() {
             points_evenement: e.points_evenement ?? 0,
             taux_reduction: e.taux_reduction ?? "",
             description_evenement: e.description_evenement ?? "",
+            affiche_evenement: e.affiche_evenement ?? "",
         });
         window.scrollTo({ top: 0, behavior: "smooth" })
     }
@@ -91,6 +93,24 @@ export default function Evenement() {
         } catch (e) {
             setErreur(e.message)
             setParticipations(null)
+        }
+    }
+
+    // upload de l affiche (dossier evenements) : le serveur renvoie le chemin exact
+    const [envoiAffiche, setEnvoiAffiche] = useState(false)
+    const choisirAffiche = async (fichier) => {
+        if (!fichier) return
+        setEnvoiAffiche(true); setMessage(""); setErreur("")
+        const fd = new FormData()
+        fd.append("image", fichier)
+        try {
+            const rep = await api.envoiFichier("/upload_image", fd)
+            setForm((f) => ({ ...f, affiche_evenement: rep.chemin }))
+            setMessage("Affiche enregistrée : " + rep.chemin)
+        } catch (e) {
+            setErreur(e.message || "Image refusée par le serveur")
+        } finally {
+            setEnvoiAffiche(false)
         }
     }
 
@@ -124,6 +144,23 @@ export default function Evenement() {
                     <label>Description (obligatoire, affichee aux etudiants)</label>
                     <textarea rows="2" value={form.description_evenement}
                         onChange={(e) => setForm({ ...form, description_evenement: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                </div>
+                <div className="flex flex-col gap-1 text-xs md:col-span-2">
+                    <label>Affiche de l&apos;événement (fichier jpg/png — affichée sur l&apos;accueil étudiants)</label>
+                    <input type="file" accept="image/jpeg,image/png,image/webp"
+                        onChange={(e) => choisirAffiche(e.target.files?.[0])}
+                        disabled={envoiAffiche}
+                        className="rounded-md border border-[#CFBD97] px-1 py-1 file:mr-2 file:cursor-pointer file:rounded-l-md file:border-0 file:bg-[#CFBD97] file:px-2 file:text-white" />
+                    {envoiAffiche && <span className="text-[11px] text-gray-500">Envoi de l&apos;affiche...</span>}
+                    {form.affiche_evenement && (
+                        <div className="flex items-center gap-2">
+                            <img src={form.affiche_evenement} alt="affiche" className="h-9 w-14 rounded object-cover" />
+                            <span className="text-[11px] text-gray-500">{form.affiche_evenement}</span>
+                        </div>
+                    )}
+                    <input value={form.affiche_evenement} onChange={(e) => setForm({ ...form, affiche_evenement: e.target.value })}
+                        placeholder="ou chemin / URL, ex : /img/evenements/soiree.jpg"
                         className="rounded-md border border-[#CFBD97] px-2 py-1" />
                 </div>
                 <div className="flex flex-col gap-1 text-xs">
@@ -173,6 +210,10 @@ export default function Evenement() {
                 {evenements.map((e) => (
                     <div key={e.Id_evenement} className="rounded-xl bg-white p-3 text-xs shadow-sm">
                         <div className="flex flex-wrap items-center gap-2">
+                            {e.affiche_evenement && (
+                                <img src={e.affiche_evenement} alt={e.Id_evenement}
+                                    className="h-10 w-14 rounded object-cover" />
+                            )}
                             <div className="flex-1">
                                 <p className="font-semibold">
                                     {e.Id_evenement} · {e.type_evenement} · {e.points_evenement} pts{e.taux_reduction ? " · -" + e.taux_reduction + "%" : ""}
