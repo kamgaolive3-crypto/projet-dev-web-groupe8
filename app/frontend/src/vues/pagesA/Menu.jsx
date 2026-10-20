@@ -277,7 +277,7 @@ export default function GestionMenu() {
                   ))}
                 </select>
               </label>
-
+                  
               <div className="mt-4 flex justify-center sm:col-span-2">
                 <button
                   type="submit"
@@ -286,6 +286,7 @@ export default function GestionMenu() {
                   {idEnEdition === null ? "Ajouter" : "Enregistrer"}
                 </button>
               </div>
+              
             </form>
           </div>
         </div>

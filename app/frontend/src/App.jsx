@@ -1,8 +1,8 @@
 import Login from "./vues/pages/page_connexion";
-import Accueil from "./vues/pagesE/Accueil"
-import Menu from "./vues/pagesE/Menu"
-import Panier from "./vues/pagesE/Panier"
-import Fideliter from "./vues/pagesE/Fideliter"
+import Accueil from "./vues/pagesE/Accueil";
+import Menu from "./vues/pagesE/Menu";
+import Panier from "./vues/pagesE/Panier";
+import Fideliter from "./vues/pagesE/Fideliter";
 import LayoutE from "./composantE/Layout";
 import LayoutA from "./composantA/Layout";
 import TableauBord from "./vues/pagesA/TableauBord";
@@ -18,8 +18,14 @@ import Commandes from "./vues/pagesEmp/Commandes";
 import MenuEmp from "./vues/pagesEmp/MenuEmp";
 import Reclamations from "./vues/pagesEmp/Reclamations";
 import Statistiques from "./vues/pagesEmp/Statistiques";
-import Reclamation from "./vues/pagesE/Reclamation"
-import Historique from "./vues/pagesE/Historique"
+import Reclamation from "./vues/pagesE/Reclamation";
+import Historique from "./vues/pagesE/Historique";
+import LayoutG from "./composantG/Layout";
+import CommandesG from "./vues/pageG/CommandesG";
+import EmployesG from "./vues/pageG/EmployesG";
+import StatistiquesG from "./vues/pageG/StatistiquesG";
+import ReclamationsG from "./vues/pageG/ReclamationsG";
+import TableauBordG from "./vues/pageG/TableauBordG";
 
 export default function App() {
   return (
@@ -44,15 +50,22 @@ export default function App() {
           <Route path="/ReclamationA" element={<ReclamationA />}/>
         </Route>
         {/* 2. Vos autres pages */}
-        <Route path="/page_connexion" element={<Login />} />
-        <Route path="/page_inscription" element={<Signin />} />
+          <Route path="/page_connexion" element={<Login />} />
+          <Route path="/page_inscription" element={<Signin />} />
         <Route element={<LayoutEmp />}>
-        <Route path="/Commandes" element={<Commandes />} />
-        <Route path="/MenuEmp" element={<MenuEmp />} />
-        <Route path="/Reclamations" element={<Reclamations />} />
-        <Route path="/Statistiques" element={<Statistiques />} />
+          <Route path="/Commandes" element={<Commandes />} />
+          <Route path="/MenuEmp" element={<MenuEmp />} />
+          <Route path="/Reclamations" element={<Reclamations />} />
+          <Route path="/Statistiques" element={<Statistiques />} />
         </Route>
-        </Routes>
+        <Route element={<LayoutG />}>
+          <Route path="/TableauBordG" element={<TableauBordG />} />
+          <Route path="/CommandesG" element={<CommandesG />} />
+          <Route path="/EmployesG" element={<EmployesG />} />
+          <Route path="/StatistiquesG" element={<StatistiquesG />} />
+          <Route path="/ReclamationsG" element={<ReclamationsG />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }
