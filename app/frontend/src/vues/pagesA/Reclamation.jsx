@@ -93,7 +93,7 @@ export default function Reclamation() {
     const listeAffichee = liste.filter((r) => {
         if (filtre && r.statut_reclamation !== filtre) return false;
         if (!texte) return true;
-        const etu = ((r.etudiant?.nom ?? "") + " " + (r.etudiant?.prenom ?? "")).toLowerCase();
+        const etu = ((r.etudiant?.utilisateur?.prenom ?? r.etudiant?.prenom ?? "") + " " + (r.etudiant?.utilisateur?.nom ?? r.etudiant?.nom ?? "")).toLowerCase();
         return (r.Id_reclamation || "").toLowerCase().includes(texte)
             || (r.Id_commande || "").toLowerCase().includes(texte)
             || (r.motif_reclamation || "").toLowerCase().includes(texte)
@@ -170,7 +170,7 @@ export default function Reclamation() {
                                     <tr key={r.Id_reclamation} className="border-b border-[#efe6d0] last:border-0">
                                         <td className="px-4 py-3 font-semibold">{r.Id_reclamation}</td>
                                         <td className="px-4 py-3">
-                                            {((r.etudiant?.prenom ?? "") + " " + (r.etudiant?.nom ?? "")).trim() || "—"}
+                                            {((r.etudiant?.utilisateur?.prenom ?? r.etudiant?.prenom ?? "") + " " + (r.etudiant?.utilisateur?.nom ?? r.etudiant?.nom ?? "")).trim() || "-"}
                                         </td>
                                         <td className="px-4 py-3">{r.Id_commande}</td>
                                         <td className="max-w-48 truncate px-4 py-3">{r.motif_reclamation}</td>
@@ -219,7 +219,7 @@ export default function Reclamation() {
                         .filter((r) => detailOuvert === r.Id_reclamation)
                         .map((r) => (
                             <div key={"detail-" + r.Id_reclamation} className="flex flex-col gap-2 border-t border-[#efe6d0] bg-[#f5f1e6] px-4 py-3 text-xs">
-                                <p><b>Étudiant :</b> {((r.etudiant?.prenom ?? "") + " " + (r.etudiant?.nom ?? "")).trim() || "—"}</p>
+                                <p><b>Étudiant :</b> {((r.etudiant?.utilisateur?.prenom ?? r.etudiant?.prenom ?? "") + " " + (r.etudiant?.utilisateur?.nom ?? r.etudiant?.nom ?? "")).trim() || "-"}</p>
                                 <p><b>Date :</b> {(r.date_reclamation || "").slice(0, 16).replace("T", " ")}</p>
                                 <p><b>Motif :</b> {r.motif_reclamation}</p>
                                 <p><b>Description :</b> {r.description_reclamation}</p>

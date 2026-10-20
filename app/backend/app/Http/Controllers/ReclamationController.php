@@ -47,7 +47,7 @@ class ReclamationController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Reclamation::with(['etudiant', 'commande'])->orderByDesc('date_reclamation');
+        $query = Reclamation::with(['etudiant.utilisateur', 'commande'])->orderByDesc('date_reclamation');
 
         if ($request->user()->role === 'etudiant') {
             $query->where('Id_utilisateur', $request->user()->Id_utilisateur);

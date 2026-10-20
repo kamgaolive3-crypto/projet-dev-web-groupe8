@@ -1,49 +1,135 @@
 // Statistiques.jsx : page « Statistiques » de l'espace Employé (route /Statistiques).
-// Filtres, 3 cartes, graphique en barres, donut, meilleur jour. Données provisoires (backend à venir).
-import { useState } from "react";
+// Filtres, 3 cartes, graphique en barres, donut, meilleur jour.
+// Données : GET /api/stats/ventes-semaine (7 derniers jours, réservé au personnel)
+// + GET /api/commande pour la répartition par catégorie du donut.
+import { useState, useEffect } from "react";
 import { FaChartColumn, FaCartShopping, FaGlobe, FaBagShopping, FaArrowUp, FaClipboardList, FaChevronDown, FaArrowRight, FaTrophy } from "react-icons/fa6";
+import { api } from "../../services/api";
 
-// Cartes de résumé : valeurs écrites à la main (TODO : calculer avec le backend)
-const cartes = [
-    { titre: "Total commandes", valeur: "267", variation: "+12%", Icone: FaCartShopping },
-    { titre: "Ventes (x1000)", valeur: "267 500", variation: "+12%", Icone: FaGlobe },
-    { titre: "Panier moyen", valeur: "2150 FCFA", variation: "+8%", Icone: FaBagShopping },
-];
-// 7 jours de la semaine (valeurs estimées sur l'échelle 0 à MAX)
-const jours = [
-    { jour: "Lun", date: "12/10", commandes: 10, ventes: 18 },
-    { jour: "Mar", date: "13/10", commandes: 10, ventes: 17 },
-    { jour: "Mer", date: "14/10", commandes: 20, ventes: 24 },
-    { jour: "Jeu", date: "15/10", commandes: 12, ventes: 22 },
-    { jour: "Ven", date: "16/10", commandes: 20, ventes: 29 },
-    { jour: "Sam", date: "17/10", commandes: 38, ventes: 42 },
-    { jour: "Dim", date: "18/10", commandes: 24, ventes: 30 },
-];
+// libellé des jours (fr) indexé par getDay() (0 = dimanche)
+const NOMS_JOURS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
-const categories = [
-    { nom: "Plat principal", pourcent: 50, couleur:"var(--color-emp-donut-principal)" },
-    { nom: "Dessert", pourcent: 15, couleur: "var(--color-emp-donut-dessert)" },
-    { nom: "Boisson", pourcent: 20, couleur:"var(--color-emp-donut-boisson)" },
-    { nom: "Accompagnements", pourcent: 10, couleur: "var( --color-emp-pab)" },
-];
-// Ordre d'affichage de la légende (différent de celui du disque)
-const ordreLegende = ["Plat principal", "Accompagnements", "Dessert", "Boisson"];
-// Graduations de l'axe (haut vers bas) et valeur max : servent à calculer les hauteurs en %
+// code categorie du backend -> libellé affiché + couleur du donut
+const LIBELLES_CATEGORIES = {
+    plat: "Plat principal",
+    accompagnement: "Accompagnement",
+    boisson: "Boisson",
+    dessert: "Dessert",
+    autre: "Autre",
+};
+const COULEURS_CATEGORIES = {
+    "Plat principal": "var(--color-emp-donut-principal)",
+    "Dessert": "var(--color-emp-donut-dessert)",
+    "Boisson": "var(--color-emp-donut-boisson)",
+    "Accompagnement": "var(--color-emp-pab)",
+    "Autre": "var(--color-emp-beige-barre)",
+};
+
+// Graduations de l'axe (haut vers bas) : servent à calculer les hauteurs en %
 const graduations = [50, 40, 30, 20, 10, 0];
-const MAX = 50;
 
 export default function Statistiques() {
     // Donnée affichée dans le graphique : "tout", "ventes" ou "commandes"
     const [donnee, setDonnee] = useState("ventes");
+    const [erreur, setErreur] = useState("");
+    const [message, setMessage] = useState("");
+    // 7 jours réels de la semaine depuis le backend (0 ventes si jour sans commande)
+    const [jours, setJours] = useState([]);
+    // les 3 cartes de chiffres
+    const [cartes, setCartes] = useState([]);
+    // répartition des ventes par catégorie (pour le donut)
+    const [categories, setCategories] = useState([]);
+    // période renvoyée par le backend (pour le sélecteur de dates)
+    const [periode, setPeriode] = useState(null);
+    // top 3 plats de la semaine (bouton « Voir le détail »)
+    const [topArticles, setTopArticles] = useState([]);
+
+    // charger() : stats de la semaine + commandes (pour le donut par catégorie)
+    function charger() {
+        Promise.all([api.get("/stats/ventes-semaine"), api.get("/commande")])
+            .then(([stats, commandesBrut]) => {
+                const lignesCommandes = Array.isArray(commandesBrut) ? commandesBrut : (commandesBrut.data ?? []);
+
+                const [debut, fin] = stats.periode ?? [];
+                const parJour = stats.par_jour ?? [];
+                const parStatuts = new Map((stats.par_statut ?? []).map((s) => [s.statut_commande, s.total]));
+
+                // 7 jours contigus (periode[0]..periode[1]), 0 par défaut
+                const joursSemaine = [];
+                if (debut) {
+                    for (let i = 0; i < 7; i++) {
+                        const d = new Date(debut + "T00:00:00");
+                        d.setDate(d.getDate() + i);
+                        const iso = d.toISOString().slice(0, 10);
+                        const sql = parJour.find((j) => (j.jour || "").slice(0, 10) === iso);
+                        joursSemaine.push({
+                            jour: NOMS_JOURS[d.getDay()],
+                            date: iso.slice(8, 10) + "/" + iso.slice(5, 7),
+                            commandes: sql ? Number(sql.nb_commandes) : 0,
+                            ventes: sql ? Math.round(Number(sql.chiffre_affaires) / 1000) : 0,
+                        });
+                    }
+                }
+                setJours(joursSemaine);
+                setPeriode([debut, fin]);
+
+                // les 3 cartes (variation comparée aux ventes -> pas d'historique : cachée si 0)
+                const totalCommandes = Number(stats.total_commandes ?? 0);
+                const ca = Number(stats.ca_total ?? 0);
+                const panier = totalCommandes ? Math.round(ca / totalCommandes) : 0;
+                setCartes([
+                    { titre: "Total commandes", valeur: totalCommandes.toLocaleString("fr-FR"), variation: null, Icone: FaCartShopping },
+                    { titre: "Ventes (x1000)", valeur: Math.round(ca / 1000).toLocaleString("fr-FR") + " 000", variation: null, Icone: FaGlobe },
+                    { titre: "Panier moyen", valeur: panier.toLocaleString("fr-FR") + " Fcfa", variation: null, Icone: FaBagShopping },
+                ]);
+
+                // ---- donut : ca par catégorie, calculé sur les commandes de la période ----
+                const caParCategorie = {};
+                lignesCommandes
+                    .filter((c) => (c.statut_commande || "") !== "annulee"
+                        && (!debut || ((c.date_commande || "").slice(0, 10) >= debut && (c.date_commande || "").slice(0, 10) <= fin)))
+                    .forEach((c) => (c.articles ?? []).forEach((a) => {
+                        const cle = LIBELLES_CATEGORIES[a.categories_article] || a.categories_article || "Autre";
+                        const montant = (a.pivot?.quantite ?? a.quantite ?? 1) * (a.pivot?.prix_unitaire ?? a.prix_article ?? 0);
+                        caParCategorie[cle] = (caParCategorie[cle] || 0) + montant;
+                    }));
+                const caTotalCat = Object.values(caParCategorie).reduce((s, v) => s + v, 0);
+                const cats = Object.entries(caParCategorie)
+                    .map(([nom, montant]) => ({
+                        nom,
+                        pourcent: caTotalCat ? Math.round((montant / caTotalCat) * 100) : 0,
+                        couleur: COULEURS_CATEGORIES[nom] || "var(--color-emp-beige-barre)",
+                    }))
+                    .sort((x, y) => y.pourcent - x.pourcent);
+                // arrondi : report de la différence sur la plus grosse part pour faire 100
+                if (cats.length && caTotalCat) {
+                    const reste = 100 - cats.reduce((s, c) => s + c.pourcent, 0);
+                    cats[0].pourcent += reste;
+                }
+                setCategories(cats);
+                setTopArticles(stats.top_articles ?? []);
+                setErreur("");
+            })
+            .catch((e) => setErreur(e.message));
+    }
+    useEffect(charger, []);
+
+    // Graduations adaptées aux vraies valeurs (Multiple de 10, minimum 50)
+    const MAX_VENTES = Math.max(50, ...jours.map((j) => j.ventes), ...jours.map((j) => j.commandes));
+    const MAX = Math.ceil(MAX_VENTES / 10) * 10;
+    const graduationsAffichees = graduations.map(() => 0).map((_, i) => MAX - i * (MAX / (graduations.length - 1)));
+
     // Dégradé du donut : chaque part commence où la précédente finit
     const degrade = categories
         .map((c, i) => {
-            const debut = categories.slice(0, i).reduce((somme, autre) => somme + autre.pourcent, 0);
-            return `${c.couleur} ${debut}% ${debut + c.pourcent}%`;
+            const debut2 = categories.slice(0, i).reduce((somme, autre) => somme + autre.pourcent, 0);
+            return `${c.couleur} ${debut2}% ${debut2 + c.pourcent}%`;
         })
         .join(", ");
     // Jour qui a le plus de ventes
-    const meilleurJour = jours.reduce((meilleur, j) => (j.ventes > meilleur.ventes ? j : meilleur));
+    const meilleurJour = jours.length ? jours.reduce((meilleur, j) => (j.ventes > meilleur.ventes ? j : meilleur)) : { jour: "-", date: "", ventes: 0 };
+    // Ordre d'affichage de la légende (les parts triées par taille)
+    const ordreLegende = categories.map((c) => c.nom);
 
     return (
         <div className="p-4 md:p-6">
@@ -56,14 +142,17 @@ export default function Statistiques() {
                 </div>
             </div>
 
-            {/* Filtres : période (TODO non branché) et donnée du graphique */}
+            {/* Filtres : période (semaine en cours renvoyée par le backend) + donnée du graphique */}
             <div className="mb-6 flex flex-wrap gap-3 md:justify-end">
                 <div className="relative md:w-64">
                     <FaClipboardList size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
                     <select className="w-full appearance-none rounded-md bg-emp-barre-carre py-3 pl-9 pr-10 text-sm cursor-pointer">
-                        <option>12 Oct. - 18 Oct. 2026</option>
-                        <option>5 Oct. - 11 Oct. 2026</option>
-                        <option>28 Sept. - 4 Oct. 2026</option>
+                        {periode && periode[0] && periode[1] && (
+                            <option>
+                                {periode[0].slice(8, 10) + "/" + periode[0].slice(5, 7)} -{" "}
+                                {periode[1].slice(8, 10) + "/" + periode[1].slice(5, 7) + " (semaine en cours)"}
+                            </option>
+                        )}
                     </select>
                     <FaChevronDown size={12} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-secondary" />
                 </div>
@@ -77,6 +166,13 @@ export default function Statistiques() {
                 </div>
             </div>
 
+            {erreur !== "" && (
+                <p className="mb-4 rounded-md bg-red-100 px-4 py-2 text-sm text-red-700">{erreur}</p>
+            )}
+            {message !== "" && (
+                <p className="mb-4 rounded-md bg-emp-vert-rond px-4 py-2 text-sm text-emp-vert-emoji">{message}</p>
+            )}
+
             {/* 3 cartes de chiffres */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 {cartes.map((carte) => (
@@ -87,10 +183,12 @@ export default function Statistiques() {
                         <div>
                             <p className="text-xs text-secondary">{carte.titre}</p>
                             <p className="text-lg font-semibold text-secondary">{carte.valeur}</p>
-                            <p className="flex items-center gap-1 text-xs font-semibold text-emp-vert-emoji">
-                                <FaArrowUp size={10} />
-                                {carte.variation}
-                            </p>
+                            {carte.variation && (
+                                <p className="flex items-center gap-1 text-xs font-semibold text-emp-vert-emoji">
+                                    <FaArrowUp size={10} />
+                                    {carte.variation}
+                                </p>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -110,7 +208,7 @@ export default function Statistiques() {
                             {/* relative : repère pour les lignes ; ml-8 : place pour les nombres de l'axe */}
                             <div className="relative ml-8 mt-4 h-36">
                                 {/* Une ligne par graduation, placée en % depuis le haut */}
-                                {graduations.map((g) => (
+                                {graduationsAffichees.map((g) => (
                                     <div key={g} className="absolute left-0 right-0" style={{ top: `${((MAX - g) / MAX) * 100}%` }}>
                                         <span className="absolute -left-8 top-0 w-6 -translate-y-1/2 text-right text-[11px] font-semibold">{g}</span>
                                         <div className="border-t border-grey-300" />
@@ -158,7 +256,7 @@ export default function Statistiques() {
                 </div>
             </div>
 
-            {/* Meilleur jour (calculé) ; « Voir le détail » : TODO non branché */}
+            {/* Meilleur jour (calculé) ; « Voir le détail » : top plats de la semaine */}
             <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-emp-beige-barre p-4">
                 <div className="flex items-center gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-emp-or-icone">
@@ -170,7 +268,19 @@ export default function Statistiques() {
                         <p>Ventes : {meilleurJour.ventes * 1000} FCFA</p>
                     </div>
                 </div>
-                <button type="button" className="flex items-center gap-3 rounded-lg bg-black px-5 py-3 text-xs font-semibold text-white cursor-pointer hover:bg-emp-noir-survol">
+                <button
+                    type="button"
+                    onClick={() =>
+                        setMessage(
+                            "Top plats de la semaine : " + (
+                                topArticles.length
+                                    ? topArticles.map((t) => t.nom_article + " (" + t.vendus + " vendus)").join(" • ")
+                                    : "aucune vente enregistrée."
+                            )
+                        )
+                    }
+                    className="flex items-center gap-3 rounded-lg bg-black px-5 py-3 text-xs font-semibold text-white cursor-pointer hover:bg-emp-noir-survol"
+                >
                     Voir le détail
                     <FaArrowRight size={14} />
                 </button>
