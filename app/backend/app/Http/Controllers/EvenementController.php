@@ -44,6 +44,8 @@ class EvenementController extends Controller
             'points_evenement'=> 'integer|min:0',
             'taux_reduction'  => 'required_if:type_evenement,promotion|nullable|integer|between:1,100',
             'description_evenement' => 'required|string|max:1000',
+            // affiche (image) envoyee par upload : chemin "/img/evenements/xxx.jpg"
+            'affiche_evenement'     => 'nullable|string',
             // fourni par le client, sinon attribue au profil administrateur connecte
             'Id_utilisateur'  => 'nullable|exists:administrateur,Id_utilisateur',
         ]);
@@ -86,6 +88,9 @@ class EvenementController extends Controller
             'points_evenement'=> 'integer|min:0',
             'taux_reduction'  => 'required_if:type_evenement,promotion|nullable|integer|between:1,100',
             'description_evenement' => 'required|string|max:1000',
+            // affiche (image) : nullable => peut rester sans affiche, ou recevoir
+            // le chemin rendu par POST /api/upload_image
+            'affiche_evenement'     => 'nullable|string',
             'Id_utilisateur'  => 'nullable|exists:administrateur,Id_utilisateur',
         ]);
         // sans Id_utilisateur fourni, on conserve le createur existant (journal intact)

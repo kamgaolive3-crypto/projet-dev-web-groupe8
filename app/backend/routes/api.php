@@ -124,6 +124,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 use App\Http\Controllers\PaiementController;
+use App\Http\Controllers\UploadImageController;
 
 // --- Paiements (Membre 3) : l'étudiant enregistre, le personnel vérifie ---
 Route::middleware('auth:sanctum')->group(function () {
@@ -131,4 +132,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('paiement/{paiement}', [PaiementController::class, 'show']);
     Route::post('commande/{commande}/paiement', [PaiementController::class, 'store']);
     Route::post('paiement/{paiement}/verifier', [PaiementController::class, 'verifier']);
+
+    // Upload d'images plats/evenements (personnel) : renvoie le chemin pret a
+    // enregistrer dans image_article / affiche_evenement
+    Route::post('upload_image', [UploadImageController::class, 'store']);
 });
