@@ -111,9 +111,9 @@ export default function Accueil() {
                     className="relative mt-5 overflow-hidden rounded-2xl shadow-soft"
                     style={{ animation: "fade-up 0.5s cubic-bezier(0.22,1,0.36,1) both" }}
                 >
-                    {/* photo de fond + voile de lisibilite en haut a gauche */}
+                    {/* photo du plat tel qu affiche dans la rubrique menu (+ repli maquette) */}
                     <img
-                        src={heroMaquette}
+                        src={platDuJour.image || heroMaquette}
                         alt={platDuJour.nom}
                         className="h-64 w-full object-cover md:h-[400px]"
                     />
