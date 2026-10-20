@@ -22,17 +22,17 @@ class MenuEvenementsDemoSeeder extends Seeder
             ['Id_article' => 'PLA004', 'nom_article' => 'Eru', 'description' => 'Feuilles eru fondues, viande, huile de palme', 'prix_article' => 2500, 'categories_article' => 'plat', 'Menu_du_jour' => false, 'image_article' => '/img/plats/eru.jpg'],
             ['Id_article' => 'PLA005', 'nom_article' => 'Okok sucré', 'description' => 'Feuilles d\'okok, arachide, huile de palme', 'prix_article' => 1500, 'categories_article' => 'plat', 'Menu_du_jour' => false, 'image_article' => '/img/plats/okok-sucre.jpg'],
             // boissons
-            ['Id_article' => 'BOI002', 'nom_article' => 'Jus de bissap', 'description' => 'Hibiscus glacé, menthe fraîche', 'prix_article' => 600, 'categories_article' => 'boisson', 'Menu_du_jour' => false, 'image_article' => '/img/plats/jus-bissap.jpg'],
             ['Id_article' => 'BOI003', 'nom_article' => 'Foléré', 'description' => 'Jus d\'hibiscus épicé, gingembre et ananas', 'prix_article' => 500, 'categories_article' => 'boisson', 'Menu_du_jour' => false, 'image_article' => '/img/plats/folere.jpg'],
-            // accompagnements
-            ['Id_article' => 'ACC001', 'nom_article' => 'Frites de plantains', 'description' => 'Plantains mûrs dorés, sauce piment', 'prix_article' => 800, 'categories_article' => 'accompagnement', 'Menu_du_jour' => false, 'image_article' => '/img/plats/frites-plantains.jpg'],
-            ['Id_article' => 'ACC002', 'nom_article' => 'Frites de pommes', 'description' => 'Pommes frites croustillantes maison', 'prix_article' => 1500, 'categories_article' => 'accompagnement', 'Menu_du_jour' => false, 'image_article' => '/img/plats/frites-pommes.jpg'],
+            // accompagnements (tarif unique)
+            ['Id_article' => 'ACC001', 'nom_article' => 'Frites de plantains', 'description' => 'Plantains mûrs dorés, sauce piment', 'prix_article' => 500, 'categories_article' => 'accompagnement', 'Menu_du_jour' => false, 'image_article' => '/img/plats/frites-plantains.jpg'],
+            ['Id_article' => 'ACC002', 'nom_article' => 'Frites de pommes', 'description' => 'Pommes frites croustillantes maison', 'prix_article' => 500, 'categories_article' => 'accompagnement', 'Menu_du_jour' => false, 'image_article' => '/img/plats/frites-pommes.jpg'],
             ['Id_article' => 'ACC003', 'nom_article' => 'Bâton de manioc', 'description' => 'Bobolo mika, manioc fermenté emballé', 'prix_article' => 500, 'categories_article' => 'accompagnement', 'Menu_du_jour' => false, 'image_article' => '/img/plats/baton-manioc.jpg'],
             // desserts
             ['Id_article' => 'DES002', 'nom_article' => 'Crème de mangue', 'description' => 'Mangue mûre vanillée, servi frais', 'prix_article' => 800, 'categories_article' => 'dessert', 'Menu_du_jour' => false, 'image_article' => '/img/plats/creme-mangue.jpg'],
         ];
-        // suppression du Kondré, sorti du catalogue (idempotent)
+        // suppression du Kondré et du Jus de bissap, sortis du catalogue (idempotent)
         ArticleMenu::where('Id_article', 'PLA002')->delete();
+        ArticleMenu::where('Id_article', 'BOI002')->delete();
 
         foreach ($articles as $a) {
             ArticleMenu::updateOrCreate(
