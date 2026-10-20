@@ -33,8 +33,14 @@ class AuthController extends Controller
 
         [$utilisateur, $etudiant] = DB::transaction(function () use ($data) {
 
+            $lettresId = '';
+            for ($i = 0; $i < 4; $i++) {
+                $lettresId .= chr(random_int(65, 90)); // A à Z
+            }
+            $idUtilisateur = $lettresId . random_int(100000, 999999);
+
             $utilisateur = Utilisateur::create([
-                'Id_utilisateur' => strtoupper(Str::random(4)) . random_int(100000, 999999),
+                'Id_utilisateur' => $idUtilisateur,
                 'nom'            => $data['nom'],
                 'prenom'         => $data['prenom'],
                 'email'          => $data['email'],

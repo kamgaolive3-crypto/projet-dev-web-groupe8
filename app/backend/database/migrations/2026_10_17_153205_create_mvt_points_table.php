@@ -12,6 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('commande')) {
+            return;
+        }
         Schema::create('mvt_points', function (Blueprint $table) {
             $table->engine = 'InnoDB';
 

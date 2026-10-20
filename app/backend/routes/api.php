@@ -4,12 +4,14 @@ use App\Http\Controllers\ArticleMenuController;
 use App\Http\Controllers\EvenementController;
 use App\Http\Controllers\ParametreController;
 use App\Http\Controllers\CookieController;
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::apiResource('restaurant', RestaurantController::class);
-Route::apiResource('article_menu', ArticleMenuController::class);
-Route::apiResource('evenement',EvenementController::class);
-Route::apiResource('parametre', ParametreController::class);
-Route::post('cookies', [CookieController::class, 'store']);
-Route::get('cookies/dernier/{idUtilisateur}', [CookieController::class, 'dernier']);
+Route::post('auth/inscription', [AuthController::class, 'inscription']);
+Route::post('auth/connexion', [AuthController::class, 'connexion']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('auth/me', [AuthController::class, 'me']);
+    Route::post('auth/deconnexion', [AuthController::class, 'deconnexion']);
+});
 

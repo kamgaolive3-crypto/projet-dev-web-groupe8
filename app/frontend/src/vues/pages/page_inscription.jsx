@@ -1,7 +1,7 @@
 import avatar from "../../assets/profil.png"
 //importe un hook qui permet de memoriser une valeur
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 //importe la frame en glass et l'image de fond
 import GlassCard from "../../Composant/GlassCard";
 import GlassPage from "../../Composant/GlassPage";
@@ -16,11 +16,17 @@ export default function Signin() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [erreur, setErreur] = useState("");
+    const [chargement, setChargement] = useState(false);
+    const navigate = useNavigate();
+
+    const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
     const regleMotDePasse = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
 
     //fonction appellée quand envoie le formulaire
-    const handleSubmit = (e) => {
-        e.preventDefault(); // empeche le rechargement de 
+    const handleSubmit = async (e) => {
+        e.preventDefault(); // empeche le rechargement de la page
+
+        const formulaire = e.currentTarget;
         if (password !== confirmPassword) {
             setErreur("Les mots de passe ne correspondent pas");
             return;
@@ -32,8 +38,57 @@ export default function Signin() {
         }
 
         setErreur("");
-        console.log(email, password); //plus tard: envoi a ton API PHP 
-    }
+        setChargement(true);
+
+        try {
+            const response = await fetch(`${API_URL}/auth/inscription`, {
+                 method: "POST",
+                 headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    nom,
+                    prenom,
+                    email,
+                    telephone,
+                    localisation,
+                    mot_de_passe: password,
+                    mot_de_passe_confirmation: confirmPassword,
+                }),
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const premiereErreur = data.errors
+                ? Object.values(data.errors).flat()[0]
+                : null;
+                throw new Error(premiereErreur || data.message || "Inscription impossible.");
+            }
+            
+            alert("Inscription réussie !");
+            formulaire.reset();
+            setnom("");
+            setprenom("");
+            setEmail("");
+            settelephone("");
+            setlocalisation("");
+            setPassword("");
+            setConfirmPassword("");
+
+            localStorage.setItem("monmiammiam.token", data.token);
+            localStorage.setItem(
+                "monmiammiam.utilisateur",
+                JSON.stringify({ ...data.utilisateur, role: "etudiant" })
+            );
+
+            navigate("/", { replace: true });
+        } catch (error) {
+            setErreur(error.message);
+        } finally {
+            setChargement(false);
+        }
+    };
 
     return (
         <GlassPage>
@@ -79,7 +134,7 @@ export default function Signin() {
                         </label>
                         <input id="location" type="text" required value={localisation} onChange={(e)=> setlocalisation(e.target.value)}
                         className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or"/>
-                        <label hrmlFor="password" className="text-secondary">
+                        <label htmlFor="password" className="text-secondary">
                             Mot de passe
                         </label>
                         <input id="password" type="password" required value ={password} onChange={(e) => setPassword(e.target.value)}
@@ -92,7 +147,7 @@ export default function Signin() {
                         ( <p className="text-xs text-green-600"> 
                         mot de passe correct</p>
                         )}
-                        <label hrmlFor="confirm" className="text-secondary">
+                        <label htmlFor="confirm" className="text-secondary">
                             Confirmation du mot de passe
                         </label>
                         <input id="confirm" type="password" required value ={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
