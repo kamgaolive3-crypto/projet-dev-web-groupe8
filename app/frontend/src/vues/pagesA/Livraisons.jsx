@@ -29,7 +29,14 @@ export default function Livraisons() {
             .then((liste) => setLivraisons(Array.isArray(liste) ? liste : liste.data || []))
             .catch((e) => setErreur(e.message))
         api.get("/employes")
-            .then((liste) => setLivreurs(Array.isArray(liste) ? liste : liste.data || []))
+            .then((liste) => {
+                const brut = Array.isArray(liste) ? liste : liste.data || [];
+                // normalisation : l'API enveloppe employe/utilisateur ; aplatir pour le select
+                setLivreurs(brut.map((l) => ({
+                    Id_utilisateur: l.employe?.Id_utilisateur ?? l.Id_utilisateur,
+                    utilisateur: l.utilisateur ?? l,
+                })));
+            })
             .catch(() => setLivreurs([]))
     }
     useEffect(charger, [])
