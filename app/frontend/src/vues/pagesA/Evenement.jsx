@@ -103,6 +103,7 @@ export default function Evenement() {
         setEnvoiAffiche(true); setMessage(""); setErreur("")
         const fd = new FormData()
         fd.append("image", fichier)
+        fd.append("dossier", "evenements")
         try {
             const rep = await api.envoiFichier("/upload_image", fd)
             setForm((f) => ({ ...f, affiche_evenement: rep.chemin }))

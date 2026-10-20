@@ -136,6 +136,7 @@ export default function Menu() {
         setEnvoiImage(true); setMessage(""); setErreur("")
         const fd = new FormData()
         fd.append("image", fichier)
+        fd.append("dossier", "plats")
         try {
             const rep = await api.envoiFichier("/upload_image", fd)
             setForm((f) => ({ ...f, image_article: rep.chemin }))
