@@ -1,10 +1,14 @@
-// Page de connexion selon la maquette (raffinee) :
-// titre "Bienvenue sur Mon Miam Miam" ; labels fins ; champs translucides
-// avec focus or ; lien "Mot de passe oublié ?" ; CTA "Se connecter" beige
+// Page de connexion (design d'origine : composants Glass + avatar, layout conservé)
+// Seule l'intérieure de handleSubmit a été branchée à POST /api/auth/connexion :
+// appel réel, message d'erreur éventuel et redirection selon le rôle du compte.
+import avatar from "../../assets/profil.png"
 import { useState } from "react";
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../services/auth";
-import AuthFond, { AuthCarte } from "../../composant/AuthFond";
+import GlassCard from "../../composant/GlassCard";
+import GlassPage from "../../composant/GlassPage";
+
+const regleMotDePasse = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -12,11 +16,10 @@ export default function Login() {
     const [erreur, setErreur] = useState("");
     const navigate = useNavigate();
     const { connexion } = useAuth();
-    const regleMotDePasse = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
 
-    //fonction appellée quand envoie le formulaire
+    //fonction appellée quand on envoie le formulaire
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault(); // empeche le rechargement de la page
         if (!regleMotDePasse.test(password)) {
             setErreur("Le mot de passe doit contenir 8 caractères, une majuscule et un chiffre");
             return;
@@ -24,7 +27,7 @@ export default function Login() {
         setErreur("");
         try {
             const reponse = await connexion(email, password);
-            // redirection selon le role : le staff va dans son espace, l etudiant a l accueil
+            // redirection selon le role : le staff va a son tableau de bord, l'etudiant a l'accueil
             if (reponse.role && reponse.role !== "etudiant") {
                 navigate("/TableauBord");
             } else {
@@ -32,79 +35,57 @@ export default function Login() {
             }
         } catch (err) {
             const detail = err.champs ? Object.values(err.champs).flat().join(" - ") : null;
-            setErreur(detail || err.message || "Connexion echouee");
+            setErreur(detail || err.message || "Connexion échouée");
         }
     }
 
     return (
-        <AuthFond>
-            <AuthCarte erreur={!!erreur}>
-                <h1 className="text-center font-sans text-[19px] font-bold tracking-tight text-black md:text-[22px]">
+        <GlassPage>
+            <GlassCard largeurMax="722px" hauteurMax="1000px">
+                <h1 className="text-3xl font-bold text-center">
                     Bienvenue sur Mon Miam Miam
                 </h1>
-
-                <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3.5">
+                <div className="flex justify-center mt-0 p-0">
+                    <img src={avatar} alt="Avatar" className="w-30 h-30" />
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
                     {erreur && (
-                        <p className="rounded-xl bg-red-50 px-3 py-2 text-[13px] font-medium text-red-700">
+                        <p className="rounded-md bg-red-100 px-3 py-2 text-center text-sm text-red-700">
                             {erreur}
                         </p>
                     )}
-
                     <div className="flex flex-col gap-1">
-                        <label htmlFor="email" className="miam-etiquette">Email</label>
-                        <input
-                            id="email"
-                            type="email"
-                            required
-                            autoComplete="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="miam-champ"
-                        />
+                        <label htmlFor="email" className="text-secondary">
+                            Email:
+                        </label>
+                        <input id="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                            className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or" />
                     </div>
-
                     <div className="flex flex-col gap-1">
-                        <label htmlFor="password" className="miam-etiquette">Mot de passe</label>
-                        <input
-                            id="password"
-                            type="password"
-                            required
-                            autoComplete="current-password"
-                            pattern="(?=.*[A-Z])(?=.*[0-9]).{8,}"
-                            title="Au moins 8 caractères, une majuscule et un chiffre"
+                        <label htmlFor="password" className="text-secondary">
+                            Mot de passe
+                        </label>
+                        <input id="password" type="password" required autoComplete="current-password"
+                            value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="miam-champ"
-                        />
-                        {password && !regleMotDePasse.test(password) && (
-                            <p className="text-[11.5px] text-red-700">
-                                Au moins 8 caractères, une majuscule et un chiffre
-                            </p>
-                        )}
-                        {/* lien maquette : or */}
-                        <Link
-                            to="/page_reset"
-                            className="self-end font-sans text-[12.5px] font-semibold text-or transition-colors hover:text-or-deep hover:underline"
-                        >
-                            Mot de passe oublié ?
+                            className="w-full rounded-md bg-white/50 px-3 py-2 text-sm shadow-inner outline-none focus:ring-2 focus:ring-or" />
+                        <Link to="/page_reset" className="self-end text-primary cursor-pointer hover:text-primary-700">
+                            Mot de passe oublié?
                         </Link>
                     </div>
-
-                    {/* CTA Se connecter : pill beige (maquette) */}
-                    <button
-                        type="submit"
-                        className="miam-cta mt-1 h-11 w-full text-[15px]"
-                    >
-                        Se connecter
-                    </button>
-
-                    <p className="text-center font-sans text-[13px] text-black">
-                        Vous n&apos;avez pas de compte ?{" "}
-                        <Link to="/page_inscription" className="font-medium text-or-deep hover:underline">
-                            Créer un compte
-                        </Link>
-                    </p>
+                    <div className="flex flex-col gap-1">
+                        <button type="submit"
+                            className="bg-primary text-secondary mx-auto w-full max-w-50 min-h-8 rounded-[10px] cursor-pointer hover:bg-primary-700">
+                            Se connecter
+                        </button>
+                        <p className="text-secondary"> Vous n'avez pas de compte ? {" "}
+                            <Link to="/page_inscription" className="text-primary cursor-pointer hover:text-primary-700">
+                                Creer un nouveau compte
+                            </Link>
+                        </p>
+                    </div>
                 </form>
-            </AuthCarte>
-        </AuthFond>
+            </GlassCard>
+        </GlassPage>
     )
 }
