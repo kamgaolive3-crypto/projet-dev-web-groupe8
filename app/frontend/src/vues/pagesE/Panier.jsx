@@ -88,7 +88,7 @@ export default function Panier() {
             // POST /api/commande/{id}/paiement : le statut passe en "en attente de validation"
             let libellePaiement = ""
             try {
-                const pai = await api.post("/commande/" + commande.Id_commande + "/paiement", {
+                const pai = await api.post("/commande/" + encodeURIComponent(commande.Id_commande) + "/paiement", {
                     mode_paiement: paiement,
                 })
                 libellePaiement = " — paiement " + labelMoyen(pai.mode_paiement) + " enregistré (en attente de validation)"
