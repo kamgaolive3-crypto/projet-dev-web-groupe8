@@ -1,532 +1,249 @@
-import { useState } from "react";
-import { FiEdit, FiImage, FiTag, FiTrash2 } from "react-icons/fi";
+import { useState, useEffect } from "react";
+import { api } from "../../services/api";
+import { useAuth } from "../../services/auth";
 
-/* ------------------------------------------------------------------ */
-/* 1. FONCTIONS UTILITAIRES (dates et statut)                         */
-/* ------------------------------------------------------------------ */
+// libellés des types (mêmes valeurs que la base)
+const types = ["promotion", "evenement", "mini_jeu"];
 
-// Retourne une date au format "AAAA-MM-JJ", décalée de "jours" par rapport à aujourd'hui.
-function dateRelative(jours) {
-  const date = new Date();
-  date.setDate(date.getDate() + jours);
-  return date.toISOString().slice(0, 10);
-}
-
-// Transforme "2026-10-20" en "20 octobre".
-function formaterDate(dateIso) {
-  return new Date(`${dateIso}T00:00:00`).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-  });
-}
-
-// Affiche "20 octobre" ou "Du 20 octobre au 25 octobre".
-function formaterPeriode(debut, fin) {
-  if (debut === fin) return formaterDate(debut);
-  return `Du ${formaterDate(debut)} au ${formaterDate(fin)}`;
-}
-
-// Déduit le statut d'un événement à partir de ses dates et de son interrupteur.
-function calculerStatut(evenement) {
-  const aujourdhui = dateRelative(0);
-  if (evenement.fin < aujourdhui) return "passee";
-  if (!evenement.actif) return "brouillon";
-  if (evenement.debut > aujourdhui) return "avenir";
-  return "encours";
-}
-
-/* ------------------------------------------------------------------ */
-/* 2. CONSTANTES ET DONNÉES DE TEST                                   */
-/* ------------------------------------------------------------------ */
-
-const TYPES = ["Promotion", "Événement", "Plat du jour"];
-
-const STATUTS = {
-  encours: { label: "en cours", classe: "bg-primary text-secondary" },
-  avenir: { label: "à venir", classe: "bg-secondary text-white" },
-  passee: { label: "passée", classe: "border border-secondary bg-white text-secondary" },
-  brouillon: { label: "brouillon", classe: "border border-grey-300 bg-white text-secondary" },
-};
-
-const CARTES = [
-  { statut: "encours", label: "Actives" },
-  { statut: "avenir", label: "Programmée" },
-  { statut: "passee", label: "Terminées" },
-  { statut: "brouillon", label: "Brouillon" },
-];
-
-const FILTRES = [
-  { cle: "toutes", label: "Toutes" },
-  { cle: "encours", label: "en cours" },
-  { cle: "avenir", label: "à venir" },
-  { cle: "passee", label: "passée" },
-];
-
+// formulaire vide
 const FORMULAIRE_VIDE = {
-  type: "Promotion",
-  titre: "",
-  description: "",
-  reduction: "",
-  montantMin: "",
-  debut: "",
-  fin: "",
-  image: "",
-  actif: true,
+    Id_evenement: "",
+    type_evenement: "promotion",
+    debut_evenement: "",
+    fin_evenement: "",
+    points_evenement: 0,
+    taux_reduction: "",
+    description_evenement: "",
+    affiche_evenement: "",
 };
 
-// Classes communes aux listes déroulantes et aux zones de texte.
-const STYLE_CHAMP =
-  "w-full rounded-md border border-grey-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
-
-const EVENEMENTS_INITIAUX = [
-  {
-    id: 1,
-    type: "Promotion",
-    titre: "-30% sur toutes les commandes",
-    description: "À partir de 5000 Fcfa d'achat",
-    reduction: "30",
-    montantMin: "5000",
-    debut: dateRelative(-1),
-    fin: dateRelative(5),
-    image: "",
-    actif: true,
-  },
-  {
-    id: 2,
-    type: "Événement",
-    titre: "Buffet complet de l'amour",
-    description: "Entrée, plat, dessert pour 3000 Fcfa l'entrée",
-    reduction: "",
-    montantMin: "",
-    debut: dateRelative(4),
-    fin: dateRelative(4),
-    image: "",
-    actif: true,
-  },
-  {
-    id: 3,
-    type: "Plat du jour",
-    titre: "Salade carter à la sauce poivrière",
-    description: "Prix : 2500 Fcfa",
-    reduction: "",
-    montantMin: "",
-    debut: dateRelative(0),
-    fin: dateRelative(0),
-    image: "",
-    actif: true,
-  },
-  {
-    id: 4,
-    type: "Promotion",
-    titre: "Dessert offert dès 4000 Fcfa",
-    description: "Un dessert offert au choix",
-    reduction: "",
-    montantMin: "4000",
-    debut: dateRelative(-20),
-    fin: dateRelative(-15),
-    image: "",
-    actif: false,
-  },
-];
-
-/* ------------------------------------------------------------------ */
-/* 3. PETITS COMPOSANTS RÉUTILISABLES                                 */
-/* ------------------------------------------------------------------ */
-
-// Interrupteur (on/off)
-function Interrupteur({ actif, onChange, label }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={actif}
-      aria-label={label}
-      onClick={onChange}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-        actif ? "bg-primary" : "bg-grey-300"
-      }`}
-    >
-      <span
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
-          actif ? "left-5.5" : "left-0.5"
-        }`}
-      />
-    </button>
-  );
-}
-
-// Champ de formulaire (étiquette + case de saisie + suffixe optionnel)
-function Champ({ label, suffixe, className = "", ...reste }) {
-  return (
-    <label className={`flex flex-col gap-1 text-xs ${className}`}>
-      {label}
-      <span className="flex items-center rounded-md border border-grey-300 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-primary">
-        <input {...reste} className="w-full min-w-0 bg-transparent text-sm outline-none" />
-        {suffixe && <span className="ml-2 text-sm text-secondary/50">{suffixe}</span>}
-      </span>
-    </label>
-  );
-}
-
-// Carte de chiffre (en haut de la page)
-function CarteStat({ label, valeur }) {
-  return (
-    <div className="rounded-xl border border-primary bg-white px-4 py-3">
-      <p className="text-2xl">{valeur}</p>
-      <p className="text-xs">{label}</p>
-    </div>
-  );
-}
-
-// Une ligne de la liste des événements
-function CarteEvenement({ evenement, onBasculer, onModifier, onSupprimer }) {
-  const statut = STATUTS[calculerStatut(evenement)];
-
-  return (
-    <li className="flex items-start gap-4 rounded-lg bg-grey p-3">
-      <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded bg-grey-300/50 text-secondary/60">
-        {evenement.image ? (
-          <img
-            src={evenement.image}
-            alt={`Affiche : ${evenement.titre}`}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <FiImage size={22} />
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <span className="inline-block rounded-full border border-secondary px-2 text-[10px] leading-4">
-          {evenement.type}
-        </span>
-        <p className="mt-1 text-sm font-medium">{evenement.titre}</p>
-        <p className="text-xs">{evenement.description}</p>
-        <p className="text-xs text-secondary/60">
-          {formaterPeriode(evenement.debut, evenement.fin)}
-        </p>
-      </div>
-
-      <div className="flex shrink-0 flex-col items-end gap-2">
-        <span className={`rounded-full px-2 text-[10px] leading-4 ${statut.classe}`}>
-          {statut.label}
-        </span>
-        <Interrupteur
-          actif={evenement.actif}
-          onChange={onBasculer}
-          label={`Activer ou désactiver : ${evenement.titre}`}
-        />
-        <div className="flex gap-1.5">
-          <button
-            type="button"
-            onClick={onModifier}
-            aria-label={`Modifier : ${evenement.titre}`}
-            className="rounded-md border border-primary bg-white p-1.5 hover:bg-primary/20"
-          >
-            <FiEdit size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={onSupprimer}
-            aria-label={`Supprimer : ${evenement.titre}`}
-            className="rounded-md border border-primary bg-white p-1.5 hover:bg-primary/20"
-          >
-            <FiTrash2 size={14} />
-          </button>
-        </div>
-      </div>
-    </li>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* 4. LA PAGE                                                         */
-/* ------------------------------------------------------------------ */
 export default function Evenement() {
-  // --- Mémoire de la page ---
-  const [evenements, setEvenements] = useState(EVENEMENTS_INITIAUX);
-  const [filtre, setFiltre] = useState("toutes");
-  const [formulaire, setFormulaire] = useState(FORMULAIRE_VIDE);
-  const [idEnEdition, setIdEnEdition] = useState(null); // null = on crée
+    const { user } = useAuth()
+    const [evenements, setEvenements] = useState([])
+    const [erreur, setErreur] = useState("")
+    const [message, setMessage] = useState("")
+    const [form, setForm] = useState(FORMULAIRE_VIDE)
+    const [modeEdition, setModeEdition] = useState(false)
+    // participations affichées d un événement (bouton "Voir")
+    const [participations, setParticipations] = useState(null)
 
-  // Liste réellement affichée selon le filtre choisi
-  const evenementsAffiches =
-    filtre === "toutes"
-      ? evenements
-      : evenements.filter((evt) => calculerStatut(evt) === filtre);
-
-  // --- Actions ---
-  function basculerActif(id) {
-    setEvenements(
-      evenements.map((evt) => (evt.id === id ? { ...evt, actif: !evt.actif } : evt))
-    );
-  }
-
-  function annulerEdition() {
-    setFormulaire(FORMULAIRE_VIDE);
-    setIdEnEdition(null);
-  }
-
-  function supprimer(id) {
-    if (window.confirm("Voulez-vous vraiment supprimer cet événement ?")) {
-      setEvenements(evenements.filter((evt) => evt.id !== id));
-      if (idEnEdition === id) annulerEdition();
+    const charger = () => {
+        api.get("/evenement")
+            .then((liste) => setEvenements(Array.isArray(liste) ? liste : liste.data || []))
+            .catch((e) => setErreur(e.message))
     }
-  }
+    useEffect(charger, [])
 
-  function modifier(evenement) {
-    setFormulaire(evenement);
-    setIdEnEdition(evenement.id);
-  }
-
-  function gererChangement(e) {
-    const { name, value } = e.target;
-    setFormulaire({ ...formulaire, [name]: value });
-  }
-
-  function gererImage(e) {
-    const fichier = e.target.files[0];
-    if (fichier) {
-      setFormulaire({ ...formulaire, image: URL.createObjectURL(fichier) });
-    }
-    e.target.value = ""; // permet de rechoisir le même fichier plus tard
-  }
-
-  function gererSoumission(e) {
-    e.preventDefault();
-
-    if (idEnEdition === null) {
-      const nouvelId =
-        evenements.length > 0 ? Math.max(...evenements.map((evt) => evt.id)) + 1 : 1;
-      setEvenements([{ ...formulaire, id: nouvelId }, ...evenements]);
-    } else {
-      setEvenements(
-        evenements.map((evt) => (evt.id === idEnEdition ? { ...evt, ...formulaire } : evt))
-      );
+    // POST (création) ou PUT (modification)
+    const enregistrer = async () => {
+        setMessage(""); setErreur("")
+        const corps = {
+            ...form,
+            points_evenement: Number(form.points_evenement) || 0,
+            taux_reduction: form.taux_reduction === "" ? null : Number(form.taux_reduction),
+        };
+        try {
+            if (modeEdition) {
+                await api.put("/evenement/" + encodeURIComponent(form.Id_evenement), corps)
+                setMessage("Événement " + form.Id_evenement + " modifié.")
+            } else {
+                await api.post("/evenement", corps)
+                setMessage("Événement " + form.Id_evenement + " créé.")
+            }
+            setForm(FORMULAIRE_VIDE)
+            setModeEdition(false)
+            charger()
+        } catch (e) {
+            const detail = e.champs ? Object.values(e.champs).flat().join(" - ") : null
+            setErreur(detail || e.message)
+        }
     }
 
-    annulerEdition();
-    setFiltre("toutes");
-  }
+    const editer = (e) => {
+        setModeEdition(true)
+        setMessage(""); setErreur("")
+        setForm({
+            Id_evenement: e.Id_evenement,
+            type_evenement: e.type_evenement,
+            debut_evenement: (e.debut_evenement || "").slice(0, 16),
+            fin_evenement: (e.fin_evenement || "").slice(0, 16),
+            points_evenement: e.points_evenement ?? 0,
+            taux_reduction: e.taux_reduction ?? "",
+            description_evenement: e.description_evenement ?? "",
+            affiche_evenement: e.affiche_evenement ?? "",
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
 
-  // --- Affichage ---
-  return (
-    <section className="bg-grey px-6 py-8 text-secondary">
-      <div className="mx-auto max-w-6xl">
-        {/* En-tête */}
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <FiTag size={22} />
-              <p className="text-2xl">Gestion des événements</p>
-            </div>
-            <p className="mt-1 text-xs">
-              Créez et programmez les promotions, événements et plats du jour
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setFiltre("passee")}
-            className="rounded-lg bg-primary px-4 py-1.5 text-xs hover:bg-primary-700"
-          >
-            Historique des promotions &gt;
-          </button>
-        </div>
+    const supprimer = async (e) => {
+        setMessage(""); setErreur("")
+        try {
+            await api.del("/evenement/" + encodeURIComponent(e.Id_evenement))
+            setMessage("Événement " + e.Id_evenement + " supprimé.")
+            charger()
+        } catch (err) { setErreur(err.message) }
+    }
 
-        {/* Cartes de chiffres */}
-        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {CARTES.map((carte) => (
-            <CarteStat
-              key={carte.statut}
-              label={carte.label}
-              valeur={evenements.filter((evt) => calculerStatut(evt) === carte.statut).length}
-            />
-          ))}
-        </div>
+    // GET /api/evenement/{id}/participations
+    const voirParticipations = async (id) => {
+        setParticipations({ id, liste: null })
+        try {
+            const liste = await api.get("/evenement/" + encodeURIComponent(id) + "/participations")
+            setParticipations({ id, liste: Array.isArray(liste) ? liste : liste.data || [] })
+        } catch (e) {
+            setErreur(e.message)
+            setParticipations(null)
+        }
+    }
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          {/* Colonne de gauche : la liste */}
-          <div className="rounded-xl border border-primary bg-white p-5 lg:col-span-2">
-            <p className="text-lg">Liste des événements</p>
+    // upload de l affiche (dossier evenements) : le serveur renvoie le chemin exact
+    const [envoiAffiche, setEnvoiAffiche] = useState(false)
+    const choisirAffiche = async (fichier) => {
+        if (!fichier) return
+        setEnvoiAffiche(true); setMessage(""); setErreur("")
+        const fd = new FormData()
+        fd.append("image", fichier)
+        fd.append("dossier", "evenements")
+        try {
+            const rep = await api.envoiFichier("/upload_image", fd)
+            setForm((f) => ({ ...f, affiche_evenement: rep.chemin }))
+            setMessage("Affiche enregistrée : " + rep.chemin)
+        } catch (e) {
+            setErreur(e.message || "Image refusée par le serveur")
+        } finally {
+            setEnvoiAffiche(false)
+        }
+    }
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {FILTRES.map((f) => (
-                <button
-                  key={f.cle}
-                  type="button"
-                  onClick={() => setFiltre(f.cle)}
-                  aria-pressed={filtre === f.cle}
-                  className={`rounded-full border border-primary px-4 py-0.5 text-xs ${
-                    filtre === f.cle ? "bg-primary font-medium" : "bg-white hover:bg-primary/20"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+    return (
+        <div className="flex flex-col gap-4 p-4 md:p-6">
+            <div>
+                <h1 className="font-serif text-xl font-bold">Gestion des événements</h1>
+                <p className="text-xs text-gray-600">Promotions, mini-jeux et événements spéciaux (US-033)</p>
             </div>
 
-            {evenementsAffiches.length === 0 ? (
-              <p className="mt-6 text-center text-sm text-secondary/60">
-                Aucun événement dans cette catégorie.
-              </p>
-            ) : (
-              <ul className="mt-4 space-y-3">
-                {evenementsAffiches.map((evt) => (
-                  <CarteEvenement
-                    key={evt.id}
-                    evenement={evt}
-                    onBasculer={() => basculerActif(evt.id)}
-                    onModifier={() => modifier(evt)}
-                    onSupprimer={() => supprimer(evt.id)}
-                  />
-                ))}
-              </ul>
-            )}
-          </div>
+            {message && <p className="rounded-md bg-green-100 px-3 py-2 text-sm text-green-800">{message}</p>}
+            {erreur && <p className="rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">{erreur}</p>}
 
-          {/* Colonne de droite : le formulaire */}
-          <form
-            onSubmit={gererSoumission}
-            className="self-start rounded-xl border border-primary bg-white p-5"
-          >
-            <p className="text-lg">
-              {idEnEdition === null ? "Nouvel événement" : "Modifier l'événement"}
-            </p>
-
-            <div className="mt-4 space-y-3">
-              <label className="flex flex-col gap-1 text-xs">
-                Type
-                <select
-                  name="type"
-                  value={formulaire.type}
-                  onChange={gererChangement}
-                  className={STYLE_CHAMP}
-                >
-                  {TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <Champ
-                label="Titre"
-                name="titre"
-                value={formulaire.titre}
-                onChange={gererChangement}
-                placeholder="Ex. -30% sur toutes les commandes"
-                required
-              />
-
-              <label className="flex flex-col gap-1 text-xs">
-                Description
-                <textarea
-                  name="description"
-                  rows={3}
-                  value={formulaire.description}
-                  onChange={gererChangement}
-                  className={STYLE_CHAMP}
-                />
-              </label>
-
-              {formulaire.type === "Promotion" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <Champ
-                    label="Réduction"
-                    name="reduction"
-                    type="number"
-                    min="0"
-                    max="100"
-                    suffixe="%"
-                    value={formulaire.reduction}
-                    onChange={gererChangement}
-                    placeholder="30"
-                  />
-                  <Champ
-                    label="Montant minimum"
-                    name="montantMin"
-                    type="number"
-                    min="0"
-                    suffixe="Fcfa"
-                    value={formulaire.montantMin}
-                    onChange={gererChangement}
-                    placeholder="5000"
-                  />
+            {/* ---------- FORMULAIRE ---------- */}
+            <section className="grid gap-3 rounded-xl bg-white p-4 shadow-sm md:grid-cols-2">
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>ID (3 majuscules + 4 chiffres, ex : PRM0001)</label>
+                    <input value={form.Id_evenement} disabled={modeEdition}
+                        onChange={(e) => setForm({ ...form, Id_evenement: e.target.value.toUpperCase() })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1 disabled:bg-gray-100" />
                 </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <Champ
-                  label="Date de début"
-                  name="debut"
-                  type="date"
-                  value={formulaire.debut}
-                  onChange={gererChangement}
-                  required
-                />
-                <Champ
-                  label="Date de fin"
-                  name="fin"
-                  type="date"
-                  min={formulaire.debut}
-                  value={formulaire.fin}
-                  onChange={gererChangement}
-                  required
-                />
-              </div>
-
-              <label className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed border-primary-700 p-4 text-center text-xs focus-within:ring-2 focus-within:ring-primary hover:bg-primary/10">
-                {formulaire.image ? (
-                  <img
-                    src={formulaire.image}
-                    alt="Aperçu de l'affiche"
-                    className="h-24 w-full rounded object-cover"
-                  />
-                ) : (
-                  <FiImage size={22} />
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>Type</label>
+                    <select value={form.type_evenement}
+                        onChange={(e) => setForm({ ...form, type_evenement: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1">
+                        {types.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                </div>
+                <div className="flex flex-col gap-1 text-xs md:col-span-2">
+                    <label>Description (obligatoire, affichee aux etudiants)</label>
+                    <textarea rows="2" value={form.description_evenement}
+                        onChange={(e) => setForm({ ...form, description_evenement: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                </div>
+                <div className="flex flex-col gap-1 text-xs md:col-span-2">
+                    <label>Affiche de l&apos;événement (fichier jpg/png — affichée sur l&apos;accueil étudiants)</label>
+                    <input type="file" accept="image/jpeg,image/png,image/webp"
+                        onChange={(e) => choisirAffiche(e.target.files?.[0])}
+                        disabled={envoiAffiche}
+                        className="rounded-md border border-[#CFBD97] px-1 py-1 file:mr-2 file:cursor-pointer file:rounded-l-md file:border-0 file:bg-[#CFBD97] file:px-2 file:text-white" />
+                    {envoiAffiche && <span className="text-[11px] text-gray-500">Envoi de l&apos;affiche...</span>}
+                    {form.affiche_evenement && (
+                        <div className="flex items-center gap-2">
+                            <img src={form.affiche_evenement} alt="affiche" className="h-9 w-14 rounded object-cover" />
+                            <span className="text-[11px] text-gray-500">{form.affiche_evenement}</span>
+                        </div>
+                    )}
+                    <input value={form.affiche_evenement} onChange={(e) => setForm({ ...form, affiche_evenement: e.target.value })}
+                        placeholder="ou chemin / URL, ex : /img/evenements/soiree.jpg"
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                </div>
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>Début</label>
+                    <input type="datetime-local" value={form.debut_evenement}
+                        onChange={(e) => setForm({ ...form, debut_evenement: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                </div>
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>Fin (après le début)</label>
+                    <input type="datetime-local" value={form.fin_evenement}
+                        onChange={(e) => setForm({ ...form, fin_evenement: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                </div>
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>Points à gagner (mini-jeu / événement)</label>
+                    <input type="number" min="0" value={form.points_evenement}
+                        onChange={(e) => setForm({ ...form, points_evenement: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                </div>
+                {form.type_evenement === "promotion" && (
+                    <div className="flex flex-col gap-1 text-xs">
+                        <label>Taux de réduction (%, 1 à 100)</label>
+                        <input type="number" min="1" max="100" value={form.taux_reduction}
+                            onChange={(e) => setForm({ ...form, taux_reduction: e.target.value })}
+                            className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                    </div>
                 )}
-                <span>{formulaire.image ? "Changer l'image" : "Ajouter une image (JPG, PNG)"}</span>
-                <input
-                  type="file"
-                  accept="image/png, image/jpeg"
-                  onChange={gererImage}
-                  className="sr-only"
-                />
-              </label>
-
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs">Afficher sur l'accueil</p>
-                  <p className="text-[10px] text-secondary/60">Bannière visible par les clients</p>
+                <p className="text-xs text-gray-500 md:col-span-2">
+                    L événement sera rattaché au compte connecté : {user?.Id_utilisateur} ({user?.role}).
+                    {user?.role !== "administrateur" && " Nécessaire d etre admin pour créer un événement."}
+                </p>
+                <div className="flex gap-2 md:col-span-2">
+                    <button onClick={enregistrer}
+                        className="rounded-full bg-[#CFBD97] px-5 py-1.5 text-xs text-white">
+                        {modeEdition ? "Enregistrer" : "Créer l événement"}
+                    </button>
+                    {modeEdition && (
+                        <button onClick={() => { setModeEdition(false); setForm(FORMULAIRE_VIDE) }}
+                            className="rounded-full border border-[#CFBD97] px-4 py-1.5 text-xs">Annuler</button>
+                    )}
                 </div>
-                <Interrupteur
-                  actif={formulaire.actif}
-                  onChange={() => setFormulaire({ ...formulaire, actif: !formulaire.actif })}
-                  label="Afficher sur l'accueil"
-                />
-              </div>
+            </section>
+
+            {/* ---------- LISTE ---------- */}
+            <div className="flex flex-col gap-2">
+                {evenements.map((e) => (
+                    <div key={e.Id_evenement} className="rounded-xl bg-white p-3 text-xs shadow-sm">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {e.affiche_evenement && (
+                                <img src={e.affiche_evenement} alt={e.Id_evenement}
+                                    className="h-10 w-14 rounded object-cover" />
+                            )}
+                            <div className="flex-1">
+                                <p className="font-semibold">
+                                    {e.Id_evenement} · {e.type_evenement} · {e.points_evenement} pts{e.taux_reduction ? " · -" + e.taux_reduction + "%" : ""}
+                                </p>
+                                <p className="text-gray-500">du {(e.debut_evenement || "").slice(0, 16).replace("T", " ")} au {(e.fin_evenement || "").slice(0, 16).replace("T", " ")}</p>
+                            </div>
+                            <button onClick={() => voirParticipations(e.Id_evenement)}
+                                className="rounded-full border border-[#CFBD97] px-3 py-1">Participations</button>
+                            <button onClick={() => editer(e)}
+                                className="rounded-full border border-[#CFBD97] px-3 py-1">Modifier</button>
+                            <button onClick={() => supprimer(e)}
+                                className="rounded-full border border-red-300 px-3 py-1 text-red-700">Supprimer</button>
+                        </div>
+                        {/* liste des participations sous l événement quand on clique */}
+                        {participations && participations.id === e.Id_evenement && (
+                            <div className="mt-2 rounded-md bg-[#f5f1e6] p-2">
+                                {participations.liste === null && <p>Chargement...</p>}
+                                {Array.isArray(participations.liste) && participations.liste.length === 0 && <p>Aucune participation.</p>}
+                                {Array.isArray(participations.liste) && participations.liste.map((p, i) => (
+                                    <p key={p.Id_utilisateur ?? i}>
+                                        {p.etudiant?.nom ?? p.nom ?? p.Id_utilisateur} — {p.points_gagnes ?? p.points ?? "?"} pts — {(p.created_at ?? p.date ?? "").slice(0, 10)}
+                                    </p>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
+                {evenements.length === 0 && <p className="text-sm text-gray-600">Aucun événement pour le moment.</p>}
             </div>
-
-            <button
-              type="submit"
-              className="mt-5 w-full rounded-lg bg-primary py-2.5 text-sm hover:bg-primary-700"
-            >
-              {idEnEdition === null ? "Publier l'événement >" : "Enregistrer les modifications >"}
-            </button>
-
-            {idEnEdition !== null && (
-              <button
-                type="button"
-                onClick={annulerEdition}
-                className="mt-2 w-full text-xs underline"
-              >
-                Annuler la modification
-              </button>
-            )}
-          </form>
         </div>
-      </div>
-    </section>
-  );
+    )
 }

@@ -5,11 +5,12 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    port: 5173,
     proxy: {
-      "/api": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
+      // pendant npm run dev, tout appel a /api/... est transmis a Laravel
+      "/api": { target: "http://127.0.0.1:8000" },
+      // les photos des plats vivent dans backend/public/img : proxy indispensable en dev
+      "/img": { target: "http://127.0.0.1:8000" },
     },
   },
 });

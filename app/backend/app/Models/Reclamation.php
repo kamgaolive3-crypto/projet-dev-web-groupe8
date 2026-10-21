@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Administrateur;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Reclamation extends Model
 {
-      protected $table = 'reclamation';
+    protected $table = 'reclamation';
     protected $primaryKey = 'Id_reclamation';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -15,6 +15,7 @@ class Reclamation extends Model
 
     protected $fillable = [
         'Id_reclamation',
+        'date_reclamation',
         'motif_reclamation',
         'description_reclamation',
         'statut_reclamation',
@@ -34,44 +35,36 @@ class Reclamation extends Model
     ];
 
     protected $casts = [
-        'date_reclamation'      => 'datetime',
-        'date_traitement'       => 'datetime',
-        'date_decision'         => 'datetime',
+        'date_reclamation' => 'datetime',
+        'date_traitement' => 'datetime',
+        'date_decision' => 'datetime',
         'date_traitement_admin' => 'datetime',
-        'date_decision_admin'   => 'datetime',
+        'date_decision_admin' => 'datetime',
     ];
 
-    // Étudiant qui dépose la réclamation
-    public function etudiant(): BelongsTo
-    {
+    public function etudiant(){
         return $this->belongsTo(Etudiant::class, 'Id_utilisateur', 'Id_utilisateur');
     }
 
-    public function commande(): BelongsTo
-    {
+    public function commande(){
         return $this->belongsTo(Commande::class, 'Id_commande', 'Id_commande');
     }
 
-    // Employé qui traite
-    public function traitant(): BelongsTo
-    {
+    public function traitant(){
         return $this->belongsTo(Employe::class, 'Id_traitant', 'Id_utilisateur');
     }
 
-    // Gérant qui décide
-    public function gerant(): BelongsTo
-    {
+    public function gerant(){
         return $this->belongsTo(Gerant::class, 'Id_gerant', 'Id_utilisateur');
     }
 
-    // Circuit administrateur
-    public function adminTraitant(): BelongsTo
-    {
+    // Circuit administrateur (integre depuis la branche de Ash) :
+    // l'admin peut aussi traiter puis decider une reclamation escaladee
+    public function adminTraitant(){
         return $this->belongsTo(Administrateur::class, 'Id_admin_traitant', 'Id_utilisateur');
     }
 
-    public function adminDecideur(): BelongsTo
-    {
+    public function adminDecideur(){
         return $this->belongsTo(Administrateur::class, 'Id_admin_decideur', 'Id_utilisateur');
-    }  
+    }
 }

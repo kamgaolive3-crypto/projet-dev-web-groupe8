@@ -2,76 +2,113 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UtiliserPointsRequest;
+use App\Models\Etudiant;
 use App\Models\MvtPoint;
-use App\Services\FideliteService;
-use App\Support\Roles;
-use DomainException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class FideliteController extends Controller
 {
-    // Laravel fournit lui-même le FideliteService (injection de dépendances)
-    public function __construct(private FideliteService $fidelite) {}
-
-    // Solde de points de l'étudiant connecté
-    public function solde(Request $request): JsonResponse
+    /**
+     * consulter son solde de points (US-015)
+     * GET /api/fidelite/solde
+     */
+    public function solde(Request $request)
     {
-        if ($refus = $this->refuserSiPasEtudiant($request)) {
-            return $refus;
+        $etudiant = $request->user()->etudiant;
+
+        if (! $etudiant) {
+            return response()->json(['message' => 'Réservé aux étudiants.'], 403);
         }
 
-        $solde = DB::table('etudiant')
-            ->where('Id_utilisateur', $request->user()->Id_utilisateur)
-            ->value('solde_point');
+        // Somme des gains expirant dans les 30 prochains jours (miroir US-016)
+        $points_a_expirer = (int) MvtPoint::where('Id_utilisateur', $etudiant->Id_utilisateur)
+            ->where('type_mvt', 'gain')
+            ->whereNotNull('date_expiration')
+            ->whereBetween('date_expiration', [now(), now()->addDays(30)])
+            ->sum('nbres_points');
 
-        return response()->json(['data' => ['solde' => (int) $solde]]);
+        return response()->json([
+            'solde_point'      => $etudiant->solde_point,
+            'gains_sous_30j'   => $points_a_expirer,
+            'taux_conversion'  => '15 points = 1000 F',
+        ]);
     }
 
-    // Historique des mouvements de l'étudiant connecté (filtre optionnel ?type=)
-    public function historique(Request $request): JsonResponse
+    /**
+     * consulter l'historique des mouvements de points (US-015)
+     * GET /api/fidelite/historique
+     */
+    public function historique(Request $request)
     {
-        if ($refus = $this->refuserSiPasEtudiant($request)) {
-            return $refus;
+        $etudiant = $request->user()->etudiant;
+
+        if (! $etudiant) {
+            return response()->json(['message' => 'Réservé aux étudiants.'], 403);
         }
 
-        $query = MvtPoint::where('Id_utilisateur', $request->user()->Id_utilisateur)
-            ->orderByDesc('date_mvt');
-
-        if ($request->filled('type') && in_array($request->type, MvtPoint::TYPES, true)) {
-            $query->where('type_mvt', $request->type);
-        }
-
-        return response()->json(['data' => $query->get()]);
+        return MvtPoint::where('Id_utilisateur', $etudiant->Id_utilisateur)
+            ->orderByDesc('date_mvt')
+            ->get();
     }
 
-    // Utilisation de points par l'étudiant connecté
-    public function utiliser(UtiliserPointsRequest $request): JsonResponse
+    /**
+     * Expiration automatique des points (US-016) : appel manuel par le staff,
+     * ou planifié via scheduler (schedule:run -> $schedule->command(...)).
+     * Politique FIFO simplifiée : pour chaque étudiant,
+     *   dû = somme des gains expirés - points déjà utilisés - points déjà expirés.
+     * POST /api/fidelite/expiration (staff uniquement)
+     */
+    public function expirer(Request $request)
     {
-        if ($refus = $this->refuserSiPasEtudiant($request)) {
-            return $refus;
+        if ($request->user()->role === 'etudiant') {
+            return response()->json(['message' => 'Réservé au personnel.'], 403);
         }
 
-        try {
-            $mvt = $this->fidelite->utiliser(
-                $request->user()->Id_utilisateur,
-                (int) $request->points
-            );
-        } catch (DomainException $e) {
-            // Règle métier violée (ex. solde insuffisant) : 422 avec le message
-            return response()->json(['message' => $e->getMessage()], 422);
+        $gainsExpirés = MvtPoint::where('type_mvt', 'gain')
+            ->whereNotNull('date_expiration')
+            ->where('date_expiration', '<', now())
+            ->selectRaw('Id_utilisateur, SUM(nbres_points) as total_gains')
+            ->groupBy('Id_utilisateur')
+            ->get();
+
+        $traites = 0;
+
+        foreach ($gainsExpirés as $ligne) {
+            DB::transaction(function () use ($ligne, &$traites) {
+                $utilisé    = (int) abs(MvtPoint::where('Id_utilisateur', $ligne->Id_utilisateur)->where('type_mvt', 'utilisation')->sum('nbres_points'));
+                $déjàExpiré = (int) abs(MvtPoint::where('Id_utilisateur', $ligne->Id_utilisateur)->where('type_mvt', 'expiration')->sum('nbres_points'));
+
+                $du = (int) $ligne->total_gains - $utilisé - $déjàExpiré;
+
+                if ($du > 0) {
+                    $etudiant = Etudiant::where('Id_utilisateur', $ligne->Id_utilisateur)->first();
+                    if ($etudiant && $etudiant->solde_point >= $du) {
+                        $etudiant->decrement('solde_point', $du);
+                        MvtPoint::create([
+                            'Id_mvt'         => $this->genererIdMvt(),
+                            'nbres_points'   => -$du,
+                            'type_mvt'       => 'expiration',
+                            'Id_utilisateur' => $etudiant->Id_utilisateur,
+                        ]);
+                        $traites++;
+                    }
+                }
+            });
         }
 
-        return response()->json(['data' => $mvt->fresh()], 201);
+        return response()->json(['message' => "Expiration traitée pour {$traite} étudiant(s)."]);
     }
 
-    // Toujours se baser sur l'utilisateur connecté, jamais sur un identifiant reçu dans l'URL
-    private function refuserSiPasEtudiant(Request $request): ?JsonResponse
+    /**
+     * Générateur MV001 (domaine ID_MVT) sans collision.
+     */
+    private function genererIdMvt(): string
     {
-        return Roles::de($request->user()) === 'etudiant'
-            ? null
-            : response()->json(['message' => 'Réservé aux étudiants.'], 403);
+        do {
+            $id = 'MV' . str_pad((string) random_int(0, 999), 3, '0', STR_PAD_LEFT);
+        } while (MvtPoint::where('Id_mvt', $id)->exists());
+
+        return $id;
     }
 }

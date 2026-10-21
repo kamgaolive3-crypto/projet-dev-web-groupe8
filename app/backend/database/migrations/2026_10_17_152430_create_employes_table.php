@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('Id_utilisateur', 10)->primary();
             $table->string('poste', 100)->nullable();
             $table->date('date_embauche')->nullable();
-            $table->string('Id_restaurant', 5)->nullable();
+            $table->string('Id_restaurant', 5);
             $table->string('Id_createur', 10)->nullable(); // gérant ou admin ayant créé le compte
             $table->foreign('Id_createur')->references('Id_utilisateur')->on('utilisateur')->nullOnDelete();
             $table->dateTime('date_creation_compte')->useCurrent();

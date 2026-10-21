@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Restaurant extends Model
 {
+    use HasFactory;
     //nom de la table
     protected $table = 'restaurant';
     protected $primaryKey = 'Id_restaurant';

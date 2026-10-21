@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ArticleMenu extends Model
 {
+    use HasFactory;
     protected $table = 'article_menu';
     protected $primaryKey ='Id_article';
     public $incrementing = false;

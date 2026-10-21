@@ -1,355 +1,348 @@
-import { useState } from "react";
-import { FiImage, FiX } from "react-icons/fi";
+import { useState, useEffect } from "react";
+import { api } from "../../services/api";
 
-/* ------------------------------------------------------------------ */
-/* 1. CONSTANTES ET DONNÉES DE TEST                                   */
-/* ------------------------------------------------------------------ */
+// GESTION DES MENUS (maquette /gestion-menu) : creer, modifier, masquer les articles
+// donnees : GET /api/article_menu + GET /api/restaurant (pour le select du restaurant)
+// actions : POST/PUT/DELETE /api/article_menu (US-027, personnel connecte)
 
-const CATEGORIES = ["Plats", "Boissons"];
-const FILTRES = ["Tous", ...CATEGORIES];
+// les catégories possibles (mêmes valeurs que la base)
+const categories = ["plat", "boisson", "dessert", "accompagnement", "autre"];
 
-const STATUTS = {
-  disponible: { label: "Disponible", classe: "bg-green-300" },
-  rupture: { label: "Rupture", classe: "bg-red-400" },
-  masque: { label: "Masqué", classe: "bg-grey-300" },
-};
-
+// formulaire vide (un article n existera pas encore)
 const FORMULAIRE_VIDE = {
-  nom: "",
-  categorie: "Plats",
-  prix: "",
-  statut: "disponible",
-  image: ""
+    Id_article: "",
+    nom_article: "",
+    description: "",
+    prix_article: 1000,
+    categories_article: "plat",
+    disponibilite_article: true,
+    Menu_du_jour: false,
+    image_article: "",
+    Id_restaurant: "RS001",
 };
 
-// Classes communes aux cases de saisie et aux listes déroulantes.
-const STYLE_CHAMP =
-  "rounded bg-grey px-3 py-2 text-base font-normal outline-none focus:ring-2 focus:ring-primary";
+export default function Menu() {
+    const [articles, setArticles] = useState([])
+    const [restaurants, setRestaurants] = useState([])
+    const [erreur, setErreur] = useState("")
+    const [message, setMessage] = useState("")
+    // le formulaire peut être en création (aucun id déjà rempli) ou en modification
+    const [form, setForm] = useState(FORMULAIRE_VIDE)
+    const [modeEdition, setModeEdition] = useState(false)
+    // onglet de categorie actif (Tous / plat / boisson...)
+    const [onglet, setOnglet] = useState("")
 
-const PLATS_INITIAUX = [
-  { id: 1, nom: "Ndolé royal", categorie: "Plats", prix: 1000, statut: "disponible" },
-  { id: 2, nom: "Poulet pané", categorie: "Plats", prix: 2000, statut: "disponible" },
-  { id: 3, nom: "Okok salé", categorie: "Plats", prix: 1000, statut: "rupture" },
-  { id: 4, nom: "Jus de fruit", categorie: "Boissons", prix: 1000, statut: "masque" },
-];
-
-// 1000 devient "1 000 Fcfa"
-function formaterPrix(prix) {
-  return `${Number(prix).toLocaleString("fr-FR")} Fcfa`;
-}
-
-/* ------------------------------------------------------------------ */
-/* 2. COMPOSANT RÉUTILISABLE : un champ de formulaire                 */
-/* ------------------------------------------------------------------ */
-function Champ({ label, className = "", ...reste }) {
-  return (
-    <label className={`flex flex-col gap-1 text-sm font-medium ${className}`}>
-      {label} :
-      <input {...reste} className={STYLE_CHAMP} />
-    </label>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* 3. LA PAGE                                                         */
-/* ------------------------------------------------------------------ */
-export default function GestionMenu() {
-  // --- Mémoire de la page ---
-  const [plats, setPlats] = useState(PLATS_INITIAUX);
-  const [filtre, setFiltre] = useState("Tous");
-  const [modalOuvert, setModalOuvert] = useState(false);
-  const [formulaire, setFormulaire] = useState(FORMULAIRE_VIDE);
-  const [idEnEdition, setIdEnEdition] = useState(null); // null = on ajoute
-  const [glisse, setGlisse] = useState(false); // pour l'animation de glissement du menu
-
-  const platsAffiches =
-    filtre === "Tous" ? plats : plats.filter((plat) => plat.categorie === filtre);
-
-  // --- Actions ---
-  function ouvrirAjout() {
-    setFormulaire(FORMULAIRE_VIDE);
-    setIdEnEdition(null);
-    setModalOuvert(true);
-  }
-
-  function ouvrirModification(plat) {
-    setFormulaire(plat);
-    setIdEnEdition(plat.id);
-    setModalOuvert(true);
-  }
-
-  function fermerModal() {
-    setModalOuvert(false);
-  }
-
-  function gererChangement(e) {
-    const { name, value } = e.target;
-    setFormulaire({ ...formulaire, [name]: value });
-  }
-
-  function gererImage(e){
-    const fichier = e.target.files[0];
-    if (fichier){
-      setFormulaire ({ ...formulaire, image: URL.createObjectURL(fichier)});
+    const charger = () => {
+        api.get("/article_menu")
+            .then((liste) => setArticles(Array.isArray(liste) ? liste : liste.data || []))
+            .catch((e) => setErreur(e.message))
     }
-    e.target.value =""
-  }
+    useEffect(() => {
+        charger()
+        // la liste des restaurants sert au select du formulaire
+        api.get("/restaurant")
+            .then((l) => {
+                const brut = Array.isArray(l) ? l : (l.data || l.restaurants || []);
+                setRestaurants(brut)
+                // toujours ancrer le formulaire sur un vrai Id_restaurant existant
+                const premier = (brut[0] || {}).Id_restaurant ?? (brut[0] || {}).id_restaurant ?? (brut[0] || {}).id;
+                if (premier) setForm((f) => ({
+                    ...f,
+                    Id_restaurant: brut.some((r) => (r.Id_restaurant ?? r.id_restaurant ?? r.id) === f.Id_restaurant)
+                        ? f.Id_restaurant
+                        : premier,
+                }));
+            })
+            .catch(() => setRestaurants([]))
+    }, [])
 
-  function gererSurvol(e){
-    e.preventDefault();
-    setGlisse(true);
-  }
-
-  function gererDepot(e){
-    e.preventDefault();
-    setGlisse(false);
-    const fichier =e.dataTransfer.files[0];
-    if (fichier && fichier.type.startsWith("image/")){
-      setFormulaire ({ ...formulaire, image: URL.createObjectURL(fichier)});
+    // POST ou PUT selon le mode
+    const enregistrer = async () => {
+        setMessage(""); setErreur("")
+        const corps = {
+            ...form,
+            prix_article: Number(form.prix_article),
+            disponibilite_article: !!form.disponibilite_article,
+            Menu_du_jour: !!form.Menu_du_jour,
+            image_article: form.image_article.trim() || null,
+            description: form.description.trim() || null,
+        };
+        try {
+            if (modeEdition) {
+                await api.put("/article_menu/" + encodeURIComponent(form.Id_article), corps)
+                setMessage("Article " + form.Id_article + " modifié.")
+            } else {
+                await api.post("/article_menu", corps)
+                setMessage("Article " + form.Id_article + " créé.")
+            }
+            setForm(FORMULAIRE_VIDE)
+            setModeEdition(false)
+            charger()
+        } catch (e) {
+            const detail = e.champs ? Object.values(e.champs).flat().join(" - ") : null
+            setErreur(detail || e.message)
+        }
     }
-  }
-  function gererSoumission(e) {
-    e.preventDefault();
 
-    // Le champ "prix" fournit du texte : on le convertit en nombre.
-    const plat = { ...formulaire, prix: Number(formulaire.prix) };
-
-    if (idEnEdition === null) {
-      const nouvelId =
-        plats.length > 0 ? Math.max(...plats.map((p) => p.id)) + 1 : 1;
-      setPlats([...plats, { ...plat, id: nouvelId }]);
-    } else {
-      setPlats(plats.map((p) => (p.id === idEnEdition ? { ...p, ...plat } : p)));
+    // pré-remplir le formulaire avec un article existant
+    const editer = (a) => {
+        setModeEdition(true)
+        setMessage(""); setErreur("")
+        setForm({
+            Id_article: a.Id_article,
+            nom_article: a.nom_article,
+            description: a.description ?? a.description_article ?? "",
+            prix_article: a.prix_article,
+            categories_article: a.categories_article,
+            disponibilite_article: !!a.disponibilite_article,
+            Menu_du_jour: !!a.Menu_du_jour,
+            image_article: a.image_article ?? "",
+            Id_restaurant: a.Id_restaurant ?? "RS001",
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" })
     }
-    fermerModal();
-  }
 
-  function supprimer(id) {
-    if (window.confirm("Voulez-vous vraiment supprimer ce plat ?")) {
-      setPlats(plats.filter((plat) => plat.id !== id));
+    // bascule rapide : menu du jour / disponibilité (PUT partiel)
+    const basculer = async (a, champ) => {
+        setMessage(""); setErreur("")
+        try {
+            await api.put("/article_menu/" + encodeURIComponent(a.Id_article), {
+                Id_article: a.Id_article,
+                nom_article: a.nom_article,
+                prix_article: a.prix_article,
+                categories_article: a.categories_article,
+                Id_restaurant: a.Id_restaurant ?? "RS001",
+                [champ]: !a[champ],
+            })
+            charger()
+        } catch (e) { setErreur(e.message) }
     }
-  }
 
-  // --- Affichage ---
-  return (
-    <section className="bg-white px-6 py-10 text-secondary">
-      <div className="mx-auto max-w-5xl">
-        {/* En-tête : titre + filtres à gauche, bouton à droite */}
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-3xl">Gestion des menus</p>
-            <div className="mt-3 flex gap-2">
-              {FILTRES.map((f) => (
+    // suppression
+    const supprimer = async (a) => {
+        setMessage(""); setErreur("")
+        try {
+            await api.del("/article_menu/" + encodeURIComponent(a.Id_article))
+            setMessage("Article " + a.Id_article + " supprimé.")
+            charger()
+        } catch (e) { setErreur(e.message) }
+    }
+
+    // upload d image du formulaire (dossier plats) : envoi du fichier, le
+    // serveur renvoie le chemin exact a enregistrer (plus de chemin a inventer)
+    const [envoiImage, setEnvoiImage] = useState(false)
+    const choisirImage = async (fichier) => {
+        if (!fichier) return
+        setEnvoiImage(true); setMessage(""); setErreur("")
+        const fd = new FormData()
+        fd.append("image", fichier)
+        fd.append("dossier", "plats")
+        try {
+            const rep = await api.envoiFichier("/upload_image", fd)
+            setForm((f) => ({ ...f, image_article: rep.chemin }))
+            setMessage("Image enregistrée : " + rep.chemin)
+        } catch (e) {
+            setErreur(e.message || "Image refusée par le serveur")
+        } finally {
+            setEnvoiImage(false)
+        }
+    }
+
+    // filtre par onglet de categorie
+    const articlesAffiches = onglet
+        ? articles.filter((a) => a.categories_article === onglet)
+        : articles
+
+    return (
+        <div className="flex flex-col gap-5 p-4 md:p-6">
+            {/* ---------- TITRE + AJOUT ---------- */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h1 className="font-serif text-2xl font-bold">Gestion des menus</h1>
+                    <p className="text-xs text-gray-600">Créer, modifier et masquer les articles du menu (US-027)</p>
+                </div>
                 <button
-                  key={f}
-                  type="button"
-                  onClick={() => setFiltre(f)}
-                  aria-pressed={filtre === f}
-                  className={`rounded-full border border-primary-700 px-4 py-0.5 text-xs ${
-                    filtre === f ? "bg-primary-700 font-medium" : "bg-white hover:bg-primary/20"
-                  }`}
+                    type="button"
+                    onClick={() => { setModeEdition(false); setForm(FORMULAIRE_VIDE); }}
+                    className="rounded-full bg-[#CFBD97] px-4 py-1.5 text-xs font-semibold text-white hover:brightness-95"
                 >
-                  {f}
+                    + Ajouter un plat
                 </button>
-              ))}
             </div>
-          </div>
 
-          <button
-            type="button"
-            onClick={ouvrirAjout}
-            className="rounded-full bg-primary-700 px-5 py-1 text-sm hover:bg-primary-800 hover:text-white"
-          >
-            + Ajouter un plat
-          </button>
-        </div>
+            {message && <p className="rounded-md bg-green-100 px-3 py-2 text-sm text-green-800">{message}</p>}
+            {erreur && <p className="rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">{erreur}</p>}
 
-        {/* Tableau */}
-        <div className="mt-6 overflow-x-auto rounded-3xl border border-primary/50 bg-white px-6 py-4">
-          <table className="w-full min-w-[40rem] text-left text-sm">
-            <thead>
-              <tr className="border-b border-primary-700">
-                <th className="px-3 py-3 font-normal">Plats</th>
-                <th className="px-3 py-3 text-center font-normal">Catégories</th>
-                <th className="px-3 py-3 font-normal">Prix</th>
-                <th className="px-3 py-3 text-center font-normal">Statut</th>
-                <th className="px-3 py-3 text-center font-normal">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {platsAffiches.map((plat) => (
-                <tr key={plat.id} className="border-b border-primary/40 last:border-b-0">
-                  <td className="px-3 py-4">
-                    <div className="flex items-center gap-3">
-                      {plat.image ? (
-                        <img
-                          src={plat.image}
-                          alt={`Photo de ${plat.nom}`}
-                          className="h-8 w-8 shrink-0 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <span aria-hidden="true" className="h-8 w-8 shrink-0 rounded-lg bg-primary-700" />
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-3 py-4 text-center">{plat.categorie}</td>
-                  <td className="px-3 py-4">{formaterPrix(plat.prix)}</td>
-                  <td className="px-3 py-4 text-center">
-                    <span
-                      className={`inline-block min-w-24 rounded-full px-3 py-0.5 text-xs ${STATUTS[plat.statut].classe}`}
-                    >
-                      {STATUTS[plat.statut].label}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4">
-                    <div className="flex items-center justify-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => ouvrirModification(plat)}
-                        aria-label={`Modifier ${plat.nom}`}
-                        className="rounded-full border border-primary-700 px-4 py-0.5 text-xs hover:bg-primary/20"
-                      >
-                        Modifier
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => supprimer(plat.id)}
-                        aria-label={`Supprimer ${plat.nom}`}
-                        className="text-xs text-secondary/50 hover:text-secondary hover:underline"
-                      >
-                        Supprimer
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {platsAffiches.length === 0 && (
-            <p className="py-6 text-center text-sm text-secondary/60">
-              Aucun plat dans cette catégorie.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Fenêtre d'ajout / de modification */}
-      {modalOuvert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="titre-modal"
-            className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-8 shadow-xl"
-          >
-            <button
-              type="button"
-              onClick={fermerModal}
-              aria-label="Fermer"
-              className="absolute right-3 top-3 rounded p-1 hover:bg-grey"
-            >
-              <FiX size={26} />
-            </button>
-
-            <p id="titre-modal" className="mb-6 text-center text-2xl text-primary-700">
-              {idEnEdition === null ? "Nouveau plat" : "Modifier le plat"}
-            </p>
-
-            <form onSubmit={gererSoumission} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Champ
-                label="Nom du plat"
-                name="nom"
-                value={formulaire.nom}
-                onChange={gererChangement}
-                required
-                className="sm:col-span-2"
-              />
-
-              <label className="flex flex-col gap-1 text-sm font-medium">
-                Catégorie :
-                <select
-                  name="categorie"
-                  value={formulaire.categorie}
-                  onChange={gererChangement}
-                  className={STYLE_CHAMP}
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <Champ
-                label="Prix (Fcfa)"
-                name="prix"
-                type="number"
-                min="0"
-                value={formulaire.prix}
-                onChange={gererChangement}
-                required
-              />
-
-              <label className="flex flex-col gap-1 text-sm font-medium sm:col-span-2">
-                Statut :
-                <select
-                  name="statut"
-                  value={formulaire.statut}
-                  onChange={gererChangement}
-                  className={STYLE_CHAMP}
-                >
-                  {Object.keys(STATUTS).map((cle) => (
-                    <option key={cle} value={cle}>
-                      {STATUTS[cle].label}
-                    </option>
-                  ))}
-                </select>
-              </label >
-              <div classeName="sm:col-span-2">
-                <p className="mb-1 text-sm front-medium">Photo du plat :</p>
-                <label 
-                  onDragOver={gererSurvol}
-                  onDragLeave={() => setGlisse(false)}
-                  onDrop={gererDepot}
-                  className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 text-center text-xs focus-within:ring-2 focus-within:ring-primary ${
-                    glisse ? "border-primary-700 bg-primary/20" : "border-primary-700/50 hover:bg-primary/10"
-                  }`}
-                >
-                <div className="pointer-events-none flex flex-col items-center gap-1">
-                  {formulaire.image ? (
-                    <img
-                      src={formulaire.image}
-                      alt="Aperçu de l'affiche"
-                      className="h-24 w-full rounded object-cover"
-                    />
-                  ) : (
-                    <FiImage size={22} />
-                  )}
-                  <span>{formulaire.image ? "Glisser une autre image ou cliquez pour lachanger" : "Glissez l'image ici ou cliquez pour parcourir"}</span>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/png, image/jpeg"
-                    onChange={gererImage}
-                    className="sr-only"
-                  />
+            {/* ---------- FORMULAIRE (creation ou modification) ---------- */}
+            <section className="grid gap-3 rounded-xl bg-white p-4 shadow-sm md:grid-cols-2">
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>ID article (3 majuscules + 3 chiffres, ex : PLA001)</label>
+                    <input value={form.Id_article} disabled={modeEdition}
+                        onChange={(e) => setForm({ ...form, Id_article: e.target.value.toUpperCase() })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1 disabled:bg-gray-100" />
+                </div>
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>Nom</label>
+                    <input value={form.nom_article} onChange={(e) => setForm({ ...form, nom_article: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                </div>
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>Prix (Fcfa)</label>
+                    <input type="number" min="0" value={form.prix_article}
+                        onChange={(e) => setForm({ ...form, prix_article: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                </div>
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>Catégorie</label>
+                    <select value={form.categories_article}
+                        onChange={(e) => setForm({ ...form, categories_article: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1">
+                        {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                </div>
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>Restaurant</label>
+                    <select value={form.Id_restaurant}
+                        onChange={(e) => setForm({ ...form, Id_restaurant: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1">
+                        {restaurants.map((r) => {
+                            const idResto = r.Id_restaurant ?? r.id_restaurant ?? r.id;
+                            // jamais le nom d'affichage comme value : l'API valide le vrai Id
+                            if (idResto == null) return null;
+                            return (
+                                <option key={idResto} value={idResto}>
+                                    {(r.nom_restaurant ?? r.nom ?? idResto)}
+                                </option>
+                            );
+                        })}
+                    </select>
+                </div>
+                <div className="flex flex-col gap-1 text-xs">
+                    <label>Photo du plat (fichier jpg/png — upload direct)</label>
+                    <input type="file" accept="image/jpeg,image/png,image/webp"
+                        onChange={(e) => choisirImage(e.target.files?.[0])}
+                        disabled={envoiImage}
+                        className="rounded-md border border-[#CFBD97] px-1 py-1 file:mr-2 file:cursor-pointer file:rounded-l-md file:border-0 file:bg-[#CFBD97] file:px-2 file:text-white" />
+                    {envoiImage && <span className="text-[11px] text-gray-500">Envoi de l&apos;image...</span>}
+                    {/* preview de l image choisie/uploadée */}
+                    {form.image_article && (
+                        <div className="flex items-center gap-2">
+                            <img src={form.image_article} alt="aperçu" className="h-9 w-9 rounded object-cover" />
+                            <span className="text-[11px] text-gray-500">{form.image_article}</span>
+                        </div>
+                    )}
+                    {/* repli : saisie manuelle du chemin (URL externe par exemple) */}
+                    <input value={form.image_article} onChange={(e) => setForm({ ...form, image_article: e.target.value })}
+                        placeholder="ou chemin / URL, ex : /img/plats/eru.jpg"
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                </div>
+                <div className="flex flex-col gap-1 text-xs md:col-span-2">
+                    <label>Description (facultatif)</label>
+                    <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                </div>
+                <label className="flex items-center gap-2 text-xs">
+                    <input type="checkbox" checked={!!form.disponibilite_article}
+                        onChange={(e) => setForm({ ...form, disponibilite_article: e.target.checked })} />
+                    Disponible à la vente
                 </label>
-              </div>    
-              <div className="mt-4 flex justify-center sm:col-span-2">
-                <button
-                  type="submit"
-                  className="w-full max-w-xs rounded-lg bg-primary px-6 py-3 text-lg text-secondary hover:bg-primary-700"
-                >
-                  {idEnEdition === null ? "Ajouter" : "Enregistrer"}
+                <label className="flex items-center gap-2 text-xs">
+                    <input type="checkbox" checked={!!form.Menu_du_jour}
+                        onChange={(e) => setForm({ ...form, Menu_du_jour: e.target.checked })} />
+                    Dans le menu du jour
+                </label>
+                <div className="flex gap-2 md:col-span-2">
+                    <button onClick={enregistrer}
+                        className="rounded-full bg-[#CFBD97] px-5 py-1.5 text-xs text-white">
+                        {modeEdition ? "Enregistrer les modifications" : "Créer l article"}
+                    </button>
+                    {modeEdition && (
+                        <button onClick={() => { setModeEdition(false); setForm(FORMULAIRE_VIDE) }}
+                            className="rounded-full border border-[#CFBD97] px-4 py-1.5 text-xs">
+                            Annuler
+                        </button>
+                    )}
+                </div>
+            </section>
+
+            {/* ---------- ONGLETS PAR CATEGORIE ---------- */}
+            <div className="flex flex-wrap gap-2">
+                <button onClick={() => setOnglet("")}
+                    className={"rounded-full px-4 py-1 text-xs " + (onglet === "" ? "bg-[#CFBD97] text-white" : "bg-white text-gray-700 shadow-sm")}>
+                    Tous
                 </button>
-              </div>
-              
-            </form>
-          </div>
+                {categories.map((c) => (
+                    <button key={c} onClick={() => setOnglet(c)}
+                        className={"rounded-full px-4 py-1 text-xs capitalize " + (onglet === c ? "bg-[#CFBD97] text-white" : "bg-white text-gray-700 shadow-sm")}>
+                        {c}s
+                    </button>
+                ))}
+            </div>
+
+            {/* ---------- TABLEAU ---------- */}
+            {articlesAffiches.length === 0 ? (
+                <p className="text-sm text-gray-600">Aucun article pour cette catégorie.</p>
+            ) : (
+                <div className="overflow-x-auto rounded-xl bg-white shadow-sm">
+                    <table className="w-full text-left text-sm">
+                        <thead>
+                            <tr className="border-b border-[#efe6d0] text-xs uppercase tracking-wide text-gray-500">
+                                <th className="px-4 py-3">Article</th>
+                                <th className="px-4 py-3">Prix</th>
+                                <th className="px-4 py-3">Statut</th>
+                                <th className="px-4 py-3">Menu du jour</th>
+                                <th className="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {articlesAffiches.map((a) => (
+                                <tr key={a.Id_article} className="border-b border-[#efe6d0] last:border-0">
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <img src={a.image_article || "/plat_du_jour.jpg"} alt={a.nom_article}
+                                                className="h-10 w-10 rounded-lg object-cover" />
+                                            <div>
+                                                <p className="font-semibold">{a.nom_article}</p>
+                                                <p className="text-xs text-gray-500">{a.Id_article} · {a.categories_article}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 font-bold text-[#b8862d]">
+                                        {(a.prix_article ?? 0).toLocaleString("fr-FR")} Fcfa
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <button onClick={() => basculer(a, "disponibilite_article")}
+                                            title="Cliquer pour basculer"
+                                            className={"rounded-full px-3 py-1 text-xs " + (a.disponibilite_article ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
+                                            {a.disponibilite_article ? "Disponible" : "Rupture"}
+                                        </button>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {/* un clic ajoute/retire le plat du menu du jour (US-025) */}
+                                        <button onClick={() => basculer(a, "Menu_du_jour")}
+                                            title={a.Menu_du_jour ? "Retirer du menu du jour" : "Ajouter ce plat existant au menu du jour"}
+                                            className={"rounded-full px-3 py-1 text-xs " + (a.Menu_du_jour ? "bg-[#CFBD97] text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300")}>
+                                            {a.Menu_du_jour ? "Du jour ✓" : "Pas du jour"}
+                                        </button>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex flex-wrap gap-1.5">
+                                            <button onClick={() => editer(a)}
+                                                className="rounded-full border border-[#CFBD97] px-3 py-1 text-xs hover:bg-[#f5f1e6]">
+                                                Modifier
+                                            </button>
+                                            <button onClick={() => supprimer(a)}
+                                                className="rounded-full border border-red-300 px-3 py-1 text-xs text-red-700 hover:bg-red-50">
+                                                Supprimer
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
-      )}
-    </section>
-  );
+    )
 }

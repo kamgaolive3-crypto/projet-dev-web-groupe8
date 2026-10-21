@@ -1,231 +1,263 @@
-import { useState } from "react";
-import { FiEdit, FiTrash2, FiX } from "react-icons/fi";
+import { useState, useEffect } from "react";
+import { api } from "../../services/api";
+import { useAuth } from "../../services/auth";
 
-/* ------------------------------------------------------------------ */
-/* 1. DONNÉES DE DÉPART                                               */
-/* Ce sont des données "de test". Plus tard, elles viendront du       */
-/* backend (API). Pour l'instant on les écrit à la main.              */
-/* ------------------------------------------------------------------ */
-const EMPLOYES_INITIAUX = [
-  { id: 1, nom: "NDJAO", prenom: "La Fortune", email: "", telephone: "", poste: "Cuisinière", sexe: "F", dateEmbauche: "" },
-  { id: 2, nom: "FOSSAP", prenom: "Aurelie", email: "", telephone: "", poste: "Serveuse", sexe: "F", dateEmbauche: "" },
-  { id: 3, nom: "SOUME", prenom: "Junior", email: "", telephone: "", poste: "Livreur", sexe: "M", dateEmbauche: "" },
-  { id: 4, nom: "TAMIBE", prenom: "Damien", email: "", telephone: "", poste: "Cuisinier", sexe: "M", dateEmbauche: "" },
-];
+// GESTION DES EMPLOYES (maquette /page-12) : creer, modifier et desactiver les comptes de l equipe
+// donnees : GET /api/employes
+// actions : POST /api/employes (gerant) · PUT /api/employes/{id} (poste / statut) · DELETE (admin)
 
-// Un formulaire "vide" : sert à remettre les champs à zéro.
-const FORMULAIRE_VIDE = {
-  nom: "",
-  prenom: "",
-  email: "",
-  telephone: "",
-  poste: "",
-  sexe: "",
-  dateEmbauche: "",
-};
-
-/* ------------------------------------------------------------------ */
-/* 2. PETIT COMPOSANT RÉUTILISABLE : un champ de formulaire           */
-/* Il évite de recopier 6 fois le même bloc (label + input).          */
-/* ------------------------------------------------------------------ */
-function Champ({ label, name, type = "text", value, onChange, className = "" }) {
-  return (
-    <label className={`flex flex-col gap-1 text-sm font-medium ${className}`}>
-      {label} :
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        required
-        className="rounded bg-grey px-3 py-2 text-base font-normal outline-none focus:ring-2 focus:ring-primary"
-      />
-    </label>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* 3. LA PAGE                                                         */
-/* ------------------------------------------------------------------ */
 export default function Employes() {
-  // --- Les "états" : la mémoire de la page ---
-  const [employes, setEmployes] = useState(EMPLOYES_INITIAUX); // la liste
-  const [modalOuvert, setModalOuvert] = useState(false); // fenêtre visible ou non
-  const [formulaire, setFormulaire] = useState(FORMULAIRE_VIDE); // ce qui est tapé
-  const [idEnEdition, setIdEnEdition] = useState(null); // null = on ajoute
+    const { user } = useAuth()
+    const [liste, setListe] = useState([])
+    const [erreur, setErreur] = useState("")
+    const [message, setMessage] = useState("")
+    const [restaurants, setRestaurants] = useState([]);
+    // formulaire de creation (POST /api/employes), ouvert par le bouton dore
+    const [formOuvert, setFormOuvert] = useState(false)
+    const [form, setForm] = useState({
+        nom: "", prenom: "", email: "", telephone: "",
+        mot_de_passe: "", poste: "", date_embauche: "",
+        Id_restaurant: "",
+    })
+    // filtre par poste : "Rôle : Tous"
+    const [filtreRole, setFiltreRole] = useState("")
+    // edition en ligne du poste : { id : valeur }
+    const [edition, setEdition] = useState({})
 
-  // --- Les actions ---
-  function ouvrirAjout() {
-    setFormulaire(FORMULAIRE_VIDE);
-    setIdEnEdition(null);
-    setModalOuvert(true);
-  }
-
-  function ouvrirModification(employe) {
-    setFormulaire(employe); // on pré-remplit avec les infos de l'employé
-    setIdEnEdition(employe.id);
-    setModalOuvert(true);
-  }
-
-  function fermerModal() {
-    setModalOuvert(false);
-  }
-
-  // Appelée à chaque frappe dans un champ.
-  function gererChangement(e) {
-    const { name, value } = e.target;
-    setFormulaire({ ...formulaire, [name]: value });
-  }
-
-  // Appelée quand on clique sur "Ajouter" / "Enregistrer".
-  function gererSoumission(e) {
-    e.preventDefault(); // empêche le rechargement de la page
-
-    if (idEnEdition === null) {
-      // AJOUT : on calcule un nouvel identifiant
-      const nouvelId =
-        employes.length > 0 ? Math.max(...employes.map((emp) => emp.id)) + 1 : 1;
-      setEmployes([...employes, { ...formulaire, id: nouvelId }]);
-    } else {
-      // MODIFICATION : on remplace seulement l'employé concerné
-      setEmployes(
-        employes.map((emp) => (emp.id === idEnEdition ? { ...emp, ...formulaire } : emp))
-      );
+    const charger = () => {
+        api.get("/employes")
+            // le backend renvoie { employe: {...}, utilisateur: {...} } ;
+            // on aplati pour que la page lise poste, telephone, statut... a plat
+            .then((l) => {
+                const brut = Array.isArray(l) ? l : l.data || [];
+                setListe(brut.map((e) => ({ ...(e.employe || {}), ...(e.utilisateur || {}) })));
+            })
+            .catch((e) => setErreur(e.message))
     }
-    fermerModal();
-  }
+    useEffect(charger, [])
 
-  function supprimer(id) {
-    if (window.confirm("Voulez-vous vraiment supprimer cet employé ?")) {
-      setEmployes(employes.filter((emp) => emp.id !== id));
+    useEffect(() => {
+    api.get("/restaurant")
+        .then((liste) => {
+            const donnees = Array.isArray(liste) ? liste : liste.data || [];
+            setRestaurants(donnees);
+
+            if (donnees.length > 0) {
+                setForm((ancien) => ({
+                    ...ancien,
+                    Id_restaurant:
+                        ancien.Id_restaurant || donnees[0].Id_restaurant,
+                }));
+            }
+        })
+        .catch((e) => setErreur(e.message));
+    }, []);
+
+    const creer = async () => {
+        setMessage(""); setErreur("")
+        try {
+            await api.post("/employes", form)
+            setMessage("Employé créé : " + form.email)
+            setForm({ nom: "", prenom: "", email: "", telephone: "", mot_de_passe: "", poste: "", date_embauche: "" })
+            setFormOuvert(false)
+            charger()
+        } catch (e) {
+            const detail = e.champs ? Object.values(e.champs).flat().join(" - ") : null
+            setErreur(detail || e.message)
+        }
     }
-  }
 
-  // --- Ce qui s'affiche ---
-  return (
-    <section className="bg-white px-6 py-10 text-secondary">
-      <div className="mx-auto max-w-5xl">
-        <p className="mb-6 text-center text-xl">Listes des employés</p>
+    // changer le poste ou le statut du compte (PUT /api/employes/{id})
+    const maj = async (id, corps) => {
+        setMessage(""); setErreur("")
+        try {
+            await api.put("/employes/" + encodeURIComponent(id), corps)
+            setMessage("Employé mis à jour.")
+            charger()
+        } catch (e) { setErreur(e.message) }
+    }
 
-        {/* Tableau */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-y border-grey-300 text-base">
-                <th className="px-3 py-3 font-medium">ID</th>
-                <th className="px-3 py-3 font-medium">Nom</th>
-                <th className="px-3 py-3 font-medium">Prénom</th>
-                <th className="px-3 py-3 font-medium">Sexe</th>
-                <th className="px-3 py-3 font-medium">Poste</th>
-                <th className="px-3 py-3 font-medium">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {employes.map((emp) => (
-                <tr key={emp.id} className="border-b border-grey-300 text-sm">
-                  <td className="px-3 py-4">{String(emp.id).padStart(2, "0")}</td>
-                  <td className="px-3 py-4">{emp.nom}</td>
-                  <td className="px-3 py-4">{emp.prenom}</td>
-                  <td className="px-3 py-4">{emp.sexe}</td>
-                  <td className="px-3 py-4">{emp.poste}</td>
-                  <td className="px-3 py-4">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => ouvrirModification(emp)}
-                        aria-label={`Modifier ${emp.prenom} ${emp.nom}`}
-                        className="rounded p-2 hover:bg-grey"
-                      >
-                        <FiEdit size={22} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => supprimer(emp.id)}
-                        aria-label={`Supprimer ${emp.prenom} ${emp.nom}`}
-                        className="rounded border border-grey-300 bg-grey p-2 hover:bg-grey-300"
-                      >
-                        <FiTrash2 size={22} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    // supprimer un employé (réservé à l administrateur)
+    const supprimer = async (id) => {
+        setMessage(""); setErreur("")
+        try {
+            await api.del("/employes/" + encodeURIComponent(id))
+            setMessage("Employé supprimé.")
+            charger()
+        } catch (e) { setErreur(e.message) }
+    }
 
-        {/* Bouton principal */}
-        <div className="mt-14 flex justify-center">
-          <button
-            type="button"
-            onClick={ouvrirAjout}
-            className="w-full max-w-md rounded-lg bg-primary px-6 py-4 text-xl text-secondary hover:bg-primary-700"
-          >
-            Ajouter un employé
-          </button>
-        </div>
-      </div>
+    // postes distincts pour le filtre "Rôle"
+    const postes = [...new Set(liste.map((e) => e.poste).filter(Boolean))]
+    const listeAffichee = filtreRole
+        ? liste.filter((e) => e.poste === filtreRole)
+        : liste
 
-      {/* Fenêtre (modal) : affichée seulement si modalOuvert est vrai */}
-      {modalOuvert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="titre-modal"
-            className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white p-8 shadow-xl"
-          >
-            <button
-              type="button"
-              onClick={fermerModal}
-              aria-label="Fermer"
-              className="absolute right-3 top-3 rounded p-1 hover:bg-grey"
-            >
-              <FiX size={26} />
-            </button>
-
-            <p id="titre-modal" className="mb-6 text-center text-2xl text-primary-700">
-              {idEnEdition === null ? "Nouvel Employé" : "Modifier l'employé"}
-            </p>
-
-            <form onSubmit={gererSoumission} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Champ label="Nom" name="nom" value={formulaire.nom} onChange={gererChangement} className="sm:col-span-2" />
-              <Champ label="Prénom" name="prenom" value={formulaire.prenom} onChange={gererChangement} className="sm:col-span-2" />
-              <Champ label="Email" name="email" type="email" value={formulaire.email} onChange={gererChangement} />
-              <Champ label="Téléphone" name="telephone" type="tel" value={formulaire.telephone} onChange={gererChangement} />
-              <Champ label="Poste" name="poste" value={formulaire.poste} onChange={gererChangement} />
-
-              <label className="flex flex-col gap-1 text-sm font-medium">
-                Sexe :
-                <select
-                  name="sexe"
-                  value={formulaire.sexe}
-                  onChange={gererChangement}
-                  required
-                  className="rounded bg-grey px-3 py-2 text-base font-normal outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Choisir</option>
-                  <option value="F">F</option>
-                  <option value="M">M</option>
-                </select>
-              </label>
-
-              <Champ label="Date d'embauche" name="dateEmbauche" type="date" value={formulaire.dateEmbauche} onChange={gererChangement} />
-
-              <div className="mt-4 flex justify-center sm:col-span-2">
+    return (
+        <div className="flex flex-col gap-5 p-4 md:p-6">
+            {/* ---------- TITRE + AJOUT ---------- */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h1 className="font-serif text-2xl font-bold">Gestion des employés</h1>
+                    <p className="text-xs text-gray-600">Créer, modifier et désactiver les comptes de l équipe (US-031/034)</p>
+                </div>
                 <button
-                  type="submit"
-                  className="w-full max-w-xs rounded-lg bg-primary px-6 py-3 text-lg text-secondary hover:bg-primary-700"
+                    type="button"
+                    onClick={() => setFormOuvert(!formOuvert)}
+                    className="rounded-full bg-[#CFBD97] px-4 py-1.5 text-xs font-semibold text-white hover:brightness-95"
                 >
-                  {idEnEdition === null ? "Ajouter" : "Enregistrer"}
+                    + Ajouter un employé
                 </button>
-              </div>
-            </form>
-          </div>
+            </div>
+
+            {message && <p className="rounded-md bg-green-100 px-3 py-2 text-sm text-green-800">{message}</p>}
+            {erreur && <p className="rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">{erreur}</p>}
+
+            {/* ---------- FORMULAIRE DE CREATION (depliable) ---------- */}
+            {formOuvert && (
+                <section className="grid gap-3 rounded-xl bg-white p-4 shadow-sm md:grid-cols-3">
+                    {[
+                        ["nom", "Nom"], ["prenom", "Prénom"], ["email", "Email"],
+                        ["telephone", "Téléphone (6xxxxxxxx)"], ["poste", "Poste (ex : livreur)"], ["date_embauche", "Date d embauche (facultatif)"],
+                    ].map(([champ, libelle]) => (
+                        <div key={champ} className="flex flex-col gap-1 text-xs">
+                            <label>{libelle}</label>
+                            <input value={form[champ]} onChange={(e) => setForm({ ...form, [champ]: e.target.value })}
+                                type={champ === "date_embauche" ? "date" : "text"}
+                                className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                        </div>
+                    ))}
+
+                    <div className="flex flex-col gap-1 text-xs">
+                        <label htmlFor="Id_restaurant">Restaurant</label>
+                        <select
+                        id="Id_restaurant"
+                        required
+                        value={form.Id_restaurant}
+                        onChange={(e) =>
+                            setForm({ ...form, Id_restaurant: e.target.value })
+                        }
+                        className="rounded-md border border-[#CFBD97] px-2 py-1"
+                    >
+                        <option value="">Choisir un restaurant</option>
+                        {restaurants.map((restaurant) => (
+                            <option
+                              key={restaurant.Id_restaurant}
+                              value={restaurant.Id_restaurant}
+                            >
+                                {restaurant.nom_restaurant} ({restaurant.Id_restaurant})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                    <div className="flex flex-col gap-1 text-xs">
+                        <label>Mot de passe (8+ caractères, 1 majuscule, 1 chiffre)</label>
+                        <input type="password" value={form.mot_de_passe} onChange={(e) => setForm({ ...form, mot_de_passe: e.target.value })}
+                            className="rounded-md border border-[#CFBD97] px-2 py-1" />
+                    </div>
+                    <div className="flex items-end gap-2">
+                        <button onClick={creer} className="rounded-full bg-[#CFBD97] px-5 py-1.5 text-xs text-white">
+                            Créer le compte
+                        </button>
+                        <button onClick={() => setFormOuvert(false)} className="rounded-full border border-[#CFBD97] px-4 py-1.5 text-xs">
+                            Annuler
+                        </button>
+                    </div>
+                </section>
+            )}
+
+            {/* ---------- FILTRE ROLE ---------- */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+                <select value={filtreRole} onChange={(e) => setFiltreRole(e.target.value)}
+                    className="rounded-full border border-[#CFBD97] bg-white px-3 py-1.5">
+                    <option value="">Rôle : Tous</option>
+                    {postes.map((p) => (
+                        <option key={p} value={p}>Rôle : {p}</option>
+                    ))}
+                </select>
+                <span className="text-gray-500">{listeAffichee.length} employé(s)</span>
+            </div>
+
+            {/* ---------- TABLEAU ---------- */}
+            {listeAffichee.length === 0 ? (
+                <p className="text-sm text-gray-600">Aucun employé enregistré.</p>
+            ) : (
+                <div className="overflow-x-auto rounded-xl bg-white shadow-sm">
+                    <table className="w-full text-left text-sm">
+                        <thead>
+                            <tr className="border-b border-[#efe6d0] text-xs uppercase tracking-wide text-gray-500">
+                                <th className="px-4 py-3">Employé</th>
+                                <th className="px-4 py-3">Téléphone</th>
+                                <th className="px-4 py-3">Rôle</th>
+                                <th className="px-4 py-3">Statut</th>
+                                <th className="px-4 py-3">Créé le</th>
+                                <th className="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {listeAffichee.map((e) => {
+                                const id = e.Id_utilisateur
+                                const nomComplet = (e.utilisateur?.prenom ?? e.prenom ?? "") + " " + (e.utilisateur?.nom ?? e.nom ?? "")
+                                const email = e.utilisateur?.email ?? e.email ?? ""
+                                const actif = e.statut_compte === "actif"
+                                const cree = (e.date_embauche ?? e.utilisateur?.created_at ?? "").slice(0, 10) || ""
+                                return (
+                                    <tr key={id} className="border-b border-[#efe6d0] last:border-0">
+                                        <td className="px-4 py-3">
+                                            <p className="font-semibold">{nomComplet.trim() || id}</p>
+                                            <p className="text-xs text-gray-500">{email}</p>
+                                        </td>
+                                        <td className="px-4 py-3">{e.telephone ?? "—"}</td>
+                                        {/* ROLE : texte ou champ d edition */}
+                                        <td className="px-4 py-3">
+                                            {edition[id] !== undefined ? (
+                                                <span className="flex items-center gap-1">
+                                                    <input
+                                                        value={edition[id]}
+                                                        onChange={(ev) => setEdition({ ...edition, [id]: ev.target.value })}
+                                                        className="w-24 rounded-md border border-[#CFBD97] px-2 py-1 text-xs"
+                                                    />
+                                                    <button
+                                                        onClick={() => { maj(id, { poste: edition[id] }); setEdition({ ...edition, [id]: undefined }); }}
+                                                        className="rounded-full bg-[#CFBD97] px-2 py-1 text-[10px] text-white">
+                                                        OK
+                                                    </button>
+                                                </span>
+                                            ) : e.poste ?? "—"}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={"rounded-full px-3 py-1 text-xs " + (actif ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600")}>
+                                                {actif ? "Actif" : "Inactif"}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-gray-500">{cree || "—"}</td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex flex-wrap gap-1.5">
+                                                <button
+                                                    onClick={() => setEdition({ ...edition, [id]: e.poste ?? "" })}
+                                                    className="rounded-full border border-[#CFBD97] px-3 py-1 text-xs hover:bg-[#f5f1e6]">
+                                                    Modifier
+                                                </button>
+                                                <button
+                                                    onClick={() => maj(id, { statut_compte: actif ? "inactif" : "actif" })}
+                                                    className={"rounded-full border px-3 py-1 text-xs " + (actif ? "border-red-300 text-red-700 hover:bg-red-50" : "border-green-300 text-green-700 hover:bg-green-50")}>
+                                                    {actif ? "Désactiver" : "Réactiver"}
+                                                </button>
+                                                {user?.role === "administrateur" && (
+                                                    <button onClick={() => supprimer(id)}
+                                                        className="rounded-full border border-red-300 px-3 py-1 text-xs text-red-700 hover:bg-red-50">
+                                                        Supprimer
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
-      )}
-    </section>
-  );
+    )
 }

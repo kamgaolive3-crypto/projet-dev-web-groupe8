@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('Id_parametre',5)->primary();
             $table->string('cle',100);
             $table->text('valeur');
-            $table->string('Id_utilisateur',10);
-            $table->foreign('Id_utilisateur')->references('Id_utilisateur')->on('administrateur')->onDelete('cascade');
+            $table->string('Id_utilisateur',10)->nullable(); // dernier modificateur (facultatif, dictionnaire)
+            $table->foreign('Id_utilisateur')->references('Id_utilisateur')->on('administrateur')->onDelete('set null');
         });
     }
 

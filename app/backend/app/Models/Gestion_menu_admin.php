@@ -10,7 +10,7 @@ class Gestion_menu_admin extends Model
     public $timestamps = false;
     protected $fillable = [
         'Id_utilisateur',
-        'Id_aticle',
+        'Id_article',
         'date_modification',
         'nature_modification',
     ];

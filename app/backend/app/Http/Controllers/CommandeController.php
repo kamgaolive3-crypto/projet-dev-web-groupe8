@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\ArticleMenu;
 use App\Models\Commande;
-use App\Models\Parametre;
 use App\Models\Evenement;
 use App\Models\MvtPoint;
+use App\Models\Parametre;
 use App\Services\CalculCommande;
 use App\Services\CommandeService;
 use DomainException;
@@ -15,6 +15,20 @@ use Illuminate\Support\Facades\DB;
 
 class CommandeController extends Controller
 {
+    /**
+     * Duree de validite des points gagnes (US-016).
+     * Priorite a la valeur configuree par l'administrateur dans la table
+     * parametre (cle "duree_expiration_points", eg. "12") ;
+     * repli = 12 mois si le parametre est absent ou invalide.
+     */
+    private function dureeExpirationPoints(): int
+    {
+        $valeur = Parametre::whereIn('cle', ['duree_expiration_points', 'duree_validite_points'])
+            ->value('valeur');
+        $mois = (int) preg_replace('/[^0-9]/', '', (string) $valeur);
+
+        return $mois > 0 ? $mois : 12;
+    }
 
     public function __construct(private CommandeService $commandes)
     {
@@ -27,7 +41,7 @@ class CommandeController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Commande::with(['articles', 'historiqueStatuts', 'paiements', 'livraison'])
+        $query = Commande::with(['articles', 'etudiant.utilisateur', 'historiqueStatuts', 'paiements', 'livraison'])
             ->orderByDesc('date_commande');
 
         if ($request->user()->role === 'etudiant') {
@@ -170,13 +184,12 @@ class CommandeController extends Controller
 
             // 8. Crédit des points gagnés (expirent dans 12 mois, US-016)
             if ($calcul->pointsGagnes > 0) {
-                $mois = (int) Parametre::valeur('duree_expiration_points', 12);// valeur par defaut 12 mais la valeur est pris dans les parametre definit par l'administrateur
                 $etudiant->increment('solde_point', $calcul->pointsGagnes);
                 MvtPoint::create([
                     'Id_mvt'          => $this->genererIdMvt(),
                     'nbres_points'    => $calcul->pointsGagnes,
                     'type_mvt'        => 'gain',
-                    'date_expiration' => now()->addMonths($mois),
+                    'date_expiration' => now()->addMonths($this->dureeExpirationPoints()),
                     'Id_utilisateur'  => $etudiant->Id_utilisateur,
                     'Id_commande'     => $commande->Id_commande,
                 ]);
@@ -216,11 +229,16 @@ class CommandeController extends Controller
         }
 
         DB::transaction(function () use ($commande, $utilisateur) {
-            $commande->update([
+            // Id_valideur ne peut contenir qu un EMPLOYE (cle etrangere vers employe) :
+            // un gerant/admin valide sans remplir cette colonne, l historique garde qui a valide.
+            $maj = [
                 'statut_commande' => 'validee',
-                'Id_valideur'     => $utilisateur->Id_utilisateur,
                 'date_validation' => now(),
-            ]);
+            ];
+            if ($utilisateur->role === 'employe') {
+                $maj['Id_valideur'] = $utilisateur->Id_utilisateur;
+            }
+            $commande->update($maj);
             $this->commandes->enregistrerHistorique($commande->Id_commande, $utilisateur->Id_utilisateur, 'validee');
         });
 
@@ -265,6 +283,10 @@ class CommandeController extends Controller
             if ($cible === 'annulee' && $commande->points_utilises > 0) {
                 $this->restituerPoints($commande);
             }
+                        if ($cible === 'annulee') {
+                $this->retirerPointsGagnes($commande);
+            }
+            
         });
 
         return $commande->load('historiqueStatuts');
@@ -305,10 +327,11 @@ class CommandeController extends Controller
             return response()->json(['message' => 'Impossible : la commande est déjà traitée.'], 422);
         }
 
-        DB::transaction(function () use ($commande, $request) {
+               DB::transaction(function () use ($commande, $request) {
             if ($commande->points_utilises > 0) {
                 $this->restituerPoints($commande);
             }
+            $this->retirerPointsGagnes($commande);
             $this->commandes->changerStatut($commande, 'annulee', $request->user()->Id_utilisateur);
         });
 
@@ -328,7 +351,31 @@ class CommandeController extends Controller
             'Id_commande'    => $commande->Id_commande,
         ]);
     }
+        /** Commande annulée : retire à l'étudiant les points que cette commande lui avait fait gagner. */
+    private function retirerPointsGagnes(Commande $commande): void
+    {
+        $gagnes = (int) MvtPoint::where('Id_commande', $commande->Id_commande)
+            ->where('type_mvt', 'gain')
+            ->whereNotNull('date_expiration')
+            ->sum('nbres_points');
 
+        $etudiant = $commande->etudiant;
+        $retrait = min($gagnes, (int) $etudiant->solde_point);
+
+        if ($retrait <= 0) {
+            return;
+        }
+
+        $etudiant->decrement('solde_point', $retrait);
+        MvtPoint::create([
+            'Id_mvt'         => $this->genererIdMvt(),
+            'nbres_points'   => -$retrait,
+            'type_mvt'       => 'utilisation',
+            'Id_utilisateur' => $etudiant->Id_utilisateur,
+            'Id_commande'    => $commande->Id_commande,
+        ]);
+    }
+    
     /**
      * Générateur #COM0001 (domaine ID_COM, dictionnaire §10) sans collision.
      */

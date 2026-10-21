@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MvtPoint extends Model
 {
@@ -13,10 +12,12 @@ class MvtPoint extends Model
     protected $keyType = 'string';
     public $timestamps = false;
 
+    // types de mouvement autorises (meme liste que la contrainte CHECK du schema)
     public const TYPES = ['gain', 'utilisation', 'expiration', 'parrainage', 'jeu'];
 
     protected $fillable = [
         'Id_mvt',
+        'date_mvt',
         'nbres_points',
         'type_mvt',
         'date_expiration',
@@ -25,18 +26,16 @@ class MvtPoint extends Model
     ];
 
     protected $casts = [
-        'date_mvt'        => 'datetime',
+        'date_mvt' => 'datetime',
         'date_expiration' => 'datetime',
-        'nbres_points'    => 'integer',
+        'nbres_points' => 'integer',
     ];
 
-    public function etudiant(): BelongsTo
-    {
+    public function etudiant(){
         return $this->belongsTo(Etudiant::class, 'Id_utilisateur', 'Id_utilisateur');
     }
 
-    public function commande(): BelongsTo
-    {
+    public function commande(){
         return $this->belongsTo(Commande::class, 'Id_commande', 'Id_commande');
     }
 }

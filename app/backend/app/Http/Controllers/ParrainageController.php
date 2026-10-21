@@ -2,93 +2,162 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UtiliserCodeParrainageRequest;
+use App\Models\Etudiant;
+use App\Models\MvtPoint;
 use App\Models\Parrainer;
-use App\Support\Roles;
-use Illuminate\Database\QueryException;
-use Illuminate\Http\JsonResponse;
+use App\Models\Utilisateur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ParrainageController extends Controller
 {
-    // Mon code à partager et mon nombre de filleuls
-    public function monCode(Request $request): JsonResponse
+    /** Bonus au parrain à la 1ère commande du filleul (US-019) */
+    public const BONUS_PARRAIN = 500; // points
+
+    /**
+     * afficher / générer mon code de parrainage (US-017)
+     * GET /api/parrainage/code
+     */
+    public function code(Request $request)
     {
-        if ($refus = $this->refuserSiPasEtudiant($request)) {
-            return $refus;
+        $etudiant = $request->user()->etudiant;
+
+        if (! $etudiant) {
+            return response()->json(['message' => 'Réservé aux étudiants.'], 403);
         }
 
-        $id = $request->user()->Id_utilisateur;
+        if (! $etudiant->code_parrainage) {
+            $etudiant->update(['code_parrainage' => $this->genererCode()]);
+        }
 
-        return response()->json(['data' => [
-            'code_parrainage' => DB::table('etudiant')->where('Id_utilisateur', $id)->value('code_parrainage'),
-            'nombre_filleuls' => Parrainer::where('Id_parrain', $id)->count(),
-        ]]);
+        return response()->json([
+            'code_parrainage' => $etudiant->code_parrainage,
+            'bonus_attendu'   => self::BONUS_PARRAIN . ' points à la 1ère commande du filleul',
+        ]);
     }
 
-    // Je saisis le code de l'étudiant qui m'a parrainé.
-    // Ici on crée seulement le lien : la récompense est versée plus tard
-    // par ParrainageService::verserRecompense (une seule fois).
-    public function utiliserCode(UtiliserCodeParrainageRequest $request): JsonResponse
+    /**
+     * utiliser un code de parrainage (US-018) : lie l'étudiant connecté à son parrain.
+     * POST /api/parrainage/utiliser { code_parrainage: "ABCD1234" }
+     */
+    public function utiliser(Request $request)
     {
-        if ($refus = $this->refuserSiPasEtudiant($request)) {
-            return $refus;
+        $data = $request->validate([
+            'code_parrainage' => ['required', 'regex:/^[A-Z]{4}[0-9]{4}$/'],
+        ]);
+
+        $filleul = $request->user()->etudiant;
+
+        if (! $filleul) {
+            return response()->json(['message' => 'Réservé aux étudiants.'], 403);
         }
 
-        $moi     = $request->user()->Id_utilisateur;
-        $parrain = DB::table('etudiant')->where('code_parrainage', $request->code_parrainage)->first();
+        if ($data['code_parrainage'] === $filleul->code_parrainage) {
+            return response()->json(['message' => 'Vous ne pouvez pas vous parrainer vous-même.'], 422);
+        }
 
-        if (!$parrain) {
+        $parrain = Etudiant::where('code_parrainage', $data['code_parrainage'])->first();
+
+        if (! $parrain) {
             return response()->json(['message' => 'Code de parrainage inconnu.'], 404);
         }
-        if ($parrain->Id_utilisateur === $moi) {
-            return response()->json(['message' => 'Vous ne pouvez pas utiliser votre propre code.'], 422);
-        }
-        if (Parrainer::where('Id_filleul', $moi)->exists()) {
-            return response()->json(['message' => 'Vous avez déjà un parrain.'], 409);
-        }
-        // Évite un parrainage circulaire : A parraine B, puis B essaie de parrainer A
-        if (Parrainer::where('Id_filleul', $parrain->Id_utilisateur)->where('Id_parrain', $moi)->exists()) {
-            return response()->json(['message' => 'Cet étudiant est déjà votre filleul.'], 422);
+
+        if (Parrainer::where('Id_filleul', $filleul->Id_utilisateur)->exists()) {
+            return response()->json(['message' => 'Vous avez déjà un parrain.'], 422);
         }
 
-        try {
+        DB::transaction(function () use ($filleul, $parrain) {
             Parrainer::create([
-                'Id_filleul'           => $moi,
+                'Id_filleul'           => $filleul->Id_utilisateur,
                 'Id_parrain'           => $parrain->Id_utilisateur,
                 'recompense_attribuee' => false,
             ]);
-        } catch (QueryException $e) {
-            // Deux requêtes simultanées : la clé primaire Id_filleul bloque la seconde (erreur MySQL 1062)
-            if (($e->errorInfo[1] ?? null) === 1062) {
-                return response()->json(['message' => 'Vous avez déjà un parrain.'], 409);
-            }
-            throw $e;
-        }
+        });
 
-        return response()->json(['data' => Parrainer::where('Id_filleul', $moi)->first()], 201);
+        return response()->json([
+            'message' => 'Parrainage enregistré.',
+            'parrain' => ['prenom' => $parrain->utilisateur?->prenom ?? null],
+        ], 201);
     }
 
-    // Les étudiants que j'ai parrainés
-    public function mesFilleuls(Request $request): JsonResponse
+    /**
+     * suivre la liste de mes filleuls (US-020)
+     * GET /api/parrainage/filleuls
+     */
+    public function filleuls(Request $request)
     {
-        if ($refus = $this->refuserSiPasEtudiant($request)) {
-            return $refus;
+        $etudiant = $request->user()->etudiant;
+
+        if (! $etudiant) {
+            return response()->json(['message' => 'Réservé aux étudiants.'], 403);
         }
 
-        $filleuls = Parrainer::where('Id_parrain', $request->user()->Id_utilisateur)
+        $parrainages = Parrainer::where('Id_parrain', $etudiant->Id_utilisateur)
             ->orderByDesc('date_parrainage')
             ->get(['Id_filleul', 'date_parrainage', 'recompense_attribuee']);
 
-        return response()->json(['data' => $filleuls]);
+        // Infos utilisateur des filleuls (nom, prénom)
+        $infos = Utilisateur::whereIn('Id_utilisateur', $parrainages->pluck('Id_filleul'))
+            ->get(['Id_utilisateur', 'nom', 'prenom'])
+            ->keyBy('Id_utilisateur');
+
+        return $parrainages->map(function ($p) use ($infos) {
+            return [
+                'filleul'              => $infos[$p->Id_filleul]?->only(['nom', 'prenom']),
+                'date_parrainage'      => $p->date_parrainage,
+                'recompense_attribuee' => (bool) $p->recompense_attribuee,
+            ];
+        });
     }
 
-    // Toujours se baser sur l'utilisateur connecté, jamais sur un identifiant reçu dans l'URL
-    private function refuserSiPasEtudiant(Request $request): ?JsonResponse
+    /**
+     * US-019 : appelé par CommandeController::store à la toute première
+     * commande réussie du filleul. Crédite le parrain et clôt le parrainage.
+     */
+    public static function attribuerBonusPremiereCommande(Etudiant $filleul): void
     {
-        return Roles::de($request->user()) === 'etudiant'
-            ? null
-            : response()->json(['message' => 'Réservé aux étudiants.'], 403);
+        $parrainage = Parrainer::where('Id_filleul', $filleul->Id_utilisateur)
+            ->where('recompense_attribuee', false)
+            ->first();
+
+        if (! $parrainage) {
+            return; // pas de parrain (ou bonus déjà versé)
+        }
+
+        DB::transaction(function () use ($filleul, $parrainage) {
+            $parrain = Etudiant::where('Id_utilisateur', $parrainage->Id_parrain)->first();
+
+            if (! $parrain) {
+                return;
+            }
+
+            $parrain->increment('solde_point', self::BONUS_PARRAIN);
+
+            do {
+                $id = 'MV' . str_pad((string) random_int(0, 999), 3, '0', STR_PAD_LEFT);
+            } while (MvtPoint::where('Id_mvt', $id)->exists());
+
+            MvtPoint::create([
+                'Id_mvt'         => $id,
+                'nbres_points'   => self::BONUS_PARRAIN,
+                'type_mvt'       => 'parrainage',
+                'Id_utilisateur' => $parrain->Id_utilisateur,
+            ]);
+
+            $parrainage->update(['recompense_attribuee' => true]);
+        });
+    }
+
+    /**
+     * Générateur ABCD1234 (domaine CODE_PARRAINAGE) sans collision.
+     */
+    private function genererCode(): string
+    {
+        do {
+            $code = strtoupper(Str::random(4)) . (string) random_int(1000, 9999);
+        } while (Etudiant::where('code_parrainage', $code)->exists());
+
+        return $code;
     }
 }

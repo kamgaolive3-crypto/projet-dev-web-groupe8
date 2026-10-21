@@ -1,5 +1,10 @@
-//importe un hook qui permet de memoriser une valeur
-import { useState } from "react"
+// Page Fidelite reproduisant la maquette (raffinee) :
+// titres Inria Serif ; bande creme #FFFDF8 (reduction + mes points + barre
+// de progression animee) ; cartes blanches : points par commande / parrainage ;
+// grande carte top 10 avec survol de ligne
+import { useState, useEffect } from "react"
+import { api } from "../../services/api"
+import { useAuth } from "../../services/auth"
 
 //---------------- REGLES DU PROGRAMME ----------------
 //On les écrit une seule fois ici : elles servent au texte ET aux calculs
@@ -11,36 +16,84 @@ const VALEUR_REDUCTION = 1000    // une réduction vaut 1 000 F
 const fcfa = (n) => n.toLocaleString("fr-FR") + " F"
 
 export default function Fidelite() {
-    //---------------- DONNEES (valeurs de test pour l'instant) ----------------
-    //plus tard : ces valeurs viendront de l'API PHP
-    const [client] = useState({ points: 28, reduction: 1850, codeParrain: "MIAM-2026" })
+    //auth pour utiliser mes points (se passe dans le panier)
+    const { user } = useAuth()
+    //message d erreur (pas connecté, serveur en panne...)
+    const [erreur, setErreur] = useState("")
 
-    const [commandes] = useState([
-        { id: 1, date: "30/09", montant: 5000, points: 5 },
-        { id: 2, date: "28/09", montant: 12000, points: 12 },
-        { id: 3, date: "26/09", montant: 9000, points: 9 },
-        { id: 4, date: "20/09", montant: 3000, points: 3 },
-        { id: 5, date: "15/09", montant: 7000, points: 7 },
-    ])
+    //---------------- DONNEES VENANT DU BACKEND ----------------
+    //le solde de points : GET /api/fidelite/solde
+    const [solde, setSolde] = useState(0)
+    //true quand le solde a ete charge (pour animer la barre une seule fois)
+    const [soldeCharge, setSoldeCharge] = useState(false)
+    //les points gagnés par commande : GET /api/fidelite/historique
+    const [commandes, setCommandes] = useState([])
+    //mon code de parrainage : GET /api/parrainage/code
+    const [codeParrain, setCodeParrain] = useState("")
+    //mes filleuls : GET /api/parrainage/filleuls
+    const [filleuls, setFilleuls] = useState([])
+    //top 10 : GET /api/stats/top-clients?periode=jour|semaine|mois (CDC : filtres)
+    const [classement, setClassement] = useState([])
+    //periode choisie pour le top 10 (mois par defaut, comme l API)
+    const [periode, setPeriode] = useState("mois")
 
-    const [filleuls] = useState([
-        { id: 1, nom: "Olive", statut: "inscrite", points: 3 },
-        { id: 2, nom: "Diana", statut: "en attente", points: 0 },
-        { id: 3, nom: "Paul", statut: "inscrit", points: 3 },
-    ])
+    //au premier affichage : les 5 chargements
+    useEffect(() => {
+        if (!user) {
+            setErreur("Connectez-vous pour voir votre programme de fidélité.")
+            return
+        }
+        api.get("/fidelite/solde")
+            .then((s) => {
+                setSolde(s.solde_point ?? s.points ?? 0)
+                setSoldeCharge(true)
+            })
+            .catch((e) => setErreur(e.message))
 
-    const [classement] = useState([
-        { nom: "Olive", points: 85 },
-        { nom: "Awa", points: 72 },
-        { nom: "Paul", points: 64 },
-        { nom: "Diana", points: 51 },
-        { nom: "Junior", points: 47 },
-        { nom: "Cindy", points: 40 },
-        { nom: "Emerie", points: 36 },
-        { nom: "Soume", points: 31 },
-        { nom: "Vous", points: 28 },
-        { nom: "Dina", points: 22 },
-    ])
+        // l historique ne contient pas le montant : on le recupere sur les commandes
+        // liees (m.Id_commande) pour remplir la colonne « Montant » de la maquette
+        Promise.all([api.get("/fidelite/historique"), api.get("/commande")])
+            .then(([liste, cmds]) => {
+                const filCmds = Array.isArray(cmds) ? cmds : (cmds.data || []);
+                const montants = new Map(filCmds.map((c) => [c.Id_commande, c.montant_total]));
+                setCommandes((Array.isArray(liste) ? liste : liste.data || []).map((m, i) => ({
+                    id: m.Id_mvt ?? i,
+                    date: (m.date_mvt || "").slice(0, 10),
+                    montant: m.montant ?? montants.get(m.Id_commande) ?? null,
+                    points: Math.abs(m.nbres_points ?? m.points ?? 0),
+                })))
+            })
+            .catch(() => setCommandes([]))
+
+        api.get("/parrainage/code")
+            .then((r) => setCodeParrain(r.code_parrainage ?? r.code ?? ""))
+            .catch(() => setCodeParrain(""))
+
+        api.get("/parrainage/filleuls")
+            .then((liste) => {
+                setFilleuls((Array.isArray(liste) ? liste : liste.data || []).map((f, i) => ({
+                    id: f.Id_utilisateur ?? i,
+                    nom: f.nom ?? f.prenom ?? "Filleul",
+                    statut: f.recompense_attribuee ? "inscrite" : "en attente",
+                    points: f.recompense_attribuee ? 3 : 0,
+                })))
+            })
+            .catch(() => setFilleuls([]))
+
+        api.get("/stats/top-clients?periode=" + periode)
+            .then((rep) => {
+                // l API renvoie { periode, classement: [{rang, etudiant, nb_commandes, montant}] }
+                const liste = Array.isArray(rep) ? rep : (rep.classement || rep.data || [])
+                setClassement(liste.map((c, i) => ({
+                    id: c.Id_utilisateur ?? i,
+                    nom: (c.etudiant?.nom ?? c.nom ?? "Client") + (c.etudiant?.prenom ? " " + c.etudiant.prenom : ""),
+                    commandes: c.nb_commandes ?? 0,
+                    montant: c.montant ?? 0,
+                    moi: c.Id_utilisateur === user.Id_utilisateur,
+                })))
+            })
+            .catch(() => setClassement([]))
+    }, [periode])
 
     //---------------- ETATS DE LA PAGE ----------------
     //true = on affiche toutes les lignes, false = seulement les premières
@@ -48,14 +101,16 @@ export default function Fidelite() {
     const [filleulsTous, setFilleulsTous] = useState(false)
     //true pendant 2 secondes après un clic sur "Copier"
     const [copie, setCopie] = useState(false)
-    //message affiché sous le bouton "Utiliser mes points"
+    //toast affiché apres "Utiliser mes points"
     const [message, setMessage] = useState("")
 
     //---------------- CALCULS ----------------
-    //28 points : 28 % 15 = 13 -> il reste 13 points vers la prochaine réduction
-    const pointsVersReduction = client.points % POINTS_PAR_REDUCTION
-    //13 / 15 = 87 % -> largeur de la barre de progression
+    //le reste vers la prochaine réduction
+    const pointsVersReduction = solde % POINTS_PAR_REDUCTION
+    //largeur de la barre de progression
     const pourcentage = (pointsVersReduction / POINTS_PAR_REDUCTION) * 100
+    //la réduction disponible : 15 points valent 1000 F (meme règle que le panier)
+    const reduction = Math.floor(solde / POINTS_PAR_REDUCTION) * VALEUR_REDUCTION
     //slice(0, 3) garde seulement les 3 premiers éléments de la liste
     const commandesAffichees = commandesToutes ? commandes : commandes.slice(0, 3)
     const filleulsAffiches = filleulsTous ? filleuls : filleuls.slice(0, 2)
@@ -63,94 +118,131 @@ export default function Fidelite() {
     //---------------- ACTIONS ----------------
     //fonction appellée quand on clique sur "Copier"
     const copierCode = () => {
-        navigator.clipboard.writeText(client.codeParrain) // copie le code
+        navigator.clipboard.writeText(codeParrain) // copie le code
         setCopie(true)
-        setTimeout(() => setCopie(false), 2000) // "Copié !" disparait après 2 secondes
+        setTimeout(() => setCopie(false), 2000) // "Copie !" disparait après 2 secondes
     }
 
     //fonction appellée quand on clique sur "Utiliser mes points"
-    //pour l'instant elle affiche seulement un message (le vrai calcul viendra avec le PHP)
     const utiliserPoints = () => {
-        if (client.reduction <= 0) {
+        if (reduction <= 0) {
             setMessage("Vous n'avez pas encore de réduction disponible.")
         } else {
-            setMessage("Votre réduction de " + fcfa(client.reduction) + " sera appliquée à votre prochain panier.")
+            setMessage("Dépensez vos points au moment de confirmer votre commande (page Panier).")
         }
+        setTimeout(() => setMessage(""), 3000)
     }
 
     return (
-        <div className="flex flex-col gap-6 p-4 md:p-6">
-            {/* ---------- TITRE ---------- */}
-            <div>
-                <h1 className="font-serif text-xl font-bold">Programme de fidélité</h1>
-                <p className="text-xs text-gray-600">
-                    {fcfa(FCFA_PAR_POINT)} dépensés = 1 point · {POINTS_PAR_REDUCTION} points = {fcfa(VALEUR_REDUCTION)} de réduction
+        <div className="mx-auto w-full max-w-[1320px] px-4 pb-14 pt-8 md:px-8">
+            {/* toast "Utiliser mes points" */}
+            {message && (
+                <p
+                    className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-black/85 px-5 py-2.5 font-sans text-[13px] text-white shadow-hover"
+                    style={{ animation: "toast-in 0.35s cubic-bezier(0.22,1,0.36,1) both" }}
+                >
+                    {message}
                 </p>
-            </div>
+            )}
 
-            {/* ---------- MES POINTS ---------- */}
-            {/* flex-col sur téléphone (empilé), md:flex-row sur ordinateur (côte à côte) */}
-            <section className="flex flex-col gap-6 rounded-xl border border-[#e3dac6] bg-[#fffdf5] p-5 md:flex-row md:items-center">
-                {/* partie gauche : les points et la barre */}
+            {/* ---------- TITRE ---------- */}
+            <h1 className="miam-titre">Programme de fidélité</h1>
+            <p className="mt-1 font-inria text-[13px] text-encre">
+                {fcfa(FCFA_PAR_POINT)} dépensés = 1 point &nbsp;·&nbsp; {POINTS_PAR_REDUCTION} points = {fcfa(VALEUR_REDUCTION)} de réduction
+            </p>
+
+            {/* pas connecté : message + lien connexion */}
+            {erreur && (
+                <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-[13px] text-red-700">
+                    {erreur}{" "}
+                    {!user && (
+                        <a href="/page_connexion" className="font-semibold underline">
+                            Se connecter
+                        </a>
+                    )}
+                </p>
+            )}
+
+            {/* ---------- BANDE REDUCTION + MES POINTS (creme) ---------- */}
+            <section
+                className="mt-5 flex flex-col gap-5 rounded-2xl bg-creme-d p-5 md:flex-row md:items-center md:p-7"
+                style={{ animation: "fade-up 0.5s cubic-bezier(0.22,1,0.36,1) both" }}
+            >
+                {/* gauche : la reduction */}
                 <div className="flex-1">
-                    <h2 className="font-serif text-sm font-semibold">Mes points</h2>
-                    <p className="mt-2 text-3xl font-bold">{client.points} pts</p>
+                    <p className="miam-eyebrow">Réduction disponible</p>
+                    <p className="mt-1.5 font-inria text-[26px] font-bold tracking-tight text-black md:text-[32px]">
+                        {fcfa(reduction)}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={utiliserPoints}
+                        className="miam-pill h-9 mt-3 text-[13.5px]"
+                    >
+                        Utiliser mes points
+                    </button>
+                </div>
 
-                    {/* la piste claire */}
-                    <div className="mt-2 h-3 w-full rounded-full bg-[#efe6d0]">
-                        {/* la partie dorée : sa largeur change avec le pourcentage */}
-                        <div className="h-3 rounded-full bg-[#CFBD97]" style={{ width: pourcentage + "%" }} />
+                {/* filet vertical sur desktop (maquette) */}
+                <span className="hidden h-24 w-px bg-bmie md:block" />
+
+                {/* droite : mes points + barre de progression animee */}
+                <div className="flex-1">
+                    <p className="miam-eyebrow">Mes points</p>
+                    <p className="mt-1.5 font-inria text-[26px] font-bold tracking-tight text-black md:text-[32px]">
+                        {solde} pts
+                    </p>
+                    {/* piste #F5F0E9 + remplissage or qui se remplit au chargement */}
+                    <div className="mt-2.5 h-2 w-full max-w-[420px] overflow-hidden rounded-full bg-piste">
+                        <div
+                            className="h-full rounded-full bg-or transition-[width] duration-700 ease-out"
+                            style={{ width: (soldeCharge ? pourcentage : 0) + "%" }}
+                        />
                     </div>
-                    <p className="mt-2 text-xs">
+                    <p className="mt-1.5 font-sans text-[12.5px] font-medium text-encre">
                         {pointsVersReduction}/{POINTS_PAR_REDUCTION} points vers la prochaine réduction
                     </p>
                 </div>
-
-                {/* partie droite : la réduction (un trait doré la sépare de la gauche) */}
-                <div className="flex flex-col items-center gap-2 border-t border-[#CFBD97] pt-4 md:w-1/3 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-                    <p className="font-serif text-sm font-semibold">Réduction disponible</p>
-                    <p className="text-3xl font-bold">{fcfa(client.reduction)}</p>
-                    <button
-                        onClick={utiliserPoints}
-                        className="rounded-full bg-[#CFBD97] px-5 py-1.5 text-sm text-black  transition-colors hover:bg-primary-700">
-                        Utiliser mes points
-                    </button>
-                    {/* && : le message s'affiche seulement s'il n'est pas vide */}
-                    {message && <p className="text-center text-xs text-[#b8862d]">{message}</p>}
-                </div>
             </section>
 
-            {/* ---------- COMMANDES + PARRAINAGE ---------- */}
-            {/* 1 colonne sur téléphone, 2 colonnes sur ordinateur */}
-            <div className="grid gap-6 md:grid-cols-2">
-                {/* Points gagnés par commande */}
-                <section className="rounded-xl border border-[#e3dac6] bg-white p-4">
-                    <h2 className="mb-2 font-serif text-sm font-semibold">Points gagnés par commande</h2>
-                    <table className="w-full text-xs">
+            {/* ---------- POINTS PAR COMMANDE + PARRAINAGE ---------- */}
+            <div className="mt-5 grid gap-5 lg:grid-cols-2">
+                {/* Points gagnés par commande : carte blanche */}
+                <section className="miam-carte p-4 md:p-5">
+                    <h2 className="font-inria text-[16px] font-bold text-black">
+                        Points gagnés par commande
+                    </h2>
+                    <table className="mt-2.5 w-full font-inria text-[13.5px] text-black">
                         <thead>
-                            <tr className="text-left text-gray-500">
-                                <th className="py-1 font-normal">Date</th>
-                                <th className="font-normal">Montant</th>
-                                <th className="text-right font-normal">Points</th>
+                            <tr className="text-left text-gris-pa">
+                                <th className="py-1 pr-2 font-medium">Date · Montant</th>
+                                <th className="text-right font-medium">Points</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {/* .map() fabrique une ligne pour chaque commande de la liste */}
+                            {/* .map() fabrique une ligne pour chaque mouvement de points */}
                             {commandesAffichees.map((c) => (
-                                <tr key={c.id} className="border-t border-[#efe6d0]">
-                                    <td className="py-1.5">{c.date}</td>
-                                    <td>{fcfa(c.montant)}</td>
-                                    <td className="text-right font-semibold text-[#b8862d]">+{c.points}</td>
+                                <tr key={c.id} className="border-t border-creme-d transition-colors hover:bg-creme-d/60">
+                                    <td className="py-2">
+                                        {c.date ? c.date.slice(8, 10) + "/" + c.date.slice(5, 7) : "—"} · {c.montant === null ? "—" : fcfa(c.montant)}
+                                    </td>
+                                    <td className="text-right font-bold text-or-deep">+{c.points}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                    {commandes.length === 0 && (
+                        <p className="mt-2.5 font-sans text-[12.5px] text-encre">
+                            Aucun mouvement de points pour le moment.
+                        </p>
+                    )}
                     {/* le bouton existe seulement s'il y a plus de 3 commandes */}
                     {commandes.length > 3 && (
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-2.5 flex justify-end">
                             <button
+                                type="button"
                                 onClick={() => setCommandesToutes(!commandesToutes)}
-                                className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs text-black  transition-colors hover:bg-primary-700"
+                                className="miam-pill h-7 px-3.5 text-[12px]"
                             >
                                 {commandesToutes ? "Voir moins" : "Voir plus"}
                             </button>
@@ -158,45 +250,55 @@ export default function Fidelite() {
                     )}
                 </section>
 
-                {/* Parrainage */}
-                <section className="rounded-xl border border-[#e3dac6] bg-white p-4">
-                    <h2 className="mb-2 font-serif text-sm font-semibold">Parrainage</h2>
+                {/* Parrainage : carte blanche */}
+                <section className="miam-carte p-4 md:p-5">
+                    <h2 className="font-inria text-[16px] font-bold text-black">
+                        Parrainage
+                    </h2>
 
-                    {/* le code de parrainage et le bouton Copier */}
-                    <div className="mb-3 flex items-center justify-between rounded-md bg-[#e8dcc3] px-3 py-1.5 text-xs">
-                        <span>
-                            Votre code : <b>{client.codeParrain}</b>
+                    {/* le code de parrainage dans sa chip beige */}
+                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-full bg-bmie px-4 py-1.5">
+                        <span className="font-inria text-[13.5px] text-black">
+                            Votre code :&nbsp;&nbsp;<b className="tracking-wide">{codeParrain || "non disponible"}</b>
                         </span>
-                        <button onClick={copierCode} className="rounded-full bg-[#CFBD97] px-3 py-0.5 text-black  transition-colors hover:bg-primary-700">
-                            {copie ? "Copié !" : "Copier"}
+                        <button
+                            type="button"
+                            onClick={copierCode}
+                            className="miam-pill h-7 px-3.5 text-[12px]"
+                        >
+                            {copie ? "Copié ✓" : "Copier"}
                         </button>
                     </div>
 
-                    <table className="w-full text-xs">
+                    <table className="mt-2.5 w-full font-inria text-[13.5px] text-black">
                         <thead>
-                            <tr className="text-left text-gray-500">
-                                <th className="py-1 font-normal">Filleul</th>
-                                <th className="font-normal">Statut</th>
-                                <th className="text-right font-normal">Points</th>
+                            <tr className="text-left text-gris-pa">
+                                <th className="py-1 pr-2 font-medium">Filleul · Statut</th>
+                                <th className="text-right font-medium">Points</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filleulsAffiches.map((f) => (
-                                <tr key={f.id} className="border-t border-[#efe6d0]">
-                                    <td className="py-1.5">{f.nom}</td>
-                                    <td>{f.statut}</td>
-                                    <td className="text-right font-semibold text-[#b8862d]">
-                                        {f.points > 0 ? "+" + f.points : 0}
+                                <tr key={f.id} className="border-t border-creme-d transition-colors hover:bg-creme-d/60">
+                                    <td className="py-2">{f.nom} · {f.statut}</td>
+                                    <td className="text-right font-bold text-or-deep">
+                                        {f.points > 0 ? "+" + f.points : "0"}
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                    {filleuls.length === 0 && (
+                        <p className="mt-2.5 font-sans text-[12.5px] text-encre">
+                            Aucun filleul pour le moment.
+                        </p>
+                    )}
                     {filleuls.length > 2 && (
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-2.5 flex justify-end">
                             <button
+                                type="button"
                                 onClick={() => setFilleulsTous(!filleulsTous)}
-                                className="rounded-full bg-[#CFBD97] px-4 py-1 text-xs text-black transition-colors hover:bg-primary-700"
+                                className="miam-pill h-7 px-3.5 text-[12px]"
                             >
                                 {filleulsTous ? "Voir moins" : "Voir plus"}
                             </button>
@@ -205,27 +307,55 @@ export default function Fidelite() {
                 </section>
             </div>
 
-            {/* ---------- TOP 10 ---------- */}
-            <section className="rounded-xl border border-[#e3dac6] bg-white p-4">
-                <h2 className="mb-2 font-serif text-sm font-semibold">Top 10 des meilleurs clients</h2>
-                {/* ordinateur : 2 colonnes de 5 (1 à 5 à gauche, 6 à 10 à droite) ; téléphone : 1 colonne */}
-                <ol className="grid gap-x-10 md:grid-flow-col md:grid-rows-5">
+            {/* ---------- TOP 10 (filtres jour/semaine/mois, cf cahier de charge) ---------- */}
+            <section className="miam-carte mt-5 p-4 md:p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="font-inria text-[16px] font-bold text-black">
+                        Top 10 des meilleurs clients
+                    </h2>
+                    {/* filtres de periode : le clic recharge le classement */}
+                    <div className="flex gap-1.5">
+                        {[["jour", "Jour"], ["semaine", "Semaine"], ["mois", "Mois"]].map(([valeur, label]) => (
+                            <button
+                                key={valeur}
+                                type="button"
+                                onClick={() => setPeriode(valeur)}
+                                className={
+                                    "miam-pill h-7 px-3 text-[12px] " +
+                                    (periode === valeur ? "" : "opacity-55")
+                                }
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                {/* ordinateur : 2 colonnes de 5 ; téléphone : 1 colonne */}
+                <ol className="mt-1 grid gap-x-10 md:grid-flow-col md:grid-rows-5">
                     {/* i = la position dans la liste (0, 1, 2...), donc le rang est i + 1 */}
                     {classement.map((c, i) => (
                         <li
-                            key={c.nom}
+                            key={c.id}
                             className={
-                                "flex justify-between border-b border-[#efe6d0] py-2 text-sm " +
-                                (c.nom === "Vous" ? "font-bold text-[#b8862d]" : "")
+                                "flex justify-between border-b border-creme-d px-1 py-2 font-inria text-[14.5px] transition-colors hover:bg-creme-d/60 md:text-[15.5px] " +
+                                (c.moi ? "font-bold text-or-deep" : "text-black")
                             }
                         >
-                            <span>
-                                {i + 1} {c.nom}
+                            <span title={fcfa(c.montant)}>
+                                {i + 1} {c.moi ? "Vous" : c.nom}
+                                <span className="font-sans text-[11.5px] text-encre">
+                                    {" "}· {c.commandes} commande{c.commandes > 1 ? "s" : ""}
+                                </span>
                             </span>
-                            <span>{c.points} pts</span>
+                            <span className="font-sans text-[11.5px] text-encre">{fcfa(c.montant)}</span>
                         </li>
                     ))}
                 </ol>
+                {classement.length === 0 && (
+                    <p className="mt-1.5 font-sans text-[12.5px] text-encre">
+                        Classement indisponible pour le moment.
+                    </p>
+                )}
             </section>
         </div>
     )

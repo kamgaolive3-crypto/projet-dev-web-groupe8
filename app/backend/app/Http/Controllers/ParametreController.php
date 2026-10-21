@@ -4,82 +4,90 @@ namespace App\Http\Controllers;
 
 use App\Models\Parametre;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ParametreController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     * GET /api/parametres
-     * Utilisé par la page Paramètres pour afficher les réglages actuels
+     * GET /api/parametre
+     * Liste tous les paramètres de l'application.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // pluck('valeur', 'cle') : lit toute la table et renvoie un tableau
-        return Parametre::pluck('valeur', 'cle');
+        // lecture reservee au personnel (l etudiant n a rien a faire des parametres)
+        if ($request->user()?->role === 'etudiant') {
+            return response()->json(['message' => 'Reserve au personnel.'], 403);
+        }
+        return Parametre::all();
     }
 
     /**
-     * Store a newly created resource in storage.
+     * POST /api/parametre
+     * Crée un nouveau paramètre (magasin clé/valeur).
      */
     public function store(Request $request)
     {
-        //
+        // cloisonnement (CDC) : les parametres generaux de l application sont
+        // configures par l administrateur uniquement.
+        if ($request->user()?->role !== 'administrateur') {
+            return response()->json(['message' => 'Parametres reserves a l administrateur.'], 403);
+        }
+        $data = $request->validate([
+            'Id_parametre'  => ['required', 'regex:/^[A-Z]{2}[0-9]{3}$/', 'unique:parametre,Id_parametre'],
+            'cle'           => 'required|string|max:100|unique:parametre,cle',
+            'valeur'        => 'required|string',
+            'Id_utilisateur'=> 'required|exists:administrateur,Id_utilisateur',
+        ]);
+
+        $parametre = Parametre::create($data);
+        return response()->json($parametre, 201);
     }
 
     /**
-     * Display the specified resource.
+     * GET /api/parametre/{id}
+     * Affiche un paramètre précis par son Id_parametre.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        //
+        if ($request->user()?->role === 'etudiant') {
+            return response()->json(['message' => 'Reserve au personnel.'], 403);
+        }
+        return Parametre::findOrFail($id);
     }
 
     /**
-     * Update the specified resource in storage.
+     * PUT /api/parametre/{id}
+     * Met à jour un paramètre. L'Id_parametre est ignoré dans le contrôle
+     * d'unicité (il ne change pas), la clé doit rester unique.
      */
     public function update(Request $request, string $id)
     {
-        //Vérifie les données reçues
+        // cloisonnement (CDC) : seul l administrateur configure les parametres.
+        if ($request->user()?->role !== 'administrateur') {
+            return response()->json(['message' => 'Parametres reserves a l administrateur.'], 403);
+        }
+        $parametre = Parametre::findOrFail($id);
         $data = $request->validate([
-            // "parametres" est obligatoire et doit être un tableau (cle => valeur)
-            'parametre'     => 'required|array',
-            // chaque valeur du tableau est obligatoire et doit être du texte
-            // (la colonne "valeur" est un TEXT : on envoie "1" ou "0", pas true/false)
-            'parametre.*'   => 'required|string',
-            // l'administrateur qui modifie doit exister dans la table administrateur
-            'Id_utilisateur' => 'required|exists:administrateur,Id_utilisateur'
+            'Id_parametre'  => ['required', 'regex:/^[A-Z]{2}[0-9]{3}$/', 'unique:parametre,Id_parametre,'.$id],
+            'cle'           => 'required|string|max:100|unique:parametre,cle,'.$id.',Id_parametre',
+            'valeur'        => 'required|string',
+            'Id_utilisateur'=> 'required|exists:administrateur,Id_utilisateur',
         ]);
 
-        //Transaction : tous les réglages sont enregistrés, ou aucun
-        //   "use ($data)" donne à la fonction interne accès à $data
-        DB::transaction(function () use ($data) {
-
-            //  Parcourt chaque réglage envoyé : $cle = le nom, $valeur = la nouvelle valeur
-            foreach ($data['parametre'] as $cle => $valeur) {
-
-                //  Cherche la ligne dont la colonne "cle" correspond
-                //    (erreur 404 si ce réglage n'existe pas)
-                Parametre::where('cle', $cle)->firstOrFail()
-
-                         // Met à jour la valeur, et note quel admin a fait la modification
-                         ->update([
-                             'valeur'         => $valeur,
-                             'Id_utilisateur' => $data['Id_utilisateur'],
-                         ]);
-            }
-        });
-
-        // 6. Renvoie tous les réglages à jour, pour que React rafraîchisse la page
-        return Parametre::pluck('valeur', 'cle');
-    
+        $parametre->update($data);
+        return response()->json($parametre, 200);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * DELETE /api/parametre/{id}
+     * Supprime un paramètre.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        //
+        // cloisonnement (CDC) : seul l administrateur supprime un parametre.
+        if ($request->user()?->role !== 'administrateur') {
+            return response()->json(['message' => 'Parametres reserves a l administrateur.'], 403);
+        }
+        Parametre::findOrFail($id)->delete();
+        return response()->json(['message' => 'paramètre supprimé']);
     }
 }

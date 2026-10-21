@@ -22,6 +22,10 @@ class RestaurantController extends Controller
      */
     public function store(Request $request)
     {
+        // cloisonnement (CDC) : la structure des restaurants est geree par le personnel.
+        if ($request->user()->role === 'etudiant') {
+            return response()->json(['message' => 'Gestion des restaurants reservee au personnel.'], 403);
+        }
         $data = $request->validate([
             'Id_restaurant'        => ['required', 'regex:/^[A-Z]{2}[0-9]{3}$/', 'unique:restaurant,Id_restaurant'],
             'nom_restaurant'       => 'required|string|max:150',
@@ -53,6 +57,10 @@ class RestaurantController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        // cloisonnement (CDC) : l etudiant ne modifie pas les restaurants.
+        if ($request->user()->role === 'etudiant') {
+            return response()->json(['message' => 'Gestion des restaurants reservee au personnel.'], 403);
+        }
         $restaurant = Restaurant::findOrFail($id);
 
         $data = $request->validate([
@@ -74,8 +82,12 @@ class RestaurantController extends Controller
      * Remove the specified resource from storage.
      * DELETE/api/restaurants : supprimer 
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
+        // cloisonnement (CDC) : l etudiant ne supprime pas de restaurant.
+        if ($request->user()->role === 'etudiant') {
+            return response()->json(['message' => 'Gestion des restaurants reservee au personnel.'], 403);
+        }
         Restaurant::findOrFail($id)->delete();
         return response()->json(['message' => 'Restaurant supprimé']);
     }

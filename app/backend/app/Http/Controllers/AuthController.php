@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -31,44 +30,35 @@ class AuthController extends Controller
             'code_parrainage'   => ['nullable', 'regex:/^[A-Z]{4}[0-9]{4}$/'],
         ]);
 
-        [$utilisateur, $etudiant] = DB::transaction(function () use ($data) {
+        $utilisateur = Utilisateur::create([
+            // ID au format AAAA123456 : 4 lettres majuscules + 6 chiffres (schéma §10)
+            'Id_utilisateur' => strtoupper(Str::random(4)).random_int(100000, 999999),
+            'nom'            => $data['nom'],
+            'prenom'         => $data['prenom'],
+            'email'          => $data['email'],
+            'mot_de_passe'   => $data['mot_de_passe'], // haché par le cast 'hashed'
+            'telephone'      => $data['telephone'],
+            'statut_compte'  => 'actif',
+        ]);
 
-            $lettresId = '';
-            for ($i = 0; $i < 4; $i++) {
-                $lettresId .= chr(random_int(65, 90)); // A à Z
-            }
-            $idUtilisateur = $lettresId . random_int(100000, 999999);
+        Etudiant::create([
+            'Id_utilisateur'  => $utilisateur->Id_utilisateur,
+            'localisation'    => $data['localisation'] ?? null,
+            'code_parrainage' => strtoupper(Str::random(4)).random_int(1000, 9999),
+            'solde_point'     => 0,
+        ]);
 
-            $utilisateur = Utilisateur::create([
-                'Id_utilisateur' => $idUtilisateur,
-                'nom'            => $data['nom'],
-                'prenom'         => $data['prenom'],
-                'email'          => $data['email'],
-                'mot_de_passe'   => $data['mot_de_passe'],
-                'telephone'      => $data['telephone'],
-                'statut_compte'  => 'actif',
+        // US-018 : utiliser un code de parrainage à l'inscription (optionnel)
+        if (! empty($data['code_parrainage'])) {
+            $parrain = Etudiant::where('code_parrainage', $data['code_parrainage'])->first();
+            if ($parrain && $parrain->Id_utilisateur !== $utilisateur->Id_utilisateur) {
+                \App\Models\Parrainer::create([
+                    'Id_filleul'           => $utilisateur->Id_utilisateur,
+                    'Id_parrain'           => $parrain->Id_utilisateur,
+                    'recompense_attribuee' => false,
                 ]);
-
-            $etudiant = Etudiant::create([
-                'Id_utilisateur'  => $utilisateur->Id_utilisateur,
-                'localisation'    => $data['localisation'] ?? null,
-                'code_parrainage' => strtoupper(Str::random(4)) . random_int(1000, 9999),
-                'solde_point'     => 0,
-                ]);
-
-             if (! empty($data['code_parrainage'])) {
-                $parrain = Etudiant::where('code_parrainage', $data['code_parrainage'])->first();
-
-                if ($parrain && $parrain->Id_utilisateur !== $utilisateur->Id_utilisateur) {
-                    \App\Models\Parrainer::create([
-                        'Id_filleul'          => $utilisateur->Id_utilisateur,
-                        'Id_parrain'          => $parrain->Id_utilisateur,
-                        'recompense_attribuee' => false,
-                    ]);
-                }
             }
-        return [$utilisateur, $etudiant];
-    });
+        }
 
         $token = $utilisateur->createToken('api')->plainTextToken;
 

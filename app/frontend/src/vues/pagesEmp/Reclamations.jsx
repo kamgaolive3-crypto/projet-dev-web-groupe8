@@ -1,7 +1,11 @@
 // Reclamations.jsx : page « Réclamations » de l'espace Employé (route /Reclamations).
-// Cartes, recherche/filtres, tableau paginé. Données provisoires (backend à venir).
-import { useState } from "react";
+// Cartes, recherche/filtres, tableau paginé.
+// Données : GET /api/reclamation (le personnel voit tout).
+// Traitement : POST /api/reclamation/{id}/traiter (Open -> In progress, demande une réponse)
+// puis POST /api/reclamation/{id}/decision-gerant (In progress -> Resolved/Rejected).
+import { useState, useEffect } from "react";
 import { FaCommentDots, FaCertificate, FaComment, FaRotate, FaCircleCheck, FaChevronDown, FaMagnifyingGlass } from "react-icons/fa6";
+import { api } from "../../services/api";
 import Pagination from "../../composantEmp/Pagination";
 import useRecherchePagination from "../../hooks/useRecherchePagination";
 
@@ -13,46 +17,117 @@ const cartes = [
     { titre: "Résolues", statut: "Résolue", Icone: FaCircleCheck, fond: "bg-emp-vert-carre", fondIcone: "bg-emp-vert-rond", couleurIcone: "text-emp-vert-emoji", couleurTitre: "text-emp-vert-emoji" },
 ];
 
-// Réclamations de test (à remplacer par le backend)
-const reclamations = [
-    { numero: "RCL-012", sujet: "Plat froid", etudiant: "Reine Meni Dom", date: "07/10 12:20", statut: "En cours" },
-    { numero: "RCL-011", sujet: "Qualité du plat", etudiant: "Junior Tamibe", date: "07/10 11:45", statut: "Ouverte" },
-    { numero: "RCL-010", sujet: "Mauvaise commande", etudiant: "Olive Kamga", date: "06/10 18:30", statut: "En cours" },
-    { numero: "RCL-009", sujet: "Retard de livraison", etudiant: "Soume Nga", date: "06/10 14:12", statut: "Résolue" },
-    { numero: "RCL-008", sujet: "Problème de paiement", etudiant: "Emery Tagne", date: "06/10 10:05", statut: "Résolue" },
-];
 const colonnes = ["N°", "Sujet", "Étudiant", "Date", "Statut", "Actions"];
+
+// statuts du backend -> libellés affichés
+const libelles = {
+    en_attente: "Ouverte",
+    observation: "En cours",
+    validee: "Résolue",
+    resolue: "Résolue",
+    rejetee: "Rejetée",
+};
 
 // Couleurs de la pastille de chaque statut
 const stylesStatut = {
     "Ouverte": "bg-emp-attente-rond text-emp-attente-emoji",
     "En cours": "bg-emp-bleu-rond text-emp-bleu-emoji",
     "Résolue": "bg-emp-vert-rond text-emp-vert-emoji",
+    "Rejetée": "bg-emp-attente-rond text-emp-attente-emoji",
 };
-// Parcours : texte du bouton + statut suivant (null = fin)
+// Parcours : texte du bouton + action backend correspondante (null = fin)
 const etapes = {
-    "Ouverte": { bouton: "Traiter", suivant: "En cours" },
-    "En cours": { bouton: "Traiter", suivant: "Résolue" },
-    "Résolue": { bouton: "Voir", suivant: null },
+    "Ouverte": { bouton: "Traiter", action: "traiter" },
+    "En cours": { bouton: "Résoudre", action: "decider" },
+    "Résolue": { bouton: "Voir", action: null },
+    "Rejetée": { bouton: "Voir", action: null },
 };
 const PAR_PAGE = 6;
 
 export default function Reclamations() {
-    const [liste, setListe] = useState(reclamations);
+    const [liste, setListe] = useState([]);
+    const [erreur, setErreur] = useState("");
+    const [message, setMessage] = useState("");
+    // fenêtre « proposer une solution » : { numero, texte } ou null
+    const [solution, setSolution] = useState(null);
+
+    // Filtre par période appliqué AVANT la recherche/pagination.
+    const [periode, setPeriode] = useState("");
+    // dates LOCALES : toISOString passerait en UTC et decalerait d un jour
+    const isoLocal = (d) =>
+        d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const aujourdhui = isoLocal(new Date());
+    const limiteSemaine = isoLocal(new Date(Date.now() - 7 * 86400000));
+    const listeFiltree = liste.filter((c) => {
+        if (!periode || !c.dateISO) return true;
+        if (periode === "aujourdhui") return c.dateISO === aujourdhui;
+        if (periode === "semaine") return c.dateISO >= limiteSemaine;
+        return true;
+    });
+
     // Hook partagé : recherche, filtres (clé = champ des données), pagination
     const { recherche, changerRecherche, filtres, changerFiltre, page, setPage, nombrePages, elementsPage: listeAffichee } =
-        useRecherchePagination(liste, ["numero", "sujet", "etudiant"], PAR_PAGE);
+        useRecherchePagination(listeFiltree, ["numero", "sujet", "etudiant"], PAR_PAGE);
+
+    // charger() : GET /api/reclamation puis transformation vers les champs du tableau.
+    function charger() {
+        api.get("/reclamation")
+            .then((brut) => {
+                const fil = Array.isArray(brut) ? brut : (brut.data ?? brut.reclamations ?? []);
+                setListe(fil.map((r) => ({
+                    numero: r.Id_reclamation,
+                    sujet: r.motif_reclamation,
+                    description: r.description_reclamation,
+                    etudiant: ((r.etudiant?.utilisateur?.prenom ?? "") + " " + (r.etudiant?.utilisateur?.nom ?? "")).trim() || r.Id_utilisateur,
+                    date: (r.date_reclamation || "").slice(8, 10) + "/" + (r.date_reclamation || "").slice(5, 7) + " " + (r.date_reclamation || "").slice(11, 16),
+                    dateISO: (r.date_reclamation || "").slice(0, 10),
+                    statut: libelles[r.statut_reclamation] || r.statut_reclamation,
+                    brut: r,
+                })));
+                setErreur("");
+            })
+            .catch((e) => setErreur(e.message));
+    }
+    useEffect(charger, []);
 
     // Compte sur la liste complète (null = tout)
     function compter(statut) {
         if (statut === null) return liste.length;
         return liste.filter((r) => r.statut === statut).length;
     }
-    // Clic sur « Traiter » : passe au statut suivant
-    function avancer(numero) {
-        setListe(liste.map((r) =>
-            r.numero === numero && etapes[r.statut].suivant ? { ...r, statut: etapes[r.statut].suivant } : r
-        ));
+    // Clic sur « Traiter » / « Résoudre » : envoie la bonne action au backend puis recharge.
+    async function avancer(numero) {
+        const ligne = liste.find((r) => r.numero === numero);
+        const etape = etapes[ligne?.statut];
+        if (!ligne || !etape?.action) return;
+        setMessage(""); setErreur("");
+        if (etape.action === "traiter") {
+            // Open -> In progress : on ouvre la fenêtre de solution (le personnel rédige)
+            setSolution({ numero, texte: "" });
+            return;
+        }
+        // In progress -> Resolved/Rejected : décision du gérant
+        const decisionValidee = window.confirm("Réclamation " + numero + " : OK, valider ? (Annuler = rejeter)");
+        try {
+            await api.post("/reclamation/" + encodeURIComponent(numero) + "/decision-gerant", { decision: decisionValidee ? "validee" : "rejetee" });
+            setMessage("Réclamation " + numero + (decisionValidee ? " résolue." : " rejetée."));
+            charger();
+        } catch (e) { setErreur(e.message); }
+    }
+
+    // Envoi de la solution rédigée dans la fenêtre (POST /api/reclamation/{id}/traiter)
+    async function proposerSolution() {
+        if (!solution?.texte.trim()) return;
+        setMessage(""); setErreur("");
+        try {
+            await api.post("/reclamation/" + encodeURIComponent(solution.numero) + "/traiter", { reponse: solution.texte });
+            setMessage("Solution proposée pour la réclamation " + solution.numero + " — elle passe au gérant pour décision.");
+            setSolution(null);
+            charger();
+        } catch (e) {
+            setErreur(e.message);
+            setSolution(null);
+        }
     }
     return (
         <div className="p-4 md:p-6">
@@ -64,6 +139,50 @@ export default function Reclamations() {
                     <p className="text-sm text-secondary">Consultez et traitez les réclamations des étudiants.</p>
                 </div>
             </div>
+
+            {erreur !== "" && (
+                <p className="mb-4 rounded-md bg-red-100 px-4 py-2 text-sm text-red-700">{erreur}</p>
+            )}
+            {message !== "" && (
+                <p className="mb-4 rounded-md bg-emp-vert-rond px-4 py-2 text-sm text-emp-vert-emoji">{message}</p>
+            )}
+
+            {/* Fenêtre « Proposer une solution » (remplace l ancien window.prompt) */}
+            {solution && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                    <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-lg">
+                        <h3 className="font-bold">Proposer une solution</h3>
+                        <p className="mt-1 text-sm text-secondary">
+                            Réclamation <b>{solution.numero}</b> — votre réponse est envoyée au client,
+                            la réclamation passe ensuite devant le gérant.
+                        </p>
+                        <textarea
+                            autoFocus
+                            rows={4}
+                            value={solution.texte}
+                            onChange={(e) => setSolution({ ...solution, texte: e.target.value })}
+                            placeholder="Ex : plat offert, nouveau plat préparé, réduction sur la prochaine commande…"
+                            className="mt-3 w-full rounded-md border border-primary px-3 py-2 text-sm outline-none"
+                        />
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setSolution(null)}
+                                className="cursor-pointer rounded-md bg-emp-type px-4 py-2 text-sm font-semibold text-secondary hover:bg-emp-attente-rond"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="button"
+                                onClick={proposerSolution}
+                                className="cursor-pointer rounded-md bg-primary-700 px-4 py-2 text-sm font-semibold text-secondary hover:bg-primary-800"
+                            >
+                                Envoyer la solution
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Cartes (nombres calculés) */}
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -104,16 +223,21 @@ export default function Reclamations() {
                         <option value="Ouverte">Ouverte</option>
                         <option value="En cours">En cours</option>
                         <option value="Résolue">Résolue</option>
+                        <option value="Rejetée">Rejetée</option>
                     </select>
                     <FaChevronDown size={12} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-secondary" />
                 </div>
 
-                {/* Filtre Date : NON BRANCHÉ */}
+                {/* Filtre Date : périodes glissantes calculées côté client */}
                 <div className="relative md:w-56 md:shrink-0">
-                    <select className="w-full appearance-none rounded-md bg-emp-type px-3 py-3 pr-10 text-sm cursor-pointer md:w-56 md:shrink-0">
-                        <option>Date : Toutes</option>
-                        <option>Aujourd'hui</option>
-                        <option>Cette semaine</option>
+                    <select
+                        value={periode}
+                        onChange={(e) => setPeriode(e.target.value)}
+                        className="w-full appearance-none rounded-md bg-emp-type px-3 py-3 pr-10 text-sm cursor-pointer md:w-56 md:shrink-0"
+                    >
+                        <option value="">Date : Toutes</option>
+                        <option value="aujourdhui">Aujourd'hui</option>
+                        <option value="semaine">Cette semaine</option>
                     </select>
                     <FaChevronDown size={12} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-secondary" />
                 </div>
@@ -151,7 +275,7 @@ export default function Reclamations() {
                                         type="button"
                                         onClick={() => avancer(r.numero)}
                                         className={`w-32 rounded-md py-2 text-xs font-semibold cursor-pointer ${
-                                            etapes[r.statut].suivant
+                                            etapes[r.statut].action
                                                 ? "bg-primary-700 text-secondary hover:bg-primary-800"
                                                 : "border border-emp-valider bg-emp-carre px-4 py-1.5 text-xs font-semibold text-emp-valider cursor-pointer hover:bg-emp-commande-rond"
                                         }`}

@@ -1,14 +1,10 @@
 /// MenuEmp.jsx : page « Gestion du menu » de l'espace Employé (route /MenuEmp).
 // Onglets de catégories, recherche, tableau paginé, interrupteur de disponibilité.
-// Données provisoires (à remplacer par le backend). « Voir » et « Ajouter » non branchés.
-import { useState } from "react";
+// Données : GET /api/article_menu (le personnel voit tout). Anti-disponibilité : PUT /api/article_menu/{id}.
+import { useState, useEffect } from "react";
 import { FaUtensils, FaPlus, FaMagnifyingGlass } from "react-icons/fa6";
-import eru from "../../assets/plats/eru.png";
-import okok from "../../assets/plats/okok.png";
-import taro from "../../assets/plats/taro.png";
-import ndole from "../../assets/plats/ndole.png";
-import jus from "../../assets/plats/jus.png";
-import frites from "../../assets/plats/frites.png";
+import { api } from "../../services/api";
+import eruplat from "../../assets/plats/eru.png"; // image de secours si le plat n'en a pas
 import Pagination from "../../composantEmp/Pagination";
 import useRecherchePagination from "../../hooks/useRecherchePagination";
 
@@ -21,20 +17,42 @@ const categorieParOnglet = {
 };
 const colonnes = ["Image", "Nom du plat", "Catégorie", "Prix", "Disponibilité", "Action"];
 
-// Plats de test : à remplacer par le backend
-const plats = [
-    { id: 1, nom: "Eru and Water", categorie: "Plat principal", prix: 2500, disponible: true, image: eru },
-    { id: 2, nom: "Taro", categorie: "Plat principal", prix: 2500, disponible: false, image: taro },
-    { id: 3, nom: "Frites", categorie: "Accompagnement", prix: 2500, disponible: true, image: frites },
-    { id: 4, nom: "Ndolè", categorie: "Plat principal", prix: 2500, disponible: true, image: ndole },
-    { id: 5, nom: "L'okok salé", categorie: "Plat principal", prix: 2500, disponible: true, image: okok },
-    { id: 6, nom: "Jus naturel", categorie: "Boisson", prix: 1000, disponible: false, image: jus },
-];
+// code du backend -> libellé affiché
+const libellesCategories = {
+    plat: "Plat principal",
+    accompagnement: "Accompagnement",
+    boisson: "Boisson",
+    dessert: "Dessert",
+    autre: "Autre",
+};
+
 const PAR_PAGE = 6;
 
 export default function MenuEmp() {
     const [ongletActif, setOngletActif] = useState("Tous");
-    const [liste, setListe] = useState(plats);
+    const [liste, setListe] = useState([]);
+    const [erreur, setErreur] = useState("");
+    const [message, setMessage] = useState("");
+
+    // charger() : GET /api/article_menu puis transformation vers les champs du tableau.
+    function charger() {
+        api.get("/article_menu")
+            .then((brut) => {
+                const fil = Array.isArray(brut) ? brut : (brut.data ?? brut.plats ?? []);
+                setListe(fil.map((a) => ({
+                    id: a.Id_article,
+                    nom: a.nom_article,
+                    categorie: libellesCategories[a.categories_article] || a.categories_article,
+                    prix: a.prix_article,
+                    disponible: !!a.disponibilite_article,
+                    image: a.image_article || eruplat,
+                    brut: a, // on garde la ligne complète pour le PUT de mis à jour
+                })));
+                setErreur("");
+            })
+            .catch((e) => setErreur(e.message));
+    }
+    useEffect(charger, []);
 
     // Hook partagé : recherche (sur "nom"), filtres et pagination.
     // Les onglets passent par changerFiltre("categorie", ...).
@@ -45,13 +63,35 @@ export default function MenuEmp() {
         elementsPage: platsPage,
     } = useRecherchePagination(liste, ["nom"], PAR_PAGE);
 
-    // Inverse la disponibilité du plat cliqué
-    function basculer(id) {
-        setListe(
-            liste.map((plat) =>
-                plat.id === id ? { ...plat, disponible: !plat.disponible } : plat
-            )
-        );
+    // Inverse la disponibilité du plat cliqué : PUT /api/article_menu/{id}
+    // (on renvoie TOUTES les colonnes : la validation du backend les exige).
+    async function basculer(id) {
+        const plat = liste.find((p) => p.id === id);
+        if (!plat) return;
+        setMessage(""); setErreur("");
+        // mise à jour optimiste : l'interrupteur bouge tout de suite...
+        setListe(liste.map((p) => (p.id === id ? { ...p, disponible: !p.disponible } : p)));
+        try {
+            const a = plat.brut;
+            await api.put("/article_menu/" + encodeURIComponent(id), {
+                Id_article: a.Id_article,
+                nom_article: a.nom_article,
+                image_article: a.image_article,
+                description: a.description,
+                prix_article: a.prix_article,
+                categories_article: a.categories_article,
+                disponibilite_article: !a.disponibilite_article,
+                Menu_du_jour: a.Menu_du_jour,
+                Id_restaurant: a.Id_restaurant, // requis par la validation du backend
+            });
+            plat.brut = { ...a, disponibilite_article: !a.disponibilite_article };
+            setMessage(plat.nom + " : " + (plat.disponible ? "indisponible" : "disponible") + ".");
+            setErreur("");
+        } catch (e) {
+            // ...repli : on remet la disponibilite d ORIGINE du plat
+            setListe((il) => il.map((p) => (p.id === id ? { ...p, disponible: !!plat.brut.disponibilite_article } : p)));
+            setErreur(e.message);
+        }
     }
 
     return (
@@ -67,6 +107,13 @@ export default function MenuEmp() {
                     </p>
                 </div>
             </div>
+
+            {erreur !== "" && (
+                <p className="mb-4 rounded-md bg-red-100 px-4 py-2 text-sm text-red-700">{erreur}</p>
+            )}
+            {message !== "" && (
+                <p className="mb-4 rounded-md bg-emp-vert-rond px-4 py-2 text-sm text-emp-vert-emoji">{message}</p>
+            )}
 
             {/* Onglets : filtrent le tableau par catégorie */}
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -105,14 +152,6 @@ export default function MenuEmp() {
                         className="w-full rounded-md border border-primary bg-white py-3 pl-9 pr-3 text-sm outline-none"
                     />
                 </div>
-
-                <button
-                    type="button"
-                    className="flex items-center justify-center gap-2 rounded-md bg-primary-700 px-12 py-3 text-sm font-semibold text-secondary cursor-pointer hover:bg-primary-800 md:w-56 md:shrink-0"
-                >
-                    <FaPlus size={12} />
-                    Ajouter un plat
-                </button>
             </div>
 
             {/* Tableau des plats (défile horizontalement sur mobile) */}
@@ -149,7 +188,7 @@ export default function MenuEmp() {
                                 </td>
                                 <td className="px-4 py-3">{plat.nom}</td>
                                 <td className="px-4 py-3">{plat.categorie}</td>
-                                <td className="px-4 py-3">{plat.prix}</td>
+                                <td className="px-4 py-3">{plat.prix.toLocaleString("fr-FR")} Fcfa</td>
 
                                 {/* Interrupteur : vert à droite si disponible, gris à gauche sinon */}
                                 <td className="px-4 py-3">
@@ -174,10 +213,16 @@ export default function MenuEmp() {
                                     </div>
                                 </td>
 
-                                {/* TODO : « Voir » non branché */}
+                                {/* « Voir » affiche la fiche du plat (message + description). */}
                                 <td className="px-4 py-3">
                                     <button
                                         type="button"
+                                        onClick={() =>
+                                            setMessage(
+                                                plat.nom + " (" + plat.prix.toLocaleString("fr-FR") + " Fcfa) : " +
+                                                (plat.brut.description || "Aucune description.")
+                                            )
+                                        }
                                         className="w-full max-w-40 rounded-md border border-emp-valider bg-emp-carre py-2 text-xs font-semibold text-emp-valider cursor-pointer hover:bg-emp-commande-rond"
                                     >
                                         Voir

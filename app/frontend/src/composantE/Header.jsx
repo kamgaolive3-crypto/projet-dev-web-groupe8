@@ -1,190 +1,156 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { FaBars, FaXmark } from "react-icons/fa6";
 import logo from "../assets/logo.png";
+import { useAuth } from "../services/auth";
+
+// lien de nav : Inter fin ; au survol la couleur monte en or avec un
+// soulignement discret ; la page active conserve sa pill beige (maquette)
+export function LienNav({ to, fin, children }) {
+    return (
+        <NavLink
+            to={to}
+            end={fin}
+            className={({ isActive }) =>
+                isActive
+                    ? "rounded-full bg-or-clair/80 px-5 py-2 font-sans text-[15px] text-or-deep transition-colors duration-150 hover:bg-or-clair"
+                    : "rounded-full px-5 py-2 font-sans text-[15px] text-black transition-all duration-150 hover:-translate-y-px hover:text-or-deep hover:underline hover:underline-offset-4 hover:decoration-or-clair"
+            }
+        >
+            {children}
+        </NavLink>
+    );
+}
 
 export default function Header() {
-     // menuOuvert indique si le menu déroulant est ouvert.
+    // le header affiche Deconnexion (nom) ou connexion selon l utilisateur
+    const { user, deconnexion } = useAuth();
     const [menuOuvert, setMenuOuvert] = useState(false);
-    // useLocation récupère les informations sur l'URL actuelle.
     const location = useLocation();
 
-    // Cet objet associe chaque chemin à un nom de page.
+    // nom de la page courante : affiche au centre sur mobile (maquette)
     const pages = {
         "/": "Accueil",
         "/Menu": "Menu",
         "/Panier": "Panier",
         "/Fideliter": "Fidélité",
+        "/Reclamation": "Réclamation",
+        "/Historique": "Historiques",
     };
-    // Recherche le nom correspondant à l'URL actuelle.
-    // Si l'URL n'est pas dans l'objet, affiche "Mon MiamMiam".
-    const pageActive =
-        pages[location.pathname] || "Mon MiamMiam";
+    const pageActive = pages[location.pathname] || "Mon Miam Miam";
 
-    // NavLink fournit isActive :
-    // true si le lien correspond à la page active,
-    // false dans le cas contraire.
-    const lienStyle = ({ isActive }) =>
-        `transition-colors duration-200 ${
-            isActive
-                ? "text-primary font-semibold"
-                : "text-secondary hover:text-primary"
-        }`;
-
-    // Fonction qui ferme le menu mobile.
     const fermerMenu = () => setMenuOuvert(false);
 
-    return(
-        <header className="relative w-full bg-grey border-b border-grey-300">
-            <nav className="flex w-full-xl mx-auto items-center justify-between">
-                <div className="flex flex-col gap-1">
-                    <img src={logo} alt="logo mon miam miam" className="w-15 m-5 mb-0 rounded-[10px]"/>
-                    <p className="text-secondary text-sm px-1">Mon MiamMiam</p>
-                </div>
-                <span className="md:hidden text-primary font-semibold">
-                    {/* Affiche Accueil, Menu, Panier ou Fidélité
-                        selon l'URL actuelle. */}
+    return (
+        <header className="relative z-40 w-full border-b border-black/[0.04] bg-band">
+            <nav className="mx-auto flex w-full max-w-[1320px] items-center justify-between gap-2 px-4 py-2.5 md:px-8">
+                {/* logo image + nom Instrument Serif (maquette) */}
+                <Link to="/" className="flex items-center gap-2.5">
+                    <img
+                        src={logo}
+                        alt="logo Mon Miam Miam"
+                        className="h-10 w-10 rounded-xl object-cover md:h-11 md:w-11"
+                    />
+                    <span className="hidden whitespace-nowrap font-instrument text-[15px] text-black sm:block">
+                        Mon Miam Miam
+                    </span>
+                </Link>
+
+                {/* titre de page centrale — visible sur mobile uniquement */}
+                <span className="absolute left-1/2 -translate-x-1/2 font-inria text-[15px] text-black md:hidden">
                     {pageActive}
                 </span>
-                <ul className="hidden md:flex item-center gap-5">
-                    <li><NavLink to="/" end className={lienStyle}>
-                        Accueil</NavLink></li>
-                    <li><NavLink to="/Menu" className={lienStyle}>
-                        Menu</NavLink></li>
-                    <li><NavLink to="/Panier"className={lienStyle}>
-                        panier</NavLink></li>
-                    <li><NavLink to="/Fideliter"className={lienStyle}>
-                        fideliter</NavLink></li>
-                </ul>
-                <Link to="/page_connexion" className="hidden md:inline-flex bg-primary text-secondary px-5 py-2 mr-3 rounded-[10px] cursor-pointer hover:bg-primary-700">
-                    Connexion </Link>
+
+                {/* navigation desktop : pills Inter (maquette) */}
+                <div className="hidden items-center gap-0.5 md:flex">
+                    <LienNav to="/" fin>Accueil</LienNav>
+                    <LienNav to="/Menu">Menu</LienNav>
+                    <LienNav to="/Panier">Panier</LienNav>
+                    <LienNav to="/Fideliter">Fidélité</LienNav>
+                </div>
+
+                {/* droite : connexion / deconnexion + nom */}
+                {user ? (
+                    <div className="hidden items-center gap-4 md:flex">
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                await deconnexion();
+                                window.location.href = "/";
+                            }}
+                            className="cursor-pointer font-sans text-[14px] text-encre transition-colors duration-150 hover:text-or-deep"
+                        >
+                            Deconnexion
+                        </button>
+                        <span className="font-inria text-[14px] font-bold text-or-deep">
+                            {user.prenom} {user.nom}
+                        </span>
+                    </div>
+                ) : (
+                    <Link
+                        to="/page_connexion"
+                        className="hidden rounded-full bg-or-clair px-5 py-2 font-sans text-[14px] text-or-deep transition-all duration-150 hover:bg-or hover:shadow-soft md:inline-flex"
+                    >
+                        connexion
+                    </Link>
+                )}
+
+                {/* burger mobile — 3 lignes simples (maquette) */}
                 <button
                     type="button"
                     onClick={() => setMenuOuvert(!menuOuvert)}
-                    className="md:hidden p-2 text-secondary"
-                    aria-label={
-                        menuOuvert
-                            ? "Fermer le menu"
-                            : "Ouvrir le menu"
-                    }
+                    className="flex h-9 w-9 cursor-pointer flex-col items-center justify-center gap-[5px] md:hidden"
+                    aria-label={menuOuvert ? "Fermer le menu" : "Ouvrir le menu"}
                     aria-expanded={menuOuvert}
                     aria-controls="menu-mobile"
                 >
-
-                    {/* Si menuOuvert vaut true, affiche la croix.
-                        Sinon, affiche le burger. */}
-                    {menuOuvert
-                        ? <FaXmark size={24} />
-                        : <FaBars size={24} />}
-
+                    {menuOuvert ? (
+                        <span className="text-xl leading-none text-black">×</span>
+                    ) : (
+                        <>
+                            <span className="h-[2px] w-5 bg-black" />
+                            <span className="h-[2px] w-5 bg-black" />
+                        </>
+                    )}
                 </button>
             </nav>
 
+            {/* tiroir mobile : glisse depuis le haut (animation) */}
             {menuOuvert && (
-
                 <div
                     id="menu-mobile"
-                    className="
-                        absolute
-                        top-full
-                        left-0
-                        z-50
-                        w-full
-                        bg-grey
-                        border-b
-                        border-grey-300
-                        shadow-lg
-                        md:hidden
-                    "
+                    className="absolute top-full left-0 z-50 w-full origin-top border-b border-black/[0.06] bg-band/95 backdrop-blur shadow-hover md:hidden"
+                    style={{ animation: "fade-up 0.18s ease-out both" }}
                 >
-
-                    {/* Liste verticale des liens mobiles. */}
-                    <ul className="flex flex-col gap-4 p-5">
-
-                        {/* LIEN ACCUEIL */}
-                        <li>
-                            <NavLink
-                                to="/"
-                                end
-                                className={lienStyle}
-                                onClick={fermerMenu}
-                            >
-                                Accueil
-                            </NavLink>
+                    <ul className="flex flex-col p-3">
+                        <li onClick={fermerMenu}><LienNav to="/" fin>Accueil</LienNav></li>
+                        <li onClick={fermerMenu}><LienNav to="/Menu">Menu</LienNav></li>
+                        <li onClick={fermerMenu}><LienNav to="/Panier">Panier</LienNav></li>
+                        <li onClick={fermerMenu}><LienNav to="/Fideliter">Fidélité</LienNav></li>
+                        <li className="mt-2 border-t border-black/[0.06] pt-2">
+                            {user ? (
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        await deconnexion();
+                                        window.location.href = "/";
+                                    }}
+                                    className="block w-full cursor-pointer rounded-xl bg-or-clair py-2.5 text-center font-sans text-sm text-black"
+                                >
+                                    Deconnexion ({user.prenom} {user.nom})
+                                </button>
+                            ) : (
+                                <Link
+                                    to="/page_connexion"
+                                    onClick={fermerMenu}
+                                    className="block w-full rounded-xl bg-or-clair py-2.5 text-center font-sans text-sm text-or-deep"
+                                >
+                                    connexion
+                                </Link>
+                            )}
                         </li>
-
-                        {/* LIEN MENU */}
-                        <li>
-                            <NavLink
-                                to="/Menu"
-                                className={lienStyle}
-                                onClick={fermerMenu}
-                            >
-                                Menu
-                            </NavLink>
-                        </li>
-
-                        {/* LIEN PANIER */}
-                        <li>
-                            <NavLink
-                                to="/Panier"
-                                className={lienStyle}
-                                onClick={fermerMenu}
-                            >
-                                Panier
-                            </NavLink>
-                        </li>
-
-                        {/* LIEN FIDÉLITÉ */}
-                        <li>
-                            <NavLink
-                                to="/Fideliter"
-                                className={lienStyle}
-                                onClick={fermerMenu}
-                            >
-                                Fidélité
-                            </NavLink>
-                        </li>
-
-                        {/* BOUTON CONNEXION DANS LE MENU MOBILE */}
-
-                        {/* border-t ajoute une séparation au-dessus.
-                            pt-4 ajoute un espace intérieur en haut. */}
-                        <li className="
-                            border-t
-                            border-grey-300
-                            pt-4
-                        ">
-
-                            <Link
-                                to="/page_connexion"
-
-                                // Ferme le menu après le clic.
-                                onClick={fermerMenu}
-
-                                className="
-                                    block
-                                    w-full
-                                    bg-primary
-                                    text-secondary
-                                    text-center
-                                    py-2
-                                    rounded-[10px]
-                                    hover:bg-primary-700
-                                "
-                            >
-                                Connexion
-                            </Link>
-
-                        </li>
-
                     </ul>
-
                 </div>
-
             )}
-
         </header>
-    )
-    
+    );
 }

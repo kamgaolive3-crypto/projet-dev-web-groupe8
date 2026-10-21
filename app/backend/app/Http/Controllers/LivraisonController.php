@@ -22,7 +22,7 @@ class LivraisonController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Livraison::with(['commande', 'livreur'])->orderByDesc('created_at');
+        $query = Livraison::with(['commande', 'livreur.utilisateur'])->orderByDesc('created_at');
 
         if ($request->user()->role === 'etudiant') {
             $query->whereHas('commande', function ($q) use ($request) {
@@ -43,7 +43,7 @@ class LivraisonController extends Controller
      */
     public function show(Request $request, string $id)
     {
-        $livraison = Livraison::with(['commande.articles', 'livreur'])->findOrFail($id);
+        $livraison = Livraison::with(['commande.articles', 'livreur.utilisateur'])->findOrFail($id);
 
         if ($request->user()->role === 'etudiant'
             && $livraison->commande->Id_utilisateur !== $request->user()->Id_utilisateur) {

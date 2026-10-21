@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Administrateur;
-use Illuminate\Support\Arr;
 use App\Models\Employe;
 use App\Models\Utilisateur;
 use Illuminate\Http\Request;
@@ -28,19 +27,16 @@ class EmployeController extends Controller
             ->get(['Id_utilisateur', 'nom', 'prenom', 'email', 'telephone', 'statut_compte'])
             ->keyBy('Id_utilisateur');
 
-        return $employes->map(function (Employe $e) use ($utilisateurs) {
-            return [
-                'employe' => [
-                    'Id_utilisateur'     => $e->getAttribute('Id_utilisateur'),
-                    'poste'              => $e->getAttribute('poste'),
-                    'date_embauche'      => $e->getAttribute('date_embauche'),
-                    'Id_restaurant'      => $e->getAttribute('Id_restaurant'),
-                    'Id_createur'        => $e->getAttribute('Id_createur'),
-                    'date_creation_compte' => $e->getAttribute('date_creation_compte'),
-                ],
-            'utilisateur' => $utilisateurs[$e->getAttribute('Id_utilisateur')] ?? null,
-            ];
-        });
+        return $employes->map(fn ($e) => [
+            'employe' => [
+                'Id_utilisateur'       => $e->Id_utilisateur,
+                'poste'                => $e->poste,
+                'date_embauche'        => $e->date_embauche,
+                'Id_restaurant'        => $e->Id_restaurant,
+                'Id_createur'          => $e->Id_createur,
+                'date_creation_compte' => $e->date_creation_compte,],
+            'utilisateur'      => $utilisateurs[$e->Id_utilisateur] ?? null,
+        ]);
     }
 
     /**

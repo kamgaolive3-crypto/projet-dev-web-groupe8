@@ -18,11 +18,11 @@ return new class extends Migration
         Schema::create('article_menu', function (Blueprint $table) {
             $table->string('Id_article',6)->primary();
             $table->string('nom_article',150);
-            $table->string('image_article',255);// chemin ou url
-            $table->text('description');
-            $table->integer('prix_article');
+            $table->string('image_article',255)->nullable();// chemin ou url (facultatif)
+            $table->text('description')->nullable();
+            $table->bigInteger('prix_article'); // montant CFA (dictionnaire : BIGINT)
             $table->string('categories_article',255);
-            $table->boolean('disponibiliter_article')->default(1);
+            $table->boolean('disponibilite_article')->default(1);
             $table->boolean('Menu_du_jour')->default(0);
             $table->string('Id_restaurant', 5);
             $table->foreign('Id_restaurant')->references('Id_restaurant')->on('restaurant')->onDelete('cascade');
