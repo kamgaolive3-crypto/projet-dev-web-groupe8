@@ -67,7 +67,7 @@ class ParametreController extends Controller
         }
         $parametre = Parametre::findOrFail($id);
         $data = $request->validate([
-            'Id_parametre'  => ['required', 'regex:/^[A-Z]{2}[0-9]{3}$/', 'unique:parametre,Id_parametre,'.$id],
+            'Id_parametre' => ['required', 'regex:/^[A-Z]{2}[0-9]{3}$/', 'unique:parametre,Id_parametre,' . $id . ',Id_parametre',],
             'cle'           => 'required|string|max:100|unique:parametre,cle,'.$id.',Id_parametre',
             'valeur'        => 'required|string',
             'Id_utilisateur'=> 'required|exists:administrateur,Id_utilisateur',

@@ -13,19 +13,19 @@ import { useAuth } from "../services/auth";
 const pages = {
     "/TableauBordG": "Tableau de bord",
     "/CommandesG" : "Commandes",
-    "/Employes": "Employés",
-    "/ReclamationA": "Réclamations",
-    "/Statistiques": "Statistiques",
+    "/EmployesG": "Employés",
+    "/ReclamationG": "Réclamations",
+    "/StatistiquesG": "Statistiques",
 };
 
 // liens du menu : les 5 premiers correspondent a la maquette, les suivants
 // sont les fonctions de gestion exigees par le cahier des charges
 const liens = [
     ["/TableauBordG", "Tableau de bord", true],
-    ["/CommandesG", "Commandes", true]
-    ["/Employes", "Employés", true],
-    ["/ReclamationA", "Réclamations", true],
-    ["/Statistiques", "Statistiques", true],
+    ["/CommandesG", "Commandes", true],
+    ["/EmployesG", "Employés", true],
+    ["/ReclamationG", "Réclamations", true],
+    ["/StatistiquesG", "Statistiques", true],
 ];
 
 export default function Header() {
@@ -55,7 +55,7 @@ export default function Header() {
         <header className="sticky top-0 z-40 w-full border-b border-grey-300 bg-grey">
             <nav className="mx-auto flex w-full items-center justify-between gap-3 px-4 py-2">
                 {/* logo + nom */}
-                <Link to="/TableauBord" className="flex flex-col gap-1">
+                <Link to="/TableauBordG" className="flex flex-col gap-1">
                     <img src={logo} alt="logo mon miam miam" className="m-3 mb-0 w-15 rounded-[10px]" />
                     <p className="px-1 text-sm text-secondary">Mon MiamMiam</p>
                 </Link>
@@ -64,7 +64,7 @@ export default function Header() {
                 <ul className="hidden items-center gap-1 lg:flex">
                     {liens.map(([chemin, libelle]) => (
                         <li key={chemin}>
-                            <NavLink to={chemin} end={chemin === "/TableauBord"} className={lienStyle}>
+                            <NavLink to={chemin} end={chemin === "/TableauBordG"} className={lienStyle}>
                                 {libelle}
                             </NavLink>
                         </li>
@@ -122,7 +122,7 @@ export default function Header() {
                             <li key={chemin}>
                                 <NavLink
                                     to={chemin}
-                                    end={chemin === "/TableauBord"}
+                                    end={chemin === "/TableauBordG"}
                                     className={lienStyle}
                                     onClick={fermerMenu}
                                 >

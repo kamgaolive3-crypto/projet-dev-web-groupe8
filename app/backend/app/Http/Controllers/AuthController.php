@@ -30,9 +30,15 @@ class AuthController extends Controller
             'code_parrainage'   => ['nullable', 'regex:/^[A-Z]{4}[0-9]{4}$/'],
         ]);
 
+        $lettres = '';
+            for ($i = 0; $i < 4; $i++) {
+                $lettres .= chr(random_int(65, 90)); // A à Z
+            }
+        $idUtilisateur = $lettres . random_int(100000, 999999);
         $utilisateur = Utilisateur::create([
             // ID au format AAAA123456 : 4 lettres majuscules + 6 chiffres (schéma §10)
-            'Id_utilisateur' => strtoupper(Str::random(4)).random_int(100000, 999999),
+            
+            'Id_utilisateur' => $idUtilisateur,
             'nom'            => $data['nom'],
             'prenom'         => $data['prenom'],
             'email'          => $data['email'],
@@ -41,6 +47,7 @@ class AuthController extends Controller
             'statut_compte'  => 'actif',
         ]);
 
+        $code = $lettres . random_int(100, 999);
         Etudiant::create([
             'Id_utilisateur'  => $utilisateur->Id_utilisateur,
             'localisation'    => $data['localisation'] ?? null,

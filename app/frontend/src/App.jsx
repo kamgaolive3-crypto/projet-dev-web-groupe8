@@ -103,9 +103,9 @@ export default function App() {
             <Route element={<LayoutG />}>
               <Route path="/TableauBordG" element={<TableauBordG />}/>
               <Route path="/CommandesG" element={<CommandesG />}/>
-              <Route path="/Employes" element={<Employes />}/>
-              <Route path="/ReclamationA" element={<ReclamationA />}/>
-              <Route path="/Statistiques" element={<Statistiques />}/>
+              <Route path="/EmployesG" element={<Employes />}/>
+              <Route path="/ReclamationG" element={<ReclamationA />}/>
+              <Route path="/StatistiquesG" element={<Statistiques />}/>
             </Route>
 
             {/* espace employe (integre depuis main, chemins renomes pour ne pas

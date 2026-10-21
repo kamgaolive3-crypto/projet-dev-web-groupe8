@@ -30,9 +30,11 @@ export default function Login() {
             // redirection selon le role : chacun arrive directement dans SON espace
             if (reponse.role === "employe") {
                 navigate("/CommandesEmp");
-            } else if (reponse.role === "gerant" || reponse.role === "administrateur") {
+            } else if (reponse.role === "gerant") {
+                navigate("/TableauBordG");
+            } else if(reponse.role === "administrateur"){
                 navigate("/TableauBord");
-            } else {
+            }else {
                 navigate("/");
             }
         } catch (err) {
