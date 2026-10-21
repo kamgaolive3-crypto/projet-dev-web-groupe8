@@ -16,21 +16,20 @@ const pages = {
 
 const LIENS = [
     ["/TableauBord", "Tableau de bord", "les-deux"],
-    ["/Commandes", "Toutes les commandes", "admin"],
-    ["/CommandesG", "Commandes", "les-deux"], // <-- Ajouté ici pour le Gérant
+    ["/CommandesG", "Commandes", "gerant"],
     ["/Employes", "Employés", "les-deux"],
     ["/ReclamationA", "Réclamations", "les-deux"],
     ["/Statistiques", "Statistiques", "les-deux"],
     ["/MenuA", "Menu", "admin"],
     ["/Evenement", "Événements", "admin"],
     ["/Parametre", "Paramètres", "admin"],
-    ["/Livraisons", "Livraisons", "admin"],
 ];
 
 const liensDe = (role) =>
     LIENS.filter(([, , pour]) =>
         pour === "les-deux" ||
-        (pour === "admin" && role === "administrateur"));
+        (pour === "admin" && role === "administrateur") ||
+        (pour === "gerant" && role === "gerant"));
 
 export default function Header() {
     const { user, deconnexion } = useAuth();
