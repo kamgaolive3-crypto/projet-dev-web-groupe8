@@ -43,7 +43,6 @@ export default function Parametre() {
             const conf = liste.find(p => p.cle === "CONFIG_RESTAURANT");
             if (conf) {
                 const parsed = JSON.parse(conf.valeur);
-                // Merge avec les valeurs par défaut pour éviter les erreurs si de nouveaux champs sont ajoutés
                 setConfig(prev => ({ ...prev, ...parsed }));
             }
         } catch (e) { console.error("Erreur chargement:", e); }
@@ -57,20 +56,32 @@ export default function Parametre() {
         try {
             const liste = await api.get("/parametre");
             const conf = liste.find(p => p.cle === "CONFIG_RESTAURANT");
+            
+            const idAdmin = user?.Id_utilisateur || "ADMI000001";
             const payload = {
                 cle: "CONFIG_RESTAURANT",
                 valeur: JSON.stringify(config),
-                Id_utilisateur: user?.Id_utilisateur || "ADMI000001"
+                Id_utilisateur: idAdmin
             };
             
             if (conf) {
-                await api.put(`/parametre/${encodeURIComponent(conf.Id_parametre)}`, { ...payload, Id_parametre: conf.Id_parametre });
+                await api.put(`/parametre/${encodeURIComponent(conf.Id_parametre)}`, {
+                    ...payload,
+                    Id_parametre: conf.Id_parametre
+                });
             } else {
-                await api.post("/parametre", { ...payload, Id_parametre: "PR999" });
+                await api.post("/parametre", {
+                    ...payload,
+                    Id_parametre: "PA" + Math.floor(100 + Math.random() * 899)
+                });
             }
-            setMessage("Paramètres enregistrés avec succès !");
+            setMessage("Configuration sauvegardée avec succès !");
             charger();
-        } catch (e) { setErreur("Erreur enregistrement."); }
+        } catch (e) {
+            console.error(e);
+            const detail = e.champs ? Object.values(e.champs).flat().join(" - ") : null;
+            setErreur(detail || e.message || "Erreur lors de la sauvegarde.");
+        }
         setChargement(false);
     };
 
@@ -90,7 +101,7 @@ export default function Parametre() {
     );
 
     return (
-        <div className="flex flex-col gap-6 p-6 max-w-6xl mx-auto min-h-screen bg-[#FDFCF8]/30">
+        <div className="flex flex-col gap-6 p-6 max-w-6xl mx-auto min-h-screen">
             <div>
                 <h1 className="font-serif text-3xl font-bold text-gray-900">Paramètre de l'application</h1>
                 <p className="text-sm text-gray-600 mt-1">Configurer les réglages du restaurant</p>
@@ -111,11 +122,11 @@ export default function Parametre() {
                 </button>
             </div>
 
-            {message && <div className="rounded-lg bg-green-50 p-4 border border-green-200 text-green-800 text-sm">{message}</div>}
-            {erreur && <div className="rounded-lg bg-red-50 p-4 border border-red-200 text-red-700 text-sm">{erreur}</div>}
+            {message && <div className="rounded-lg bg-green-50 p-4 border border-green-200 text-green-800 text-sm font-bold">{message}</div>}
+            {erreur && <div className="rounded-lg bg-red-50 p-4 border border-red-200 text-red-700 text-sm font-bold">{erreur}</div>}
 
             {ongletActif === "infos" && (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-6 animate-in fade-in">
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col gap-4">
                         <h2 className="font-serif text-lg font-bold text-gray-800">Informations du restaurant</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -168,7 +179,7 @@ export default function Parametre() {
             )}
 
             {ongletActif === "services" && (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-6 animate-in fade-in">
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col gap-4">
                         <h2 className="font-serif text-lg font-bold text-gray-800">Service de livraison</h2>
                         <Toggle label="Commande sur place" valeur={config.commandeSurPlace} onChange={v => setConfig({...config, commandeSurPlace: v})} />
@@ -212,7 +223,7 @@ export default function Parametre() {
                     disabled={chargement}
                     className="cursor-pointer rounded-full bg-[#CFBD97] px-8 py-3 text-sm font-semibold text-white shadow hover:bg-[#bfa97e] transition-all disabled:opacity-50"
                 >
-                    {chargement ? "Enregistrement..." : "Enregistrer les modifications"}
+                    {chargement ? "Sauvegarde..." : "Enregistrer les modifications"}
                 </button>
             </div>
         </div>
