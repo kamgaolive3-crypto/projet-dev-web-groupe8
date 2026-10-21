@@ -91,8 +91,6 @@ export default function App() {
               <Route element={<LayoutA/>}>
                 <Route path="/TableauBord" element={<TableauBord />}/>
                 <Route path="/Statistiques" element={<Statistiques />}/>
-                <Route path="/Commandes" element={<Commandes />}/>
-                <Route path="/Livraisons" element={<Livraisons />}/>
                 <Route path="/Employes" element={<Employes />}/>
                 <Route path="/MenuA" element={<MenuA />}/>
                 <Route path="/Evenement" element={<Evenement />}/>
