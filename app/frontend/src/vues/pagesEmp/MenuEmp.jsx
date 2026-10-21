@@ -152,14 +152,6 @@ export default function MenuEmp() {
                         className="w-full rounded-md border border-primary bg-white py-3 pl-9 pr-3 text-sm outline-none"
                     />
                 </div>
-
-                <button
-                    type="button"
-                    className="flex items-center justify-center gap-2 rounded-md bg-primary-700 px-12 py-3 text-sm font-semibold text-secondary cursor-pointer hover:bg-primary-800 md:w-56 md:shrink-0"
-                >
-                    <FaPlus size={12} />
-                    Ajouter un plat
-                </button>
             </div>
 
             {/* Tableau des plats (défile horizontalement sur mobile) */}
