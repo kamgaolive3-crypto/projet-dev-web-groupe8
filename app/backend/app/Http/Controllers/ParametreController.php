@@ -11,8 +11,12 @@ class ParametreController extends Controller
      * GET /api/parametre
      * Liste tous les paramètres de l'application.
      */
-    public function index()
+    public function index(Request $request)
     {
+        // lecture reservee au personnel (l etudiant n a rien a faire des parametres)
+        if ($request->user()?->role === 'etudiant') {
+            return response()->json(['message' => 'Reserve au personnel.'], 403);
+        }
         return Parametre::all();
     }
 
@@ -22,6 +26,11 @@ class ParametreController extends Controller
      */
     public function store(Request $request)
     {
+        // cloisonnement (CDC) : les parametres generaux de l application sont
+        // configures par l administrateur uniquement.
+        if ($request->user()?->role !== 'administrateur') {
+            return response()->json(['message' => 'Parametres reserves a l administrateur.'], 403);
+        }
         $data = $request->validate([
             'Id_parametre'  => ['required', 'regex:/^[A-Z]{2}[0-9]{3}$/', 'unique:parametre,Id_parametre'],
             'cle'           => 'required|string|max:100|unique:parametre,cle',
@@ -37,8 +46,11 @@ class ParametreController extends Controller
      * GET /api/parametre/{id}
      * Affiche un paramètre précis par son Id_parametre.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
+        if ($request->user()?->role === 'etudiant') {
+            return response()->json(['message' => 'Reserve au personnel.'], 403);
+        }
         return Parametre::findOrFail($id);
     }
 
@@ -49,6 +61,10 @@ class ParametreController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        // cloisonnement (CDC) : seul l administrateur configure les parametres.
+        if ($request->user()?->role !== 'administrateur') {
+            return response()->json(['message' => 'Parametres reserves a l administrateur.'], 403);
+        }
         $parametre = Parametre::findOrFail($id);
         $data = $request->validate([
             'Id_parametre'  => ['required', 'regex:/^[A-Z]{2}[0-9]{3}$/', 'unique:parametre,Id_parametre,'.$id],
@@ -65,8 +81,12 @@ class ParametreController extends Controller
      * DELETE /api/parametre/{id}
      * Supprime un paramètre.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
+        // cloisonnement (CDC) : seul l administrateur supprime un parametre.
+        if ($request->user()?->role !== 'administrateur') {
+            return response()->json(['message' => 'Parametres reserves a l administrateur.'], 403);
+        }
         Parametre::findOrFail($id)->delete();
         return response()->json(['message' => 'paramètre supprimé']);
     }

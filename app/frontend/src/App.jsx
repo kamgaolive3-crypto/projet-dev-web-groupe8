@@ -40,8 +40,25 @@ function RouteStaff({ roles = ["employe", "gerant", "administrateur"] }) {
         return <Navigate to="/page_connexion" state={{ de: location.pathname }} replace />;
     }
     if (!roles.includes(user.role)) {
-        // role insuffisant : retour a l accueil
-        return <Navigate to="/" replace />;
+        // role insuffisant : retour a la page d accueil de SON role (cloisonnement)
+        return <Navigate to={ACCUEIL_PAR_ROLE[user.role] || "/"} replace />;
+    }
+    return <Outlet />;
+}
+
+// page d accueil naturelle de chaque role apres connexion
+const ACCUEIL_PAR_ROLE = {
+    employe: "/CommandesEmp",
+    gerant: "/TableauBord",
+    administrateur: "/TableauBord",
+};
+
+// garde des pages etudiantes transactionnelles : un compte du personnel qui
+// essayerait d y acceder par URL est ramene a son propre espace
+function RouteEtudiant() {
+    const { user } = useAuth();
+    if (user && ACCUEIL_PAR_ROLE[user.role]) {
+        return <Navigate to={ACCUEIL_PAR_ROLE[user.role]} replace />;
     }
     return <Outlet />;
 }
@@ -56,24 +73,32 @@ export default function App() {
           <Route element={<LayoutE />}>
             <Route path="/" element={<Accueil />} />
             <Route path="/Menu" element={<Menu />}/>
-            <Route path="/Panier" element={<Panier />}/>
-            <Route path="/Fideliter" element={<Fideliter />}/>
-            <Route path="/Reclamation" element={<Reclamation />}/>
-            <Route path="/Historique" element={<Historique />}/>
+            {/* pages transactionnelles reservees a l etudiant (le personnel
+                est renvoye vers SON espace) */}
+            <Route element={<RouteEtudiant />}>
+              <Route path="/Panier" element={<Panier />}/>
+              <Route path="/Fideliter" element={<Fideliter />}/>
+              <Route path="/Reclamation" element={<Reclamation />}/>
+              <Route path="/Historique" element={<Historique />}/>
+            </Route>
           </Route>
 
-          {/* 2. Espace personnel (employe / gerant / administrateur) : protege */}
+          {/* 2. Espace personnel protege (auth exigee) */}
           <Route element={<RouteStaff />}>
-            <Route element={<LayoutA/>}>
-              <Route path="/TableauBord" element={<TableauBord />}/>
-              <Route path="/Statistiques" element={<Statistiques />}/>
-              <Route path="/Commandes" element={<Commandes />}/>
-              <Route path="/Livraisons" element={<Livraisons />}/>
-              <Route path="/Employes" element={<Employes />}/>
-              <Route path="/MenuA" element={<MenuA />}/>
-              <Route path="/Evenement" element={<Evenement />}/>
-              <Route path="/Parametre" element={<Parametre />}/>
-              <Route path="/ReclamationA" element={<ReclamationA />}/>
+            {/* pages gerant/administrateur (CDC : la direction et le gerant ;
+                l employe possede SES 4 pages ci-dessous uniquement) */}
+            <Route element={<RouteStaff roles={["gerant", "administrateur"]} />}>
+              <Route element={<LayoutA/>}>
+                <Route path="/TableauBord" element={<TableauBord />}/>
+                <Route path="/Statistiques" element={<Statistiques />}/>
+                <Route path="/Commandes" element={<Commandes />}/>
+                <Route path="/Livraisons" element={<Livraisons />}/>
+                <Route path="/Employes" element={<Employes />}/>
+                <Route path="/MenuA" element={<MenuA />}/>
+                <Route path="/Evenement" element={<Evenement />}/>
+                <Route path="/Parametre" element={<Parametre />}/>
+                <Route path="/ReclamationA" element={<ReclamationA />}/>
+              </Route>
             </Route>
 
             {/* espace employe (integre depuis main, chemins renomes pour ne pas

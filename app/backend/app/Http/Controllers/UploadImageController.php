@@ -18,6 +18,11 @@ class UploadImageController extends Controller
 {
     public function store(Request $request)
     {
+        // cloisonnement : le personnel gere les images des plats et affiches ;
+        // un etudiant connecte ne peut pas televerser de fichiers.
+        if ($request->user()->role === 'etudiant') {
+            return response()->json(['message' => 'Reserve au personnel.'], 403);
+        }
         $data = $request->validate([
             'image'   => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
             'dossier' => 'required|in:plats,evenements',

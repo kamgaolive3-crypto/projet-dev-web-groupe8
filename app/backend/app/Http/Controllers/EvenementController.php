@@ -36,6 +36,11 @@ class EvenementController extends Controller
      */
     public function store(Request $request)
     {
+        // cloisonnement (CDC) : les promotions/jeux sont publies par le personnel
+        // (les offres se presentent sous forme d affiches) ; l etudiant, lui, y participe.
+        if ($request->user()->role === 'etudiant') {
+            return response()->json(['message' => 'Publication reservee au personnel.'], 403);
+        }
         $data = $request->validate([
             'Id_evenement'    => ['required', 'regex:/^[A-Z]{3}[0-9]{4}$/', 'unique:evenement,Id_evenement'],
             'debut_evenement' => 'required|date',
@@ -77,6 +82,10 @@ class EvenementController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        // cloisonnement (CDC) : l etudiant ne modifie pas les evenements.
+        if ($request->user()->role === 'etudiant') {
+            return response()->json(['message' => 'Publication reservee au personnel.'], 403);
+        }
         $event = Evenement::findOrFail($id);
         $data = $request->validate([
             // unique ignore l'enregistrement courant ($id) : sans cela, toute
@@ -104,8 +113,12 @@ class EvenementController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
+        // cloisonnement (CDC) : l etudiant ne supprime pas d evenement.
+        if ($request->user()->role === 'etudiant') {
+            return response()->json(['message' => 'Publication reservee au personnel.'], 403);
+        }
         Evenement::findOrFail($id)->delete();
         return response () ->json(['message'=> 'evenement supprimer']);
     }
