@@ -11,11 +11,13 @@ export default function Employes() {
     const [liste, setListe] = useState([])
     const [erreur, setErreur] = useState("")
     const [message, setMessage] = useState("")
+    const [restaurants, setRestaurants] = useState([]);
     // formulaire de creation (POST /api/employes), ouvert par le bouton dore
     const [formOuvert, setFormOuvert] = useState(false)
     const [form, setForm] = useState({
         nom: "", prenom: "", email: "", telephone: "",
         mot_de_passe: "", poste: "", date_embauche: "",
+        Id_restaurant: "",
     })
     // filtre par poste : "Rôle : Tous"
     const [filtreRole, setFiltreRole] = useState("")
@@ -33,6 +35,23 @@ export default function Employes() {
             .catch((e) => setErreur(e.message))
     }
     useEffect(charger, [])
+
+    useEffect(() => {
+    api.get("/restaurant")
+        .then((liste) => {
+            const donnees = Array.isArray(liste) ? liste : liste.data || [];
+            setRestaurants(donnees);
+
+            if (donnees.length > 0) {
+                setForm((ancien) => ({
+                    ...ancien,
+                    Id_restaurant:
+                        ancien.Id_restaurant || donnees[0].Id_restaurant,
+                }));
+            }
+        })
+        .catch((e) => setErreur(e.message));
+    }, []);
 
     const creer = async () => {
         setMessage(""); setErreur("")
@@ -108,6 +127,29 @@ export default function Employes() {
                                 className="rounded-md border border-[#CFBD97] px-2 py-1" />
                         </div>
                     ))}
+
+                    <div className="flex flex-col gap-1 text-xs">
+                        <label htmlFor="Id_restaurant">Restaurant</label>
+                        <select
+                        id="Id_restaurant"
+                        required
+                        value={form.Id_restaurant}
+                        onChange={(e) =>
+                            setForm({ ...form, Id_restaurant: e.target.value })
+                        }
+                        className="rounded-md border border-[#CFBD97] px-2 py-1"
+                    >
+                        <option value="">Choisir un restaurant</option>
+                        {restaurants.map((restaurant) => (
+                            <option
+                              key={restaurant.Id_restaurant}
+                              value={restaurant.Id_restaurant}
+                            >
+                                {restaurant.nom_restaurant} ({restaurant.Id_restaurant})
+                            </option>
+                        ))}
+                    </select>
+                </div>
                     <div className="flex flex-col gap-1 text-xs">
                         <label>Mot de passe (8+ caractères, 1 majuscule, 1 chiffre)</label>
                         <input type="password" value={form.mot_de_passe} onChange={(e) => setForm({ ...form, mot_de_passe: e.target.value })}

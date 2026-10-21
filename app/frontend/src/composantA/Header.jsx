@@ -93,7 +93,7 @@ export default function Header() {
                         </span>
                     )}
                     <button
-                        type="button"
+                        type="button" 
                         onClick={async () => {
                             // vraie déconnexion : revoke du token côté API puis nettoyage local
                             await deconnexion();

@@ -19,6 +19,8 @@
 import { NavLink, useLocation } from "react-router-dom";
 // useState : mémorise si le menu mobile est ouvert ou fermé (NOUVEAU).
 import { useState } from "react";
+
+import { useAuth } from "../services/auth";
 // Icônes : panier, couverts, bulle, graphique, cloche, burger (3 traits) et croix (NOUVEAU).
 import { FaCartShopping, FaUtensils, FaComment, FaChartColumn, FaBell, FaBars, FaXmark } from "react-icons/fa6";
 // Le logo se trouve dans src/assets (un niveau au-dessus de ce dossier).
@@ -41,6 +43,12 @@ export default function Header() {
 
     // NOUVEAU : adresse actuelle (ex : "/CommandesEmp").
     const location = useLocation();
+
+    // le header doit connaitre l utilisateur pour la vraie deconnexion
+        const { user, deconnexion } = useAuth();
+
+    // initiale de l utilisateur pour la pastille ronde
+    const initiale = (user?.prenom || user?.nom || "S").charAt(0).toUpperCase();
 
     // NOUVEAU : nom de la page active, affiché au centre sur mobile.
     // find cherche le lien dont le chemin correspond à l'adresse ; "Espace Employé" si rien trouvé.
@@ -90,26 +98,30 @@ export default function Header() {
                 </ul>
 
                 {/* ===== DROITE (ordinateur seulement) : cloche + nom + déconnexion ===== */}
-                <div className="hidden items-center gap-12 md:flex">
-                    {/* relative : repère pour placer le point rouge */}
-                    <div className="relative">
-                        <FaBell size={20} />
-                        {/* absolute : le point se pose par-dessus la cloche, en haut à droite */}
-                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-600" />
-                    </div>
-
-                    {/* flex-col : le nom passe AU-DESSUS du bouton */}
-                    <div className="flex flex-col items-center gap-1">
-                        {/* TODO : remplacer par le nom de l'employé connecté */}
-                        <span className="text-xs">Meni Dom Reine</span>
-                        {/* TODO : brancher la déconnexion (aucune action pour l'instant) */}
-                        <button
-                            type="button"
-                            className="bg-primary text-secondary text-xs px-4 py-1.5 rounded-full cursor-pointer hover:bg-primary-700"
-                        >
-                            Déconnexion
-                        </button>
-                    </div>
+                 {/* pastille utilisateur + deconnexion (bureau) */}
+                <div className="hidden items-center gap-2 lg:flex">
+                    {user && (
+                        <span className="flex items-center gap-2 rounded-full bg-white px-3 py-1 shadow-sm">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f1e6] text-xs font-bold text-[#b8862d]">
+                                {initiale}
+                            </span>
+                            <span className="text-xs">
+                                {user.prenom || user.nom || user.email}
+                                <span className="ml-1 text-gray-500">· {user.role}</span>
+                            </span>
+                        </span>
+                    )}
+                    <button
+                        type="button" 
+                        onClick={async () => {
+                            // vraie déconnexion : revoke du token côté API puis nettoyage local
+                            await deconnexion();
+                            window.location.href = "/";
+                        }}
+                        className="cursor-pointer rounded-[10px] bg-primary px-5 py-2 text-secondary hover:bg-primary-700"
+                    >
+                        Deconnexion
+                    </button>
                 </div>
 
                 {/* ===== DROITE (mobile seulement) : cloche + bouton burger ===== */}
@@ -138,7 +150,7 @@ export default function Header() {
                 absolute top-full : posé juste sous la barre.
                 z-50 : passe au-dessus du contenu de la page. */}
             {menuOuvert && (
-                <div className="absolute left-0 top-full z-50 w-full border-b border-grey-300 bg-grey shadow-lg md:hidden">
+                <div className="absolute left-0 top-full z-50 w-full border-b border-grey-300 bg-grey shadow-lg lg:hidden">
                     <ul className="flex flex-col gap-4 p-5">
                         {liens.map(({ chemin, nom, Icone }) => (
                             <li key={chemin}>
@@ -153,7 +165,7 @@ export default function Header() {
                         {/* Nom de l'employé + déconnexion, séparés par un trait */}
                         <li className="flex flex-col gap-3 border-t border-grey-300 pt-4">
                             {/* TODO : remplacer par le nom de l'employé connecté */}
-                            <span className="text-sm">Meni Dom Reine</span>
+                            <span className="text-sm">{user.prenom || user.nom || user.email}</span>
                             {/* TODO : brancher la déconnexion */}
                             <button
                                 type="button"
