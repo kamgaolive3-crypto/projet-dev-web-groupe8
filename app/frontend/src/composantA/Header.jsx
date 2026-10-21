@@ -4,14 +4,6 @@ import { FaBars, FaXmark } from "react-icons/fa6";
 import logo from "../assets/logo.png";
 import { useAuth } from "../services/auth";
 
-// EN-TETE DE L ESPACE STAFF (maquettes /page-9 a /page-13) :
-// liens principaux (Tableau de bord, Employes, Reclamations, Statistiques)
-// + liens de gestion reserves a l administrateur (Menu, Evenements, Parametres)
-// + pastille utilisateur et bouton Deconnexion dore.
-// (remarque du groupe : le gerant ne voit NI Commandes, NI Livraisons,
-//  NI Menu, NI Evenements, NI Parametres — cloisonnement comme cote API)
-
-// la page active sert au bandeau du menu mobile
 const pages = {
     "/TableauBord": "Tableau de bord",
     "/Employes": "Employés",
@@ -22,9 +14,6 @@ const pages = {
     "/Parametre": "Paramètres",
 };
 
-// liens du menu FILTRES PAR ROLE :
-// - gérant : le tableau de bord et ses statistiques, les employés, réclamations
-// - administrateur : en plus le menu, les événements et les paramètres
 const LIENS = [
     ["/TableauBord", "Tableau de bord", "les-deux"],
     ["/Employes", "Employés", "les-deux"],
@@ -41,41 +30,29 @@ const liensDe = (role) =>
         (pour === "admin" && role === "administrateur"));
 
 export default function Header() {
-    // le header doit connaitre l utilisateur pour la vraie deconnexion
     const { user, deconnexion } = useAuth();
-    // liens du menu selon le role qui est connecte :
-    // le gerant ne voit ni Menu, ni Evenements, ni Parametres (cloisonnement)
     const liens = liensDe(user?.role);
-    // menuOuvert indique si le menu déroulant est ouvert.
     const [menuOuvert, setMenuOuvert] = useState(false);
-    // useLocation récupère les informations sur l'URL actuelle.
     const location = useLocation();
-
     const pageActive = pages[location.pathname] || "Mon MiamMiam";
 
-    // style du lien : pilule doree quand la page est active (comme la maquette)
     const lienStyle = ({ isActive }) =>
         "rounded-full px-3 py-1 text-xs transition-colors duration-200 " +
         (isActive
             ? "bg-[#CFBD97] font-semibold text-white"
             : "text-secondary hover:bg-[#f5f1e6]");
 
-    // Fonction qui ferme le menu mobile.
     const fermerMenu = () => setMenuOuvert(false);
-
-    // initiale de l utilisateur pour la pastille ronde
     const initiale = (user?.prenom || user?.nom || "S").charAt(0).toUpperCase();
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-grey-300 bg-grey">
             <nav className="mx-auto flex w-full items-center justify-between gap-3 px-4 py-2">
-                {/* logo + nom */}
                 <Link to="/TableauBord" className="flex flex-col gap-1">
                     <img src={logo} alt="logo mon miam miam" className="m-3 mb-0 w-15 rounded-[10px]" />
                     <p className="px-1 text-sm text-secondary">Mon MiamMiam</p>
                 </Link>
 
-                {/* liens principaux (bureau) */}
                 <ul className="hidden items-center gap-1 lg:flex">
                     {liens.map(([chemin, libelle]) => (
                         <li key={chemin}>
@@ -86,7 +63,6 @@ export default function Header() {
                     ))}
                 </ul>
 
-                {/* pastille utilisateur + deconnexion (bureau) */}
                 <div className="hidden items-center gap-2 lg:flex">
                     {user && (
                         <span className="flex items-center gap-2 rounded-full bg-white px-3 py-1 shadow-sm">
@@ -101,65 +77,39 @@ export default function Header() {
                     )}
                     <button
                         type="button" 
-                        onClick={async () => {
-                            // vraie déconnexion : revoke du token côté API puis nettoyage local
-                            await deconnexion();
-                            window.location.href = "/";
-                        }}
+                        onClick={async () => { await deconnexion(); window.location.href = "/"; }}
                         className="cursor-pointer rounded-[10px] bg-primary px-5 py-2 text-secondary hover:bg-primary-700"
                     >
                         Deconnexion
                     </button>
                 </div>
 
-                {/* bandeau mobile : page active + burger */}
                 <span className="text-sm font-semibold text-primary lg:hidden">{pageActive}</span>
                 <button
                     type="button"
                     onClick={() => setMenuOuvert(!menuOuvert)}
                     className="p-2 text-secondary lg:hidden"
                     aria-label={menuOuvert ? "Fermer le menu" : "Ouvrir le menu"}
-                    aria-expanded={menuOuvert}
-                    aria-controls="menu-mobile"
                 >
                     {menuOuvert ? <FaXmark size={24} /> : <FaBars size={24} />}
                 </button>
             </nav>
 
-            {/* MENU MOBILE */}
             {menuOuvert && (
-                <div
-                    id="menu-mobile"
-                    className="absolute left-0 top-full z-50 w-full border-b border-grey-300 bg-grey shadow-lg lg:hidden"
-                >
+                <div className="absolute left-0 top-full z-50 w-full border-b border-grey-300 bg-grey shadow-lg lg:hidden">
                     <ul className="flex flex-col gap-3 p-5">
                         {liens.map(([chemin, libelle]) => (
                             <li key={chemin}>
-                                <NavLink
-                                    to={chemin}
-                                    end={chemin === "/TableauBord"}
-                                    className={lienStyle}
-                                    onClick={fermerMenu}
-                                >
+                                <NavLink to={chemin} end={chemin === "/TableauBord"} className={lienStyle} onClick={fermerMenu}>
                                     {libelle}
                                 </NavLink>
                             </li>
                         ))}
-
-                        {/* pastille utilisateur + deconnexion (mobile) */}
                         <li className="border-t border-grey-300 pt-4">
-                            {user && (
-                                <p className="mb-2 text-xs text-gray-600">
-                                    Connecté : {user.prenom || user.nom || user.email} · {user.role}
-                                </p>
-                            )}
+                            {user && <p className="mb-2 text-xs text-gray-600">Connecté : {user.prenom} · {user.role}</p>}
                             <button
                                 type="button"
-                                onClick={async () => {
-                                    // vraie déconnexion puis retour a l accueil
-                                    await deconnexion();
-                                    window.location.href = "/";
-                                }}
+                                onClick={async () => { await deconnexion(); window.location.href = "/"; }}
                                 className="block w-full rounded-[10px] bg-primary py-2 text-center text-secondary hover:bg-primary-700"
                             >
                                 Deconnexion

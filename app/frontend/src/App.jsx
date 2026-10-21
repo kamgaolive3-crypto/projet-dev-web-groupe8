@@ -5,8 +5,12 @@ import Panier from "./vues/pagesE/Panier"
 import Fideliter from "./vues/pagesE/Fideliter"
 import LayoutE from "./composantE/Layout";
 import LayoutA from "./composantA/Layout";
+import LayoutG from "./composantG/Layout";
 import TableauBord from "./vues/pagesA/TableauBord";
 import Statistiques from "./vues/pagesA/Statistiques";
+import TableauBordG from "./vues/pagesG/TableauBordG";
+import CommandesG from "./vues/pagesA/Commandes";
+import Livraisons from "./vues/pagesA/Livraisons";
 import Employes from "./vues/pagesA/Employes";
 import MenuA from "./vues/pagesA/Menu";
 import Evenement from "./vues/pagesA/Evenement";
@@ -47,7 +51,7 @@ function RouteStaff({ roles = ["employe", "gerant", "administrateur"] }) {
 // page d accueil naturelle de chaque role apres connexion
 const ACCUEIL_PAR_ROLE = {
     employe: "/CommandesEmp",
-    gerant: "/TableauBord",
+    gerant: "/TableauBordG",
     administrateur: "/TableauBord",
 };
 
@@ -83,30 +87,27 @@ export default function App() {
 
           {/* 2. Espace personnel protege (auth exigee) */}
           <Route element={<RouteStaff />}>
-            {/* pages gerant/administrateur (CDC : la direction et le gerant ;
-                l employe possede SES 4 pages ci-dessous uniquement) */}
-            <Route element={<RouteStaff roles={["gerant", "administrateur"]} />}>
-              <Route element={<LayoutA/>}>
-                <Route path="/TableauBord" element={<TableauBord />}/>
-                <Route path="/Statistiques" element={<Statistiques />}/>
-                <Route path="/Employes" element={<Employes />}/>
-                <Route path="/ReclamationA" element={<ReclamationA />}/>
-              </Route>
+            {/* Espace Admin (Gestion complète) */}
+            <Route element={<LayoutA/>}>
+              <Route path="/TableauBord" element={<TableauBord />}/>
+              <Route path="/Statistiques" element={<Statistiques />}/>
+              <Route path="/Employes" element={<Employes />}/>
+              <Route path="/ReclamationA" element={<ReclamationA />}/>
+              <Route path="/MenuA" element={<MenuA />}/>
+              <Route path="/Evenement" element={<Evenement />}/>
+              <Route path="/Parametre" element={<Parametre />}/>
+              <Route path="/Livraisons" element={<Livraisons />}/>
             </Route>
 
-            {/* pages administrateur UNIQUEMENT (remarque du groupe : le gerant
-                n a ni Menu, ni Evenements, ni Parametres) ; la RouteStaff
-                renvoie le gerant a son accueil /TableauBord s il force l URL */}
-            <Route element={<RouteStaff roles={["administrateur"]} />}>
-              <Route element={<LayoutA/>}>
-                <Route path="/MenuA" element={<MenuA />}/>
-                <Route path="/Evenement" element={<Evenement />}/>
-                <Route path="/Parametre" element={<Parametre />}/>
-              </Route>
+            {/* Espace Gérant (Olive) */}
+            <Route element={<LayoutG />}>
+              <Route path="/TableauBordG" element={<TableauBordG />}/>
+              <Route path="/CommandesG" element={<CommandesG />}/>
+              <Route path="/EmployesG" element={<Employes />}/>
+              <Route path="/StatistiquesG" element={<Statistiques />}/>
             </Route>
 
-            {/* espace employe (integre depuis main, chemins renomes pour ne pas
-                entrer en collision avec /Commandes et /Statistiques du gerant) */}
+            {/* Espace Employé */}
             <Route element={<LayoutEmp />}>
               <Route path="/CommandesEmp" element={<CommandesEmp />}/>
               <Route path="/MenuEmp" element={<MenuEmp />}/>

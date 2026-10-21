@@ -112,6 +112,16 @@ class ParrainageController extends Controller
     }
 
     /**
+     * Calcule le bonus dynamiquement à partir de la table parametre
+     * (clé BONUS_PARRAIN ou recompense_filleul), avec repli à 500.
+     */
+    public static function getBonusParrain(): int
+    {
+        $valeur = \App\Models\Parametre::whereIn('cle', ['BONUS_PARRAIN', 'recompense_filleul'])->value('valeur');
+        return $valeur !== null ? (int) $valeur : self::BONUS_PARRAIN;
+    }
+
+    /**
      * US-019 : appelé par CommandeController::store à la toute première
      * commande réussie du filleul. Crédite le parrain et clôt le parrainage.
      */
@@ -132,7 +142,8 @@ class ParrainageController extends Controller
                 return;
             }
 
-            $parrain->increment('solde_point', self::BONUS_PARRAIN);
+            $bonus = self::getBonusParrain();
+            $parrain->increment('solde_point', $bonus);
 
             do {
                 $id = 'MV' . str_pad((string) random_int(0, 999), 3, '0', STR_PAD_LEFT);
@@ -140,7 +151,7 @@ class ParrainageController extends Controller
 
             MvtPoint::create([
                 'Id_mvt'         => $id,
-                'nbres_points'   => self::BONUS_PARRAIN,
+                'nbres_points'   => $bonus,
                 'type_mvt'       => 'parrainage',
                 'Id_utilisateur' => $parrain->Id_utilisateur,
             ]);
