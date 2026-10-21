@@ -153,7 +153,7 @@ export default function Historique() {
                             />
 
                             <div className="flex-1 text-sm">
-                                <p className="text-xs text-gray-500">#{c.id}</p>
+                                <p className="text-xs text-gray-500">{c.id}</p>
                                 {/* "2x Poulet pané, 1x Okok" : on assemble les plats avec join() */}
                                 <p className="font-serif font-semibold">
                                     {c.articles.map((a) => a.quantite + "x " + a.nom).join(", ")}
@@ -166,8 +166,9 @@ export default function Historique() {
                                 {c.statut}
                             </span>
                         </div>
-                        {/* US-010 : après le service, l étudiant peut laisser un commentaire */}
-                        {c.statut === "Servie" && (
+                        {/* US-010 : apres le service (libelle « Livree »), l etudiant
+                            peut laisser un commentaire sur SA commande */}
+                        {c.statut === "Livrée" && (
                             <div className="mt-2 flex flex-col gap-1 rounded-lg bg-[#f5f1e6] p-2 text-xs">
                                 <label>Votre commentaire sur cette commande :</label>
                                 <textarea rows={2} value={commentaires[c.id] ?? ""}

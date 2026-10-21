@@ -133,6 +133,7 @@ class StatistiqueController extends Controller
             'periode'    => $periode,
             'classement' => $classement->map(fn ($ligne, $index) => [
                 'rang'         => $index + 1,
+                'Id_utilisateur' => $ligne->Id_utilisateur,
                 'etudiant'     => $utilisateurs[$ligne->Id_utilisateur]?->only(['nom', 'prenom']),
                 'nb_commandes' => (int) $ligne->nb_commandes,
                 'montant'      => (int) $ligne->montant,

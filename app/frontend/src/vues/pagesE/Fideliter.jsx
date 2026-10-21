@@ -32,8 +32,10 @@ export default function Fidelite() {
     const [codeParrain, setCodeParrain] = useState("")
     //mes filleuls : GET /api/parrainage/filleuls
     const [filleuls, setFilleuls] = useState([])
-    //top 10 : GET /api/stats/top-clients
+    //top 10 : GET /api/stats/top-clients?periode=jour|semaine|mois (CDC : filtres)
     const [classement, setClassement] = useState([])
+    //periode choisie pour le top 10 (mois par defaut, comme l API)
+    const [periode, setPeriode] = useState("mois")
 
     //au premier affichage : les 5 chargements
     useEffect(() => {
@@ -78,17 +80,20 @@ export default function Fidelite() {
             })
             .catch(() => setFilleuls([]))
 
-        api.get("/stats/top-clients")
-            .then((liste) => {
-                setClassement((Array.isArray(liste) ? liste : liste.data || []).slice(0, 10).map((c, i) => ({
+        api.get("/stats/top-clients?periode=" + periode)
+            .then((rep) => {
+                // l API renvoie { periode, classement: [{rang, etudiant, nb_commandes, montant}] }
+                const liste = Array.isArray(rep) ? rep : (rep.classement || rep.data || [])
+                setClassement(liste.map((c, i) => ({
                     id: c.Id_utilisateur ?? i,
-                    nom: c.nom ?? c.nom_utilisateur ?? c.etudiant?.nom ?? "Client",
-                    points: c.points ?? c.total_points ?? c.solde_point ?? 0,
+                    nom: (c.etudiant?.nom ?? c.nom ?? "Client") + (c.etudiant?.prenom ? " " + c.etudiant.prenom : ""),
+                    commandes: c.nb_commandes ?? 0,
+                    montant: c.montant ?? 0,
                     moi: c.Id_utilisateur === user.Id_utilisateur,
                 })))
             })
             .catch(() => setClassement([]))
-    }, [])
+    }, [periode])
 
     //---------------- ETATS DE LA PAGE ----------------
     //true = on affiche toutes les lignes, false = seulement les premières
@@ -302,11 +307,29 @@ export default function Fidelite() {
                 </section>
             </div>
 
-            {/* ---------- TOP 10 ---------- */}
+            {/* ---------- TOP 10 (filtres jour/semaine/mois, cf cahier de charge) ---------- */}
             <section className="miam-carte mt-5 p-4 md:p-5">
-                <h2 className="font-inria text-[16px] font-bold text-black">
-                    Top 10 des meilleurs clients
-                </h2>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="font-inria text-[16px] font-bold text-black">
+                        Top 10 des meilleurs clients
+                    </h2>
+                    {/* filtres de periode : le clic recharge le classement */}
+                    <div className="flex gap-1.5">
+                        {[["jour", "Jour"], ["semaine", "Semaine"], ["mois", "Mois"]].map(([valeur, label]) => (
+                            <button
+                                key={valeur}
+                                type="button"
+                                onClick={() => setPeriode(valeur)}
+                                className={
+                                    "miam-pill h-7 px-3 text-[12px] " +
+                                    (periode === valeur ? "" : "opacity-55")
+                                }
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
                 {/* ordinateur : 2 colonnes de 5 ; téléphone : 1 colonne */}
                 <ol className="mt-1 grid gap-x-10 md:grid-flow-col md:grid-rows-5">
                     {/* i = la position dans la liste (0, 1, 2...), donc le rang est i + 1 */}
@@ -318,10 +341,13 @@ export default function Fidelite() {
                                 (c.moi ? "font-bold text-or-deep" : "text-black")
                             }
                         >
-                            <span>
+                            <span title={fcfa(c.montant)}>
                                 {i + 1} {c.moi ? "Vous" : c.nom}
+                                <span className="font-sans text-[11.5px] text-encre">
+                                    {" "}· {c.commandes} commande{c.commandes > 1 ? "s" : ""}
+                                </span>
                             </span>
-                            <span>{c.points} pts</span>
+                            <span className="font-sans text-[11.5px] text-encre">{fcfa(c.montant)}</span>
                         </li>
                     ))}
                 </ol>
