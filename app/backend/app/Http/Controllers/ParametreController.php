@@ -54,26 +54,19 @@ class ParametreController extends Controller
         return Parametre::findOrFail($id);
     }
 
-    /**
-     * PUT /api/parametre/{id}
-     * Met à jour un paramètre. L'Id_parametre est ignoré dans le contrôle
-     * d'unicité (il ne change pas), la clé doit rester unique.
-     */
     public function update(Request $request, string $id)
     {
-        // cloisonnement (CDC) : seul l administrateur configure les parametres.
         if ($request->user()?->role !== 'administrateur') {
             return response()->json(['message' => 'Parametres reserves a l administrateur.'], 403);
         }
         $parametre = Parametre::findOrFail($id);
+        
         $data = $request->validate([
-            'Id_parametre'  => ['required', 'regex:/^[A-Z]{2}[0-9]{3}$/', 'unique:parametre,Id_parametre,'.$id],
-            'cle'           => 'required|string|max:100|unique:parametre,cle,'.$id.',Id_parametre',
             'valeur'        => 'required|string',
             'Id_utilisateur'=> 'required|exists:administrateur,Id_utilisateur',
         ]);
 
-        $parametre->update($data);
+        $parametre->update(['valeur' => $data['valeur']]);
         return response()->json($parametre, 200);
     }
 

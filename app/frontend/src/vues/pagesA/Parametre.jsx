@@ -66,15 +66,17 @@ export default function Parametre() {
             if (confExistante) {
                 // On met à jour l'existant
                 await api.put(`/parametre/${encodeURIComponent(confExistante.Id_parametre)}`, {
-                    ...payload,
-                    Id_parametre: confExistante.Id_parametre
+                    valeur: JSON.stringify(config),
+                    Id_utilisateur: idAdmin
                 });
             } else {
-                // On crée une nouvelle ligne avec un ID unique
-                const newId = "CF" + Math.floor(1000 + Math.random() * 8999);
+                // On crée une nouvelle ligne avec un ID unique (2 lettres + 3 chiffres)
+                const newId = "PR" + Math.floor(100 + Math.random() * 899);
                 await api.post("/parametre", {
-                    ...payload,
-                    Id_parametre: newId
+                    Id_parametre: newId,
+                    cle: "CONFIG_RESTAURANT",
+                    valeur: JSON.stringify(config),
+                    Id_utilisateur: idAdmin
                 });
             }
             setMessage("Configuration sauvegardée avec succès !");
