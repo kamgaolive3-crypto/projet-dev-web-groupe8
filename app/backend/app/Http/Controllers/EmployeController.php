@@ -28,7 +28,13 @@ class EmployeController extends Controller
             ->keyBy('Id_utilisateur');
 
         return $employes->map(fn ($e) => [
-            'employe'          => $e->only(['Id_utilisateur', 'poste', 'date_embauche', 'Id_restaurant', 'Id_createur', 'date_creation_compte']),
+            'employe' => [
+                'Id_utilisateur'       => $e->Id_utilisateur,
+                'poste'                => $e->poste,
+                'date_embauche'        => $e->date_embauche,
+                'Id_restaurant'        => $e->Id_restaurant,
+                'Id_createur'          => $e->Id_createur,
+                'date_creation_compte' => $e->date_creation_compte,],
             'utilisateur'      => $utilisateurs[$e->Id_utilisateur] ?? null,
         ]);
     }
