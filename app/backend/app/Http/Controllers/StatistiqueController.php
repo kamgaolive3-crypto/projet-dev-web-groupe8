@@ -20,8 +20,14 @@ class StatistiqueController extends Controller
             return response()->json(['message' => 'Réservé au personnel.'], 403);
         }
 
-        $debut = now()->subDays(6)->startOfDay();
-        $fin   = now()->endOfDay();
+        // par defaut : la semaine glissante (7 derniers jours) ;
+        // ?du=2026-10-01&au=2026-10-31 remplace la fenetre (prop. d'Ash)
+        $request->validate([
+            'du' => ['nullable', 'date'],
+            'au' => ['nullable', 'date', 'after_or_equal:du'],
+        ]);
+        $debut = $request->query('du') ? Carbon::parse($request->query('du'))->startOfDay() : now()->subDays(6)->startOfDay();
+        $fin   = $request->query('au') ? Carbon::parse($request->query('au'))->endOfDay() : now()->endOfDay();
 
         $base = Commande::whereBetween('date_commande', [$debut, $fin])
             ->whereNotIn('statut_commande', ['annulee']);
@@ -73,30 +79,65 @@ class StatistiqueController extends Controller
             return response()->json(['message' => 'Réservé au gérant et aux administrateurs.'], 403);
         }
 
-        $caParPeriode = function ($days) {
-            return (int) Commande::whereBetween('date_commande', [now()->subDays($days)->startOfDay(), now()->endOfDay()])
-                ->whereNotIn('statut_commande', ['annulee'])
-                ->sum('montant_total');
-        };
+        // filtre de periode facultatif repris de la prop. d'Ash : ?du=2026-10-01&au=2026-10-31
+        $request->validate([
+            'du' => ['nullable', 'date'],
+            'au' => ['nullable', 'date', 'after_or_equal:du'],
+        ]);
+        $du = $request->query('du');
+        $au = $request->query('au') ? $request->query('au') . ' 23:59:59' : null;
 
-        $parStatut = Commande::selectRaw('statut_commande, COUNT(*) as total')
+        // applique (ou non) la periode personnalisee sur une colonne de date
+        $surPeriode = fn ($query, string $colonne) => $query
+            ->when($du, fn ($q) => $q->where($colonne, '>=', $du))
+            ->when($au, fn ($q) => $q->where($colonne, '<=', $au));
+
+        // sans du/au : les CA fixes jour/semaine/mois (comportement d'origine, US-032)
+        $caFixe = ($du || $au) ? null : collect([
+            'jour'    => 0,
+            'semaine' => 6,
+            'mois'    => 29,
+        ])->map(fn ($jours) => ['ca' => (int) Commande::whereBetween('date_commande', [
+                now()->subDays($jours)->startOfDay(),
+                now()->endOfDay(),
+            ])->whereNotIn('statut_commande', ['annulee'])->sum('montant_total')]);
+
+        // argent reellement encaisse : paiements au statut « paye » (idee d'Ash)
+        $caEncaisse = (int) $surPeriode(
+            DB::table('paiement')->where('statut_paiement', 'paye'),
+            'date_paiement'
+        )->sum('montant_paye');
+
+        $parStatut = $surPeriode(Commande::query(), 'date_commande')
+            ->selectRaw('statut_commande, COUNT(*) as total')
             ->groupBy('statut_commande')
             ->pluck('total', 'statut_commande');
 
-        $fidélité = DB::table('mvt_points')
+        $fidélité = $surPeriode(DB::table('mvt_points'), 'date_mvt')
             ->selectRaw("type_mvt, COALESCE(SUM(ABS(nbres_points)),0) as total")
             ->groupBy('type_mvt')
             ->pluck('total', 'type_mvt');
 
         return response()->json([
-            'jour'                    => ['ca' => $caParPeriode(0)],
-            'semaine'                 => ['ca' => $caParPeriode(6)],
-            'mois'                    => ['ca' => $caParPeriode(29)],
+            'jour'                    => $caFixe['jour'] ?? null,
+            'semaine'                 => $caFixe['semaine'] ?? null,
+            'mois'                    => $caFixe['mois'] ?? null,
+            'personnalise'            => ($du || $au) ? ['du' => $du, 'au' => $au, 'ca' => (int) $surPeriode(
+                Commande::whereNotIn('statut_commande', ['annulee']),
+                'date_commande'
+            )->sum('montant_total')] : null,
+            'ca_encaisse'             => $caEncaisse,
             'commandes_par_statut'    => $parStatut,
             'points'                  => $fidélité,
             'etudiants_actifs'        => Utilisateur::where('statut_compte', 'actif')->whereHas('etudiant')->count(),
-            'parrainages_recompenses' => DB::table('parrainer')->where('recompense_attribuee', 1)->count(),
-            'reclamations_attente'    => DB::table('reclamation')->where('statut_reclamation', 'en_attente')->count(),
+            'parrainages_recompenses' => (int) $surPeriode(
+                DB::table('parrainer')->where('recompense_attribuee', 1),
+                'date_parrainage'
+            )->count(),
+            'reclamations_attente'    => (int) $surPeriode(
+                DB::table('reclamation')->where('statut_reclamation', 'en_attente'),
+                'date_reclamation'
+            )->count(),
         ]);
     }
 
