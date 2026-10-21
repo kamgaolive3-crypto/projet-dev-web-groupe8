@@ -5,40 +5,47 @@ import logo from "../assets/logo.png";
 import { useAuth } from "../services/auth";
 
 // EN-TETE DE L ESPACE STAFF (maquettes /page-9 a /page-13) :
-// liens principaux (Tableau de bord, Commandes, Employes, Reclamations, Statistiques)
-// + liens de gestion (Livraisons, Menu, Evenements, Parametres)
+// liens principaux (Tableau de bord, Employes, Reclamations, Statistiques)
+// + liens de gestion reserves a l administrateur (Menu, Evenements, Parametres)
 // + pastille utilisateur et bouton Deconnexion dore.
+// (remarque du groupe : le gerant ne voit NI Commandes, NI Livraisons,
+//  NI Menu, NI Evenements, NI Parametres — cloisonnement comme cote API)
 
 // la page active sert au bandeau du menu mobile
 const pages = {
     "/TableauBord": "Tableau de bord",
-    "/Commandes": "Commandes",
     "/Employes": "Employés",
     "/ReclamationA": "Réclamations",
     "/Statistiques": "Statistiques",
-    "/Livraisons": "Livraisons",
     "/MenuA": "Menu",
     "/Evenement": "Événements",
     "/Parametre": "Paramètres",
 };
 
-// liens du menu : les 5 premiers correspondent a la maquette, les suivants
-// sont les fonctions de gestion exigees par le cahier des charges
-const liens = [
-    ["/TableauBord", "Tableau de bord", true],
-    ["/Commandes", "Commandes", true],
-    ["/Employes", "Employés", true],
-    ["/ReclamationA", "Réclamations", true],
-    ["/Statistiques", "Statistiques", true],
-    ["/Livraisons", "Livraisons", false],
-    ["/MenuA", "Menu", false],
-    ["/Evenement", "Événements", false],
-    ["/Parametre", "Paramètres", false],
+// liens du menu FILTRES PAR ROLE :
+// - gérant : le tableau de bord et ses statistiques, les employés, réclamations
+// - administrateur : en plus le menu, les événements et les paramètres
+const LIENS = [
+    ["/TableauBord", "Tableau de bord", "les-deux"],
+    ["/Employes", "Employés", "les-deux"],
+    ["/ReclamationA", "Réclamations", "les-deux"],
+    ["/Statistiques", "Statistiques", "les-deux"],
+    ["/MenuA", "Menu", "admin"],
+    ["/Evenement", "Événements", "admin"],
+    ["/Parametre", "Paramètres", "admin"],
 ];
+
+const liensDe = (role) =>
+    LIENS.filter(([, , pour]) =>
+        pour === "les-deux" ||
+        (pour === "admin" && role === "administrateur"));
 
 export default function Header() {
     // le header doit connaitre l utilisateur pour la vraie deconnexion
     const { user, deconnexion } = useAuth();
+    // liens du menu selon le role qui est connecte :
+    // le gerant ne voit ni Menu, ni Evenements, ni Parametres (cloisonnement)
+    const liens = liensDe(user?.role);
     // menuOuvert indique si le menu déroulant est ouvert.
     const [menuOuvert, setMenuOuvert] = useState(false);
     // useLocation récupère les informations sur l'URL actuelle.

@@ -7,8 +7,6 @@ import LayoutE from "./composantE/Layout";
 import LayoutA from "./composantA/Layout";
 import TableauBord from "./vues/pagesA/TableauBord";
 import Statistiques from "./vues/pagesA/Statistiques";
-import Commandes from "./vues/pagesA/Commandes";
-import Livraisons from "./vues/pagesA/Livraisons";
 import Employes from "./vues/pagesA/Employes";
 import MenuA from "./vues/pagesA/Menu";
 import Evenement from "./vues/pagesA/Evenement";
@@ -92,10 +90,18 @@ export default function App() {
                 <Route path="/TableauBord" element={<TableauBord />}/>
                 <Route path="/Statistiques" element={<Statistiques />}/>
                 <Route path="/Employes" element={<Employes />}/>
+                <Route path="/ReclamationA" element={<ReclamationA />}/>
+              </Route>
+            </Route>
+
+            {/* pages administrateur UNIQUEMENT (remarque du groupe : le gerant
+                n a ni Menu, ni Evenements, ni Parametres) ; la RouteStaff
+                renvoie le gerant a son accueil /TableauBord s il force l URL */}
+            <Route element={<RouteStaff roles={["administrateur"]} />}>
+              <Route element={<LayoutA/>}>
                 <Route path="/MenuA" element={<MenuA />}/>
                 <Route path="/Evenement" element={<Evenement />}/>
                 <Route path="/Parametre" element={<Parametre />}/>
-                <Route path="/ReclamationA" element={<ReclamationA />}/>
               </Route>
             </Route>
 
