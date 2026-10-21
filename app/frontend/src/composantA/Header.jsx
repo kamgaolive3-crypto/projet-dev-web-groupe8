@@ -16,12 +16,15 @@ const pages = {
 
 const LIENS = [
     ["/TableauBord", "Tableau de bord", "les-deux"],
+    ["/Commandes", "Toutes les commandes", "admin"],
+    ["/CommandesG", "Commandes", "les-deux"], // <-- Ajouté ici pour le Gérant
     ["/Employes", "Employés", "les-deux"],
     ["/ReclamationA", "Réclamations", "les-deux"],
     ["/Statistiques", "Statistiques", "les-deux"],
     ["/MenuA", "Menu", "admin"],
     ["/Evenement", "Événements", "admin"],
     ["/Parametre", "Paramètres", "admin"],
+    ["/Livraisons", "Livraisons", "admin"],
 ];
 
 const liensDe = (role) =>

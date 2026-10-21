@@ -45,7 +45,7 @@ export default function Header() {
                     <p className="px-1 text-sm text-secondary">Mon MiamMiam</p>
                 </Link>
 
-                <ul className="hidden items-center gap-1 lg:flex">
+                <ul className="flex items-center gap-1">
                     {liens.map(([chemin, libelle]) => (
                         <li key={chemin}>
                             <NavLink to={chemin} end={chemin === "/TableauBordG"} className={lienStyle}>
@@ -53,6 +53,10 @@ export default function Header() {
                             </NavLink>
                         </li>
                     ))}
+                    {/* Forçage manuel si la boucle échoue */}
+                    <li key="/CommandesG">
+                         <NavLink to="/CommandesG" className={lienStyle}>Commandes</NavLink>
+                    </li>
                 </ul>
 
                 <div className="hidden items-center gap-2 lg:flex">

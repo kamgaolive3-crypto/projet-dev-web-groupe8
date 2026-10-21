@@ -8,12 +8,12 @@ import { api } from "../../services/api";
 // libelles lisibles pour les statuts de la base
 const libelles = {
     en_attente: "En attente",
-    validee: "ValidÃ©e",
-    en_preparation: "En prÃ©paration",
-    prete: "PrÃªte",
+    validee: "Validée",
+    en_preparation: "En préparation",
+    prete: "Prête",
     en_livraison: "En livraison",
     servie: "Servie",
-    annulee: "AnnulÃ©e",
+    annulee: "Annulée",
 };
 
 // couleurs des pilules de statut (meme style que la maquette)
@@ -58,7 +58,7 @@ export default function Commandes() {
         setMessage(""); setErreur("")
         try {
             await api.post("/commande/" + encodeURIComponent(id) + "/valider", {})
-            setMessage("Commande " + id + " validÃ©e.")
+            setMessage("Commande " + id + " validée.")
             charger()
         } catch (e) { setErreur(e.message) }
     }
@@ -68,7 +68,7 @@ export default function Commandes() {
         setMessage(""); setErreur("")
         try {
             await api.post("/commande/" + encodeURIComponent(id) + "/statut", { statut_commande: statut })
-            setMessage("Commande " + id + " : statut mis Ã  " + (libelles[statut] || statut).toLowerCase() + ".")
+            setMessage("Commande " + id + " : statut mis à " + (libelles[statut] || statut).toLowerCase() + ".")
             charger()
         } catch (e) { setErreur(e.message) }
     }
@@ -95,7 +95,7 @@ export default function Commandes() {
             {/* ---------- TITRE ---------- */}
             <div>
                 <h1 className="font-serif text-2xl font-bold">Gestion des commandes</h1>
-                <p className="text-xs text-gray-600">Suivi en temps rÃ©el des commandes des Ã©tudiants</p>
+                <p className="text-xs text-gray-600">Suivi en temps réel des commandes des étudiants</p>
             </div>
 
             {message && <p className="rounded-md bg-green-100 px-3 py-2 text-sm text-green-800">{message}</p>}
@@ -104,19 +104,19 @@ export default function Commandes() {
             {/* ---------- 3 CARTES INDICATEURS ---------- */}
             <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-xl bg-white p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-wide text-gray-500">En prÃ©paration</p>
+                    <p className="text-xs uppercase tracking-wide text-gray-500">En préparation</p>
                     <p className="mt-1 text-2xl font-bold text-[#b8862d]">{compte("en_preparation")}</p>
                     <p className="text-xs text-gray-500">En cuisine</p>
                 </div>
                 <div className="rounded-xl bg-white p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-wide text-gray-500">PrÃªtes</p>
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Prêtes</p>
                     <p className="mt-1 text-2xl font-bold text-[#b8862d]">{compte("prete")}</p>
                     <p className="text-xs text-gray-500">Ã livrer / servir</p>
                 </div>
                 <div className="rounded-xl bg-white p-4 shadow-sm">
                     <p className="text-xs uppercase tracking-wide text-gray-500">Commandes du jour</p>
                     <p className="mt-1 text-2xl font-bold text-[#b8862d]">{nbAujourdhui}</p>
-                    <p className="text-xs text-gray-500">Total cumulÃ©</p>
+                    <p className="text-xs text-gray-500">Total cumulé</p>
                 </div>
             </div>
 
@@ -213,11 +213,11 @@ export default function Commandes() {
                         .filter((c) => detailOuvert === c.Id_commande)
                         .map((c) => (
                             <div key={"detail-" + c.Id_commande} className="border-t border-[#efe6d0] bg-[#f5f1e6] px-4 py-3 text-xs">
-                                <p><b>Commande :</b> {c.Id_commande} Â· {(c.date_commande || "").slice(0, 16).replace("T", " ")}</p>
+                                <p><b>Commande :</b> {c.Id_commande} · {(c.date_commande || "").slice(0, 16).replace("T", " ")}</p>
                                 <p><b>Ãtudiant :</b> {c.etudiant ? (c.etudiant.prenom ?? "") + " " + (c.etudiant.nom ?? "") : (c.Id_utilisateur ?? "â")}</p>
                                 <p><b>Articles :</b> {(c.articles || []).map((a) => (a.pivot?.quantite ?? a.quantite ?? 1) + "x " + a.nom_article).join(", ") || "Aucun article."}</p>
-                                {c.heure_recup && <p><b>Heure de rÃ©cupÃ©ration :</b> {c.heure_recup}</p>}
-                                {c.point_reduction > 0 && <p><b>Points utilisÃ©s :</b> {c.point_reduction} (rÃ©duction appliquÃ©e)</p>}
+                                {c.heure_recup && <p><b>Heure de récupération :</b> {c.heure_recup}</p>}
+                                {c.point_reduction > 0 && <p><b>Points utilisés :</b> {c.point_reduction} (réduction appliquée)</p>}
                             </div>
                         ))}
                 </div>
@@ -225,3 +225,4 @@ export default function Commandes() {
         </div>
     )
 }
+
