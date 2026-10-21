@@ -9,7 +9,6 @@ export default function Parametre() {
     const [message, setMessage] = useState("");
     const [chargement, setChargement] = useState(false);
 
-    // État unique pour toute la config JSON
     const [config, setConfig] = useState({
         nomResto: "Mon Miam Miam @UCAC-ICAM",
         adresse: "Campus UCAC-ICAM, Yaoundé",
@@ -37,13 +36,13 @@ export default function Parametre() {
         recompense_filleul: "50"
     });
 
+    // Charger les paramètres depuis l'API
     const charger = async () => {
         try {
             const liste = await api.get("/parametre");
             const conf = liste.find(p => p.cle === "CONFIG_RESTAURANT");
             if (conf) {
-                const parsed = JSON.parse(conf.valeur);
-                setConfig(prev => ({ ...prev, ...parsed }));
+                setConfig(prev => ({ ...prev, ...JSON.parse(conf.valeur) }));
             }
         } catch (e) { console.error("Erreur chargement:", e); }
     };
@@ -54,31 +53,33 @@ export default function Parametre() {
         setChargement(true);
         setMessage(""); setErreur("");
         try {
+            // Étape 1 : On vérifie l'état RÉEL en base juste avant de décider (évite les conflits d'ID)
             const liste = await api.get("/parametre");
-            const conf = liste.find(p => p.cle === "CONFIG_RESTAURANT");
+            const confExistante = liste.find(p => p.cle === "CONFIG_RESTAURANT");
             
-            const idAdmin = user?.Id_utilisateur || "ADMI000001";
             const payload = {
                 cle: "CONFIG_RESTAURANT",
                 valeur: JSON.stringify(config),
-                Id_utilisateur: idAdmin
+                Id_utilisateur: user?.Id_utilisateur || "ADMI000001"
             };
             
-            if (conf) {
-                await api.put(`/parametre/${encodeURIComponent(conf.Id_parametre)}`, {
+            if (confExistante) {
+                // On met à jour l'existant
+                await api.put(`/parametre/${encodeURIComponent(confExistante.Id_parametre)}`, {
                     ...payload,
-                    Id_parametre: conf.Id_parametre
+                    Id_parametre: confExistante.Id_parametre
                 });
             } else {
+                // On crée une nouvelle ligne avec un ID unique
+                const newId = "CF" + Math.floor(1000 + Math.random() * 8999);
                 await api.post("/parametre", {
                     ...payload,
-                    Id_parametre: "PA" + Math.floor(100 + Math.random() * 899)
+                    Id_parametre: newId
                 });
             }
             setMessage("Configuration sauvegardée avec succès !");
-            charger();
+            await charger(); // Rafraîchir l'état local
         } catch (e) {
-            console.error(e);
             const detail = e.champs ? Object.values(e.champs).flat().join(" - ") : null;
             setErreur(detail || e.message || "Erreur lors de la sauvegarde.");
         }
@@ -91,9 +92,7 @@ export default function Parametre() {
             <button
                 type="button"
                 onClick={() => onChange(!valeur)}
-                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                    valeur ? "bg-[#CFBD97]" : "bg-gray-200"
-                }`}
+                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${valeur ? "bg-[#CFBD97]" : "bg-gray-200"}`}
             >
                 <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${valeur ? "translate-x-5" : "translate-x-0"}`} />
             </button>
@@ -122,11 +121,11 @@ export default function Parametre() {
                 </button>
             </div>
 
-            {message && <div className="rounded-lg bg-green-50 p-4 border border-green-200 text-green-800 text-sm font-bold">{message}</div>}
+            {message && <div className="rounded-lg bg-green-50 p-4 border border-green-200 text-green-800 text-sm font-bold animate-pulse">{message}</div>}
             {erreur && <div className="rounded-lg bg-red-50 p-4 border border-red-200 text-red-700 text-sm font-bold">{erreur}</div>}
 
             {ongletActif === "infos" && (
-                <div className="flex flex-col gap-6 animate-in fade-in">
+                <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2">
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col gap-4">
                         <h2 className="font-serif text-lg font-bold text-gray-800">Informations du restaurant</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -179,7 +178,7 @@ export default function Parametre() {
             )}
 
             {ongletActif === "services" && (
-                <div className="flex flex-col gap-6 animate-in fade-in">
+                <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2">
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col gap-4">
                         <h2 className="font-serif text-lg font-bold text-gray-800">Service de livraison</h2>
                         <Toggle label="Commande sur place" valeur={config.commandeSurPlace} onChange={v => setConfig({...config, commandeSurPlace: v})} />
@@ -207,7 +206,7 @@ export default function Parametre() {
                                 <div key={f.key} className="flex flex-col gap-1">
                                     <label className="text-xs text-gray-500">{f.label}</label>
                                     <div className="flex items-center">
-                                        <input type="number" value={config[f.key]} onChange={e => setConfig({...config, [f.key]: e.target.value})} className="w-full rounded-l-lg border border-gray-200 px-3 py-2 text-sm" />
+                                        <input type="number" value={config[f.key]} onChange={e => setConfig({...config, [f.key]: e.target.value})} className="w-full rounded-l-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#CFBD97]" />
                                         <span className="bg-gray-50 border border-l-0 border-gray-200 px-3 py-2 text-xs text-gray-500 rounded-r-lg">{f.unit}</span>
                                     </div>
                                 </div>
@@ -221,9 +220,9 @@ export default function Parametre() {
                 <button
                     onClick={enregistrer}
                     disabled={chargement}
-                    className="cursor-pointer rounded-full bg-[#CFBD97] px-8 py-3 text-sm font-semibold text-white shadow hover:bg-[#bfa97e] transition-all disabled:opacity-50"
+                    className="cursor-pointer rounded-full bg-[#CFBD97] px-8 py-3 text-sm font-semibold text-white shadow-md hover:bg-[#bfa97e] transition-all disabled:opacity-50 active:scale-95"
                 >
-                    {chargement ? "Sauvegarde..." : "Enregistrer les modifications"}
+                    {chargement ? "Sauvegarde en cours..." : "Enregistrer les modifications"}
                 </button>
             </div>
         </div>
