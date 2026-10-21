@@ -60,8 +60,12 @@ export default function Header() {
                     <li><NavLink to="/StatistiquesG"className={lienStyle}>
                         Statistiques</NavLink></li>
                 </ul>
-                <Link to="/page_connexion" className="hidden md:inline-flex bg-primary text-secondary px-5 py-2 mr-3 rounded-[10px] cursor-pointer hover:bg-primary-700">
-                    Deconnexion </Link>
+                <div className="hidden md:flex flex-col items-center gap-1 mr-3">
+    <span className="text-xs">Reine Cindy</span>
+    <Link to="/page_connexion" className="bg-primary text-secondary text-xs px-5 py-1.5 rounded-[10px] cursor-pointer hover:bg-primary-700">
+        Déconnexion
+    </Link>
+</div>
                 <button
                     type="button"
                     onClick={() => setMenuOuvert(!menuOuvert)}
