@@ -86,28 +86,38 @@ export default function App() {
           </Route>
 
           {/* 2. Espace personnel protege (auth exigee) */}
-          <Route element={<RouteStaff />}>
-            {/* Espace Admin (Gestion complète) */}
+          {/* Routes Admin/Gerant partagees */}
+          <Route element={<RouteStaff roles={["gerant", "administrateur"]} />}>
             <Route element={<LayoutA/>}>
               <Route path="/TableauBord" element={<TableauBord />}/>
               <Route path="/Statistiques" element={<Statistiques />}/>
               <Route path="/Employes" element={<Employes />}/>
               <Route path="/ReclamationA" element={<ReclamationA />}/>
+            </Route>
+          </Route>
+
+          {/* Routes Administrateur UNIQUEMENT (remarque du groupe : gerant n'a ni Menu, ni Evenements, ni Parametres) */}
+          <Route element={<RouteStaff roles={["administrateur"]} />}>
+            <Route element={<LayoutA/>}>
               <Route path="/MenuA" element={<MenuA />}/>
               <Route path="/Evenement" element={<Evenement />}/>
               <Route path="/Parametre" element={<Parametre />}/>
               <Route path="/Livraisons" element={<Livraisons />}/>
             </Route>
+          </Route>
 
-            {/* Espace Gérant (Olive) */}
+          {/* Espace Gérant (Olive) */}
+          <Route element={<RouteStaff roles={["gerant", "administrateur"]} />}>
             <Route element={<LayoutG />}>
               <Route path="/TableauBordG" element={<TableauBordG />}/>
               <Route path="/CommandesG" element={<CommandesG />}/>
               <Route path="/EmployesG" element={<Employes />}/>
               <Route path="/StatistiquesG" element={<Statistiques />}/>
             </Route>
+          </Route>
 
-            {/* Espace Employé */}
+          {/* Espace Employé */}
+          <Route element={<RouteStaff roles={["employe", "gerant", "administrateur"]} />}>
             <Route element={<LayoutEmp />}>
               <Route path="/CommandesEmp" element={<CommandesEmp />}/>
               <Route path="/MenuEmp" element={<MenuEmp />}/>
