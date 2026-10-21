@@ -52,6 +52,7 @@ export default function Parametre() {
     const enregistrer = async () => {
         setChargement(true);
         setMessage(""); setErreur("");
+        const idAdmin = user?.Id_utilisateur || "ADMI000001";
         try {
             // Étape 1 : On vérifie l'état RÉEL en base juste avant de décider (évite les conflits d'ID)
             const liste = await api.get("/parametre");
@@ -60,23 +61,18 @@ export default function Parametre() {
             const payload = {
                 cle: "CONFIG_RESTAURANT",
                 valeur: JSON.stringify(config),
-                Id_utilisateur: user?.Id_utilisateur || "ADMI000001"
+                Id_utilisateur: idAdmin
             };
             
             if (confExistante) {
                 // On met à jour l'existant
-                await api.put(`/parametre/${encodeURIComponent(confExistante.Id_parametre)}`, {
-                    valeur: JSON.stringify(config),
-                    Id_utilisateur: idAdmin
-                });
+                await api.put(`/parametre/${encodeURIComponent(confExistante.Id_parametre)}`, payload);
             } else {
-                // On crée une nouvelle ligne avec un ID unique (2 lettres + 3 chiffres)
+                // On crée une nouvelle ligne avec un ID unique
                 const newId = "PR" + Math.floor(100 + Math.random() * 899);
                 await api.post("/parametre", {
-                    Id_parametre: newId,
-                    cle: "CONFIG_RESTAURANT",
-                    valeur: JSON.stringify(config),
-                    Id_utilisateur: idAdmin
+                    ...payload,
+                    Id_parametre: newId
                 });
             }
             setMessage("Configuration sauvegardée avec succès !");

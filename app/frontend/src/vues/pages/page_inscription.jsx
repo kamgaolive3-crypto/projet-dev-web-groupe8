@@ -36,14 +36,14 @@ export default function Login() {
         setErreur("");
         try {
             await inscription({
-                nom,
-                prenom,
-                email,
-                telephone,
-                localisation,
+                nom: nom.trim(),
+                prenom: prenom.trim(),
+                email: email.trim(),
+                telephone: telephone.replace(/\s+/g, ""), // nettoie les espaces éventuels
+                localisation: localisation.trim(),
                 mot_de_passe: password,
                 mot_de_passe_confirmation: confirmPassword,
-                code_parrainage: codeParrainage.trim() || null,
+                code_parrainage: codeParrainage.trim().toUpperCase() || null,
             });
             navigate("/");
         } catch (err) {
