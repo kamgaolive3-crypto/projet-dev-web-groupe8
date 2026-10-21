@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiX } from "react-icons/fi";
+import { FiImage, FiX } from "react-icons/fi";
 
 /* ------------------------------------------------------------------ */
 /* 1. CONSTANTES ET DONNÉES DE TEST                                   */
@@ -19,6 +19,7 @@ const FORMULAIRE_VIDE = {
   categorie: "Plats",
   prix: "",
   statut: "disponible",
+  image: ""
 };
 
 // Classes communes aux cases de saisie et aux listes déroulantes.
@@ -59,6 +60,7 @@ export default function GestionMenu() {
   const [modalOuvert, setModalOuvert] = useState(false);
   const [formulaire, setFormulaire] = useState(FORMULAIRE_VIDE);
   const [idEnEdition, setIdEnEdition] = useState(null); // null = on ajoute
+  const [glisse, setGlisse] = useState(false); // pour l'animation de glissement du menu
 
   const platsAffiches =
     filtre === "Tous" ? plats : plats.filter((plat) => plat.categorie === filtre);
@@ -85,6 +87,27 @@ export default function GestionMenu() {
     setFormulaire({ ...formulaire, [name]: value });
   }
 
+  function gererImage(e){
+    const fichier = e.target.files[0];
+    if (fichier){
+      setFormulaire ({ ...formulaire, image: URL.createObjectURL(fichier)});
+    }
+    e.target.value =""
+  }
+
+  function gererSurvol(e){
+    e.preventDefault();
+    setGlisse(true);
+  }
+
+  function gererDepot(e){
+    e.preventDefault();
+    setGlisse(false);
+    const fichier =e.dataTransfer.files[0];
+    if (fichier && fichier.type.startsWith("image/")){
+      setFormulaire ({ ...formulaire, image: URL.createObjectURL(fichier)});
+    }
+  }
   function gererSoumission(e) {
     e.preventDefault();
 
@@ -158,8 +181,15 @@ export default function GestionMenu() {
                 <tr key={plat.id} className="border-b border-primary/40 last:border-b-0">
                   <td className="px-3 py-4">
                     <div className="flex items-center gap-3">
-                      <span aria-hidden="true" className="h-8 w-8 shrink-0 rounded-lg bg-primary-700" />
-                      {plat.nom}
+                      {plat.image ? (
+                        <img
+                          src={plat.image}
+                          alt={`Photo de ${plat.nom}`}
+                          className="h-8 w-8 shrink-0 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <span aria-hidden="true" className="h-8 w-8 shrink-0 rounded-lg bg-primary-700" />
+                      )}
                     </div>
                   </td>
                   <td className="px-3 py-4 text-center">{plat.categorie}</td>
@@ -276,8 +306,37 @@ export default function GestionMenu() {
                     </option>
                   ))}
                 </select>
-              </label>
-                  
+              </label >
+              <div classeName="sm:col-span-2">
+                <p className="mb-1 text-sm front-medium">Photo du plat :</p>
+                <label 
+                  onDragOver={gererSurvol}
+                  onDragLeave={() => setGlisse(false)}
+                  onDrop={gererDepot}
+                  className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 text-center text-xs focus-within:ring-2 focus-within:ring-primary ${
+                    glisse ? "border-primary-700 bg-primary/20" : "border-primary-700/50 hover:bg-primary/10"
+                  }`}
+                >
+                <div className="pointer-events-none flex flex-col items-center gap-1">
+                  {formulaire.image ? (
+                    <img
+                      src={formulaire.image}
+                      alt="Aperçu de l'affiche"
+                      className="h-24 w-full rounded object-cover"
+                    />
+                  ) : (
+                    <FiImage size={22} />
+                  )}
+                  <span>{formulaire.image ? "Glisser une autre image ou cliquez pour lachanger" : "Glissez l'image ici ou cliquez pour parcourir"}</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg"
+                    onChange={gererImage}
+                    className="sr-only"
+                  />
+                </label>
+              </div>    
               <div className="mt-4 flex justify-center sm:col-span-2">
                 <button
                   type="submit"
