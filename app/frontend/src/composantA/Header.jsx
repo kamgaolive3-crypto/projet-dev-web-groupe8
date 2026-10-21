@@ -12,11 +12,9 @@ import { useAuth } from "../services/auth";
 // la page active sert au bandeau du menu mobile
 const pages = {
     "/TableauBord": "Tableau de bord",
-    "/Commandes": "Commandes",
     "/Employes": "Employés",
     "/ReclamationA": "Réclamations",
     "/Statistiques": "Statistiques",
-    "/Livraisons": "Livraisons",
     "/MenuA": "Menu",
     "/Evenement": "Événements",
     "/Parametre": "Paramètres",
@@ -26,11 +24,9 @@ const pages = {
 // sont les fonctions de gestion exigees par le cahier des charges
 const liens = [
     ["/TableauBord", "Tableau de bord", true],
-    ["/Commandes", "Commandes", true],
     ["/Employes", "Employés", true],
     ["/ReclamationA", "Réclamations", true],
     ["/Statistiques", "Statistiques", true],
-    ["/Livraisons", "Livraisons", false],
     ["/MenuA", "Menu", false],
     ["/Evenement", "Événements", false],
     ["/Parametre", "Paramètres", false],

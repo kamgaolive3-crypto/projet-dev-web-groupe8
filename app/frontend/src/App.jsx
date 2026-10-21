@@ -7,7 +7,9 @@ import LayoutE from "./composantE/Layout";
 import LayoutA from "./composantA/Layout";
 import TableauBord from "./vues/pagesA/TableauBord";
 import Statistiques from "./vues/pagesA/Statistiques";
-import Commandes from "./vues/pagesA/Commandes";
+import LayoutG from "./composantG/Layout";
+import TableauBordG from "./vues/pagesG/TableauBordG";
+import CommandesG from "./vues/pagesA/Commandes";
 import Livraisons from "./vues/pagesA/Livraisons";
 import Employes from "./vues/pagesA/Employes";
 import MenuA from "./vues/pagesA/Menu";
@@ -49,7 +51,7 @@ function RouteStaff({ roles = ["employe", "gerant", "administrateur"] }) {
 // page d accueil naturelle de chaque role apres connexion
 const ACCUEIL_PAR_ROLE = {
     employe: "/CommandesEmp",
-    gerant: "/TableauBord",
+    gerant: "/TableauBordG",
     administrateur: "/TableauBord",
 };
 
@@ -85,9 +87,8 @@ export default function App() {
 
           {/* 2. Espace personnel protege (auth exigee) */}
           <Route element={<RouteStaff />}>
-            {/* pages gerant/administrateur (CDC : la direction et le gerant ;
+            {/* pages administrateur (CDC : la direction et le gerant ;
                 l employe possede SES 4 pages ci-dessous uniquement) */}
-            <Route element={<RouteStaff roles={["gerant", "administrateur"]} />}>
               <Route element={<LayoutA/>}>
                 <Route path="/TableauBord" element={<TableauBord />}/>
                 <Route path="/Statistiques" element={<Statistiques />}/>
@@ -97,6 +98,14 @@ export default function App() {
                 <Route path="/Parametre" element={<Parametre />}/>
                 <Route path="/ReclamationA" element={<ReclamationA />}/>
               </Route>
+
+            {/** espace gerant*/}
+            <Route element={<LayoutG />}>
+              <Route path="/TableauBordG" element={<TableauBordG />}/>
+              <Route path="/CommandesG" element={<CommandesG />}/>
+              <Route path="/Employes" element={<Employes />}/>
+              <Route path="/ReclamationA" element={<ReclamationA />}/>
+              <Route path="/Statistiques" element={<Statistiques />}/>
             </Route>
 
             {/* espace employe (integre depuis main, chemins renomes pour ne pas
