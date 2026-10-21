@@ -23,6 +23,7 @@ import { useState } from "react";
 import { FaCartShopping, FaUtensils, FaComment, FaChartColumn, FaBell, FaBars, FaXmark } from "react-icons/fa6";
 // Le logo se trouve dans src/assets (un niveau au-dessus de ce dossier).
 import logo from "../assets/logo.png";
+import { Link } from "react-router-dom";
 
 // ===== DONNÉES =====
 // Liste des liens écrite une seule fois, réutilisée par la version ordinateur ET mobile.
@@ -103,12 +104,9 @@ export default function Header() {
                         {/* TODO : remplacer par le nom de l'employé connecté */}
                         <span className="text-xs">Meni Dom Reine</span>
                         {/* TODO : brancher la déconnexion (aucune action pour l'instant) */}
-                        <button
-                            type="button"
-                            className="bg-primary text-secondary text-xs px-4 py-1.5 rounded-full cursor-pointer hover:bg-primary-700"
-                        >
-                            Déconnexion
-                        </button>
+                        <Link to="/page_connexion" className="bg-primary text-secondary text-xs px-5 py-1.5 rounded-[10px] cursor-pointer hover:bg-primary-700">
+        Déconnexion
+    </Link>
                     </div>
                 </div>
 
