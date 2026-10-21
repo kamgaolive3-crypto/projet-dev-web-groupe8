@@ -27,8 +27,10 @@ export default function Login() {
         setErreur("");
         try {
             const reponse = await connexion(email, password);
-            // redirection selon le role : le staff va a son tableau de bord, l'etudiant a l'accueil
-            if (reponse.role && reponse.role !== "etudiant") {
+            // redirection selon le role : chacun arrive directement dans SON espace
+            if (reponse.role === "employe") {
+                navigate("/CommandesEmp");
+            } else if (reponse.role === "gerant" || reponse.role === "administrateur") {
                 navigate("/TableauBord");
             } else {
                 navigate("/");
