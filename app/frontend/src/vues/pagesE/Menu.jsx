@@ -32,7 +32,7 @@ export default function Menu() {
 
     //au premier affichage de la page, on va chercher le menu
     useEffect(() => {
-        api.get("/article_menu")
+        api.get("/article_menu-du-jour")
             .then((liste) => {
                 //on transforme les champs de la base (Id_article, nom_article...)
                 //en champs utilisés par la page (id, nom, prix, categorie, image)
