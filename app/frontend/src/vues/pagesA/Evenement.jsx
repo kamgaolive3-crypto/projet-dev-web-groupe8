@@ -53,6 +53,9 @@ export default function Evenement() {
         if (!form.fin_evenement?.includes("T")) {
             setErreur("Choisissez la date ET l'heure de fin de l'événement."); return
         }
+        if (!form.description_evenement.trim()) {
+            setErreur("La description de l'événement est obligatoire."); return
+        }
         const corps = {
             ...form,
             points_evenement: Number(form.points_evenement) || 0,
@@ -81,8 +84,10 @@ export default function Evenement() {
         setForm({
             Id_evenement: e.Id_evenement,
             type_evenement: e.type_evenement,
-            debut_evenement: (e.debut_evenement || "").slice(0, 16),
-            fin_evenement: (e.fin_evenement || "").slice(0, 16),
+            // l API renvoie "2026-10-20 12:32:37" (espace) : datetime-local exige
+            // le separateur "T", sans quoi le champ reste VIDE a l edition
+            debut_evenement: (e.debut_evenement || "").replace(" ", "T").slice(0, 16),
+            fin_evenement: (e.fin_evenement || "").replace(" ", "T").slice(0, 16),
             points_evenement: e.points_evenement ?? 0,
             taux_reduction: e.taux_reduction ?? "",
             description_evenement: e.description_evenement ?? "",

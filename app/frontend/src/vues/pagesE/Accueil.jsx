@@ -67,6 +67,7 @@ export default function Accueil() {
                 image: e.affiche_evenement || (e.type_evenement === "promotion" ? promoMaquette : eventMaquette),
                 texte: e.description_evenement || (e.taux_reduction ? "Réduction de " + e.taux_reduction + "%" : "Points a gagner : " + e.points_evenement),
                 points: e.points_evenement,
+                taux: e.taux_reduction,
                 // fenetre de dates lisible : "13 oct → 27 oct"
                 dates: e.debut_evenement && e.fin_evenement ? {
                     debut: dateCourte(e.debut_evenement),
@@ -88,14 +89,18 @@ export default function Accueil() {
     }
 
     //participer a un mini-jeu/evenement : POST /api/evenement/{id}/participer
-    const participer = async (id) => {
+    const participer = async (promo) => {
         if (!user) {
             setMessage("Connectez-vous pour participer.")
             return
         }
         try {
-            const reponse = await api.post("/evenement/" + id + "/participer")
-            setMessage("Participation enregistree ! Points credites : " + reponse.points_gagnes)
+            const reponse = await api.post("/evenement/" + promo.id + "/participer")
+            // une promotion s applique TOUT SEULE au panier (US-028) : la
+            // participation sert surtout a gagner des points — on l explique
+            setMessage(promo.bande === "promo" && promo.taux
+                ? "Participation enregistree ! Reduction de " + promo.taux + "% appliquee automatiquement a vos commandes."
+                : "Participation enregistree ! Points credites : " + reponse.points_gagnes)
         } catch (e) {
             setMessage(e.message)
         }
@@ -154,13 +159,20 @@ export default function Accueil() {
                                         {promo.points ? " — " + promo.points + " points" : ""}
                                     </span>
                                 )}
+                                {/* clarification (demande client) : la reduction
+                                    d une promotion s applique toute seule */}
+                                {promo.bande === "promo" && (
+                                    <span className="font-sans text-[11.5px] font-medium text-or-deep">
+                                        Réduction appliquée automatiquement à vos commandes
+                                    </span>
+                                )}
                             </div>
                             {/* filet vertical sur desktop */}
                             <span className="hidden h-12 w-px bg-black/10 md:block" />
                             {/* CTA "Je participe" */}
                             <button
                                 type="button"
-                                onClick={() => participer(promo.id)}
+                                onClick={() => participer(promo)}
                                 className="miam-cta self-start md:self-auto"
                             >
                                 Je participe

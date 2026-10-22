@@ -162,7 +162,9 @@ class StatistiqueController extends Controller
             ->whereNotIn('statut_commande', ['annulee'])
             ->selectRaw('Id_utilisateur, COUNT(*) as nb_commandes, COALESCE(SUM(montant_total),0) as montant')
             ->groupBy('Id_utilisateur')
-            ->orderByDesc('nb_commandes')
+            // classement par MONTANT depense (US-023 "meilleurs clients") :
+            // trier par nombre de commandes placait 2975 F devant 8150 F
+            ->orderByDesc('montant')
             ->limit(10)
             ->get();
 

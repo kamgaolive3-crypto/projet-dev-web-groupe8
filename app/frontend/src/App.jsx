@@ -30,6 +30,8 @@ import Reclamation from "./vues/pagesE/Reclamation"
 import Historique from "./vues/pagesE/Historique"
 import { FournisseurAuth, useAuth } from "./services/auth";
 import BanniereCookies from "./composant/BanniereCookies";
+import PageIntrouvable from "./composant/PageIntrouvable";
+import BasculeTheme from "./composant/BasculeTheme";
 
 // garde de l espace personnel : une connexion est exigee avec un role du staff
 // (employe, gerant, administrateur) ; l etudiant reste sur son espace public
@@ -65,11 +67,30 @@ function RouteEtudiant() {
     return <Outlet />;
 }
 
+// /Commandes (URL devinee a la main parfois) : renvoie vers la page de
+// commandes DU ROLE connecte au lieu d un ecran blanc (aucune route ne
+// matchait ce chemin)
+function VersCommandes() {
+    const { user } = useAuth();
+    if (!user) {
+        return <Navigate to="/page_connexion" state={{ de: "/Commandes" }} replace />;
+    }
+    if (user.role === "etudiant") {
+        return <Navigate to="/Historique" replace />;
+    }
+    if (user.role === "employe") {
+        return <Navigate to="/CommandesEmp" replace />;
+    }
+    // gerant + administrateur suivent leurs commandes dans l espace gerant
+    return <Navigate to="/CommandesG" replace />;
+}
+
 export default function App() {
   return (
     <FournisseurAuth>
       <BrowserRouter>
         <BanniereCookies />
+        <BasculeTheme />
         <Routes>
           {/* 1. Espace de visite (etudiant + visiteur) */}
           <Route element={<LayoutE />}>
@@ -130,6 +151,10 @@ export default function App() {
           <Route path="/page_connexion" element={<Login />} />
           <Route path="/page_inscription" element={<Signin />} />
           <Route path="/page_reset" element={<PageReset />} />
+
+          {/* 4. Raccourcis devines + page 404 (fin : le * attrape tout) */}
+          <Route path="/Commandes" element={<VersCommandes />} />
+          <Route path="*" element={<PageIntrouvable />} />
         </Routes>
       </BrowserRouter>
     </FournisseurAuth>

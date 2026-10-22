@@ -230,3 +230,122 @@ code {
            tracking-tight text-white;
   }
 }
+
+/* ============================ MODE SOMBRE ============================
+   Bascule flottante (composant/BasculeTheme) : la classe .dark est posee
+   sur <html> et memorisee (localStorage miam_theme, appliquee dans
+   main.jsx). Les utilitaires Tailwind v4 pointent vers les variables du
+   theme — redefinir les tokens suffit donc pour les pages "tokens"
+   (espace etudiant) ; les utilitaires hardcodes (bg-white, text-gray-*)
+   de l'espace de gestion sont surcharges ci-dessous. */
+html.dark {
+  color-scheme: dark;
+  --text: #ececec;
+
+  /* tokens maquette inverses */
+  --color-creme: #141417;
+  --color-creme-d: #1a1a1f;
+  --color-band: #1e1e23;
+  --color-zone: #26262c;
+  --color-piste: #222228;
+  --color-ligne: #2c2c33;
+  --color-filet: #3a3a42;
+  --color-encre: #cfcfcf;
+  --color-gris-pa: #9a9590;
+  --color-bmie: #4a4436;
+  --color-or: #d1a954;
+  --color-or-clair: #c9b184;
+  --color-or-deep: #e3bd6b;
+  --color-grey: #222227;
+  --color-grey-300: #55555e;
+
+  /* tokens espace employe */
+  --color-emp-fond: #141417;
+  --color-emp-carre: #1c1c22;
+  --color-emp-pab: #232329;
+  --color-emp-type: #3a3a42;
+  --color-emp-barre-carre: #2a2a31;
+  --color-emp-trace-pab: #cfcfcf;
+  --color-emp-valider: #8f7c47;
+  --color-emp-or-disque: #c9b184;
+  --color-emp-commande-carre: #2c2617;
+  --color-emp-commande-rond: #3a3323;
+  --color-emp-attente-carre: #33211f;
+  --color-emp-attente-rond: #4a2b2c;
+  --color-emp-bleu-carre: #16282b;
+  --color-emp-bleu-rond: #1d3a3c;
+  --color-emp-vert-carre: #1a2b1a;
+  --color-emp-vert-rond: #233823;
+  --color-emp-beige-barre: #4a4436;
+  --color-emp-fond-carte: #1c1c22;
+  --color-emp-noir-survol: #e5e5e5;
+  --color-emp-or-icone: #4a4029;
+  --color-emp-donut-boisson: #6b5f42;
+  --color-emp-donut-dessert: #121212;
+  --color-emp-donut-principal: #6b5f42;
+}
+
+html.dark body {
+  background-color: #131316;
+  color: #ececec;
+}
+
+/* surfaces hardcodees (espace de gestion : bg-white, gris, beige) */
+html.dark .bg-white { background-color: #1c1c22 !important; }
+html.dark .bg-gray-50,
+html.dark .bg-gray-100 { background-color: #232329 !important; }
+html.dark .bg-gray-200 { background-color: #2e2e35 !important; }
+html.dark .hover\:bg-gray-300:hover { background-color: #3a3a42 !important; }
+html.dark .bg-\[\#f5f1e6\] { background-color: #232329 !important; }
+html.dark .hover\:bg-\[\#f5f1e6\]:hover { background-color: #2e2e38 !important; }
+html.dark .bg-\[\#efe6d0\],
+html.dark .bg-\[\#EFEDE9\] { background-color: #2a2a31 !important; }
+html.dark .hover\:bg-\[\#EFEDE9\]:hover { background-color: #2e2e38 !important; }
+
+/* textes hardcodes */
+html.dark .text-black,
+html.dark .text-gray-900,
+html.dark .text-gray-800 { color: #ececec !important; }
+html.dark .text-gray-700,
+html.dark .text-gray-600 { color: #b9b9b9 !important; }
+html.dark .text-gray-500 { color: #9a9a9a !important; }
+
+/* les CTA or gardent un texte sombre (contraste sur fond dore) */
+html.dark .miam-cta,
+html.dark .miam-cta-or,
+html.dark .miam-pill { color: #17171a !important; }
+
+/* bordures hardcodeses */
+html.dark .border-\[\#CFBD97\] { border-color: #6d6244 !important; }
+html.dark .border-\[\#efe6d0\],
+html.dark .border-\[\#EAE3D6\] { border-color: #33333b !important; }
+html.dark .border-black\/10 { border-color: rgba(255, 255, 255, 0.12) !important; }
+html.dark .border-black\/\[\.08\] { border-color: rgba(255, 255, 255, 0.12) !important; }
+
+/* champs de formulaire */
+html.dark input:not([type="checkbox"]):not([type="file"]),
+html.dark select,
+html.dark textarea {
+  background-color: #232329;
+  color: #ececec;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder { color: #8a8a8a; }
+html.dark input:disabled,
+html.dark select:disabled { background-color: #1b1b20 !important; color: #8a8a8a !important; }
+
+/* pills / alertes de statut : fonds colores assombris, texte blanchi */
+html.dark .bg-green-100 { background-color: #1d3324 !important; }
+html.dark .text-green-700,
+html.dark .text-green-800 { color: #86d69a !important; }
+html.dark .bg-red-100 { background-color: #3a2022 !important; }
+html.dark .text-red-700 { color: #ef9a9a !important; }
+html.dark .hover\:bg-red-50:hover { background-color: #3a2226 !important; }
+html.dark .border-red-300 { border-color: #6e3a3e !important; }
+html.dark .bg-blue-100 { background-color: #1d2838 !important; }
+html.dark .text-blue-700 { color: #8ab4f8 !important; }
+html.dark .bg-\[\#f3e3c3\] { background-color: #3a3323 !important; }
+html.dark .text-\[\#8a6a1f\] { color: #e3bd6b !important; }
+
+/* scrollbar discrete en mode sombre */
+html.dark * { scrollbar-color: #3a3a42 #141417; }

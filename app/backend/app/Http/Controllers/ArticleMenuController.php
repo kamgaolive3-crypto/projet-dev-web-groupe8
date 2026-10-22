@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ArticleMenu;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 
 class ArticleMenuController extends Controller
 {
@@ -55,6 +56,18 @@ class ArticleMenuController extends Controller
             'disponibilite_article' => 'boolean',
             'Menu_du_jour'          => 'boolean',
             'Id_restaurant'         => 'required|exists:restaurant,Id_restaurant',
+        ], [
+            // messages en francais : l interface affiche tels quels
+            'Id_article.required'    => "L'identifiant de l'article est obligatoire.",
+            'Id_article.regex'       => "L'identifiant doit être 3 lettres majuscules suivies de 3 chiffres (ex : PLA001).",
+            'Id_article.unique'      => 'Cet identifiant article existe déjà.',
+            'nom_article.required'   => "Le nom de l'article est obligatoire.",
+            'nom_article.max'        => 'Le nom ne doit pas dépasser 150 caractères.',
+            'prix_article.required'  => 'Le prix est obligatoire.',
+            'prix_article.integer'   => 'Le prix doit être un nombre entier (en Fcfa).',
+            'prix_article.min'       => 'Le prix ne peut pas être négatif.',
+            'categories_article.in'  => 'Catégorie inconnue : plat, boisson, dessert, accompagnement ou autre.',
+            'Id_restaurant.exists'   => 'Restaurant introuvable.',
         ]);
         $article = ArticleMenu::create($data);
         return response() ->json($article, 201);
@@ -94,6 +107,18 @@ class ArticleMenuController extends Controller
             'disponibilite_article' => 'boolean',
             'Menu_du_jour'          => 'boolean',
             'Id_restaurant'         => 'required|exists:restaurant,Id_restaurant',
+        ], [
+            // messages en francais (meme grille que la creation)
+            'Id_article.required'    => "L'identifiant de l'article est obligatoire.",
+            'Id_article.regex'       => "L'identifiant doit être 3 lettres majuscules suivies de 3 chiffres (ex : PLA001).",
+            'Id_article.unique'      => 'Cet identifiant article existe déjà.',
+            'nom_article.required'   => "Le nom de l'article est obligatoire.",
+            'nom_article.max'        => 'Le nom ne doit pas dépasser 150 caractères.',
+            'prix_article.required'  => 'Le prix est obligatoire.',
+            'prix_article.integer'   => 'Le prix doit être un nombre entier (en Fcfa).',
+            'prix_article.min'       => 'Le prix ne peut pas être négatif.',
+            'categories_article.in'  => 'Catégorie inconnue : plat, boisson, dessert, accompagnement ou autre.',
+            'Id_restaurant.exists'   => 'Restaurant introuvable.',
         ]);
 
         $article->update($data);
@@ -109,7 +134,14 @@ class ArticleMenuController extends Controller
         if ($request->user()->role === 'etudiant') {
             return response()->json(['message' => 'Gestion du menu reservee au personnel.'], 403);
         }
-        ArticleMenu::findOrFail( $id )->delete();
+        $article = ArticleMenu::findOrFail($id);
+        try {
+            $article->delete();
+        } catch (QueryException $e) {
+            // article deja lie a des commandes (table contenir) : on refuse
+            // proprement au lieu d un 500 (cle etrangere)
+            return response()->json(['message' => "Impossible de supprimer : cet article figure déjà dans des commandes. Changez plutôt son statut en « Rupture »."], 422);
+        }
         return response () ->json(['message'=> 'article supprimer']);
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Etudiant;
 use App\Models\Evenement;
 use App\Models\MvtPoint;
 use App\Models\Participation_evenement;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -53,6 +54,22 @@ class EvenementController extends Controller
             'affiche_evenement'     => 'nullable|string',
             // fourni par le client, sinon attribue au profil administrateur connecte
             'Id_utilisateur'  => 'nullable|exists:administrateur,Id_utilisateur',
+        ], [
+            // messages en francais : l interface affiche tels quels
+            'Id_evenement.required'    => "L'identifiant de l'événement est obligatoire.",
+            'Id_evenement.regex'       => "L'identifiant doit être 3 lettres majuscules suivies de 4 chiffres (ex : PRM0001).",
+            'Id_evenement.unique'      => 'Cet identifiant événement existe déjà.',
+            'debut_evenement.required' => 'La date de début est obligatoire (date ET heure).',
+            'debut_evenement.date'     => 'La date de début est invalide.',
+            'fin_evenement.required'   => 'La date de fin est obligatoire (date ET heure).',
+            'fin_evenement.date'       => 'La date de fin est invalide.',
+            'fin_evenement.after_or_equal' => 'La date de fin doit être postérieure ou égale au début.',
+            'type_evenement.in'        => 'Type inconnu : promotion, evenement ou mini_jeu.',
+            'points_evenement.integer' => 'Les points doivent être un nombre entier.',
+            'taux_reduction.required_if' => 'Le taux de réduction est obligatoire pour une promotion.',
+            'taux_reduction.between'   => 'Le taux de réduction doit être compris entre 1 et 100.',
+            'description_evenement.required' => 'La description est obligatoire.',
+            'description_evenement.max' => 'La description ne doit pas dépasser 1000 caractères.',
         ]);
         if (empty($data['Id_utilisateur'])) {
             // journal : priorite au profil administrateur connecte. Un gerant/employe
@@ -101,6 +118,22 @@ class EvenementController extends Controller
             // le chemin rendu par POST /api/upload_image
             'affiche_evenement'     => 'nullable|string',
             'Id_utilisateur'  => 'nullable|exists:administrateur,Id_utilisateur',
+        ], [
+            // messages en francais (meme grille que la creation)
+            'Id_evenement.required'    => "L'identifiant de l'événement est obligatoire.",
+            'Id_evenement.regex'       => "L'identifiant doit être 3 lettres majuscules suivies de 4 chiffres (ex : PRM0001).",
+            'Id_evenement.unique'      => 'Cet identifiant événement existe déjà.',
+            'debut_evenement.required' => 'La date de début est obligatoire (date ET heure).',
+            'debut_evenement.date'     => 'La date de début est invalide.',
+            'fin_evenement.required'   => 'La date de fin est obligatoire (date ET heure).',
+            'fin_evenement.date'       => 'La date de fin est invalide.',
+            'fin_evenement.after_or_equal' => 'La date de fin doit être postérieure ou égale au début.',
+            'type_evenement.in'        => 'Type inconnu : promotion, evenement ou mini_jeu.',
+            'points_evenement.integer' => 'Les points doivent être un nombre entier.',
+            'taux_reduction.required_if' => 'Le taux de réduction est obligatoire pour une promotion.',
+            'taux_reduction.between'   => 'Le taux de réduction doit être compris entre 1 et 100.',
+            'description_evenement.required' => 'La description est obligatoire.',
+            'description_evenement.max' => 'La description ne doit pas dépasser 1000 caractères.',
         ]);
         // sans Id_utilisateur fourni, on conserve le createur existant (journal intact)
         if (! array_key_exists('Id_utilisateur', $data) || $data['Id_utilisateur'] === null) {
@@ -119,7 +152,14 @@ class EvenementController extends Controller
         if ($request->user()->role === 'etudiant') {
             return response()->json(['message' => 'Publication reservee au personnel.'], 403);
         }
-        Evenement::findOrFail($id)->delete();
+        $evenement = Evenement::findOrFail($id);
+        try {
+            $evenement->delete();
+        } catch (QueryException $e) {
+            // particiation deja enregistree (cle etrangere) : on refuse
+            // proprement au lieu d un 500
+            return response()->json(['message' => "Impossible de supprimer : cet événement a déjà des participants. Laissez-le simplement expirer (dates passées)."], 422);
+        }
         return response () ->json(['message'=> 'evenement supprimer']);
     }
 
