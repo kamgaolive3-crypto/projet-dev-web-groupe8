@@ -37,12 +37,14 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # (index.html est servi a la racine, index.php reste le front controller de /api)
 COPY --from=front /app/frontend/dist/ /var/www/html/public/
 
-# Dossiers ecrivables a l execution (sessions, cache, uploads)
+# Dossiers ecrivables a l execution (sessions, cache, UPLOADS d images)
 # (sans accolades : /bin/sh = dash n expande pas {a,b,c})
+# public/img doit appartenir a www-data : c est la que le contrôleur d upload
+# ecrit les photos (public_path('img/plats|evenements')->move()).
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views \
-        storage/logs bootstrap/cache \
+        storage/logs bootstrap/cache public/img/plats public/img/evenements \
     && touch database/database.sqlite \
-    && chown -R www-data: storage bootstrap/cache database
+    && chown -R www-data: storage bootstrap/cache database public/img
 
 # Script d'amorcage : DB SQLite, migrations, seeds idempotents, puis Apache
 COPY app/backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
