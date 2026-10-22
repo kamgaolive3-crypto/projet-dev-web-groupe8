@@ -199,10 +199,6 @@ class DatabaseSeeder extends Seeder
      */
     private function creerCommandesDemo(): void
     {
-        use App\Models\Commande;
-        use App\Models\Contenir;
-        use Carbon\Carbon;
-
         // Vérifier s'il y a déjà des commandes
         if (Commande::count() > 0) {
             return;
