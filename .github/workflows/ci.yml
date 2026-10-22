@@ -47,3 +47,40 @@ jobs:
         run: npm ci
       - name: Build de production
         run: npm run build
+
+  docker:
+    name: Validation image Docker (backend)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construction de l'image
+        run: docker build -t mon-miam-miam-api:ci .
+
+  deploy:
+    name: Deploiement automatique (CD)
+    needs: [backend, frontend, docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+      VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+    steps:
+      - name: Deploiement du backend sur Render
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            echo "Declenchement du deploiement Render (API backend)..."
+            curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK"
+          else
+            echo "::notice::Secret RENDER_DEPLOY_HOOK absent - si Render est connecte au depot, le deploiement se fait automatiquement au push."
+          fi
+      - name: Deploiement du frontend sur Vercel
+        run: |
+          if [ -n "$VERCEL_DEPLOY_HOOK" ]; then
+            echo "Declenchement du deploiement Vercel (frontend)..."
+            curl --fail --silent --show-error -X POST "$VERCEL_DEPLOY_HOOK"
+          else
+            echo "::notice::Secret VERCEL_DEPLOY_HOOK absent - si Vercel est connecte au depot, le deploiement se fait automatiquement au push."
+          fi

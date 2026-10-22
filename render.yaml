@@ -1,0 +1,33 @@
+# --- Blueprint Render : backend Laravel (API) de Mon Miam Miam ---
+# Applique automatiquement quand on connecte le depot GitHub a Render
+# (Dashboard Render > New > Blueprint > choisir ce depot).
+# Le frontend React est deploie cote Vercel (voir app/frontend/vercel.json).
+services:
+  - type: web
+    name: mon-miam-miam-api
+    runtime: docker
+    rootDir: app/backend
+    plan: free
+    healthCheckPath: /up
+    envVars:
+      # Cle de chiffrement Laravel : Render la genere une seule fois (stable)
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        value: https://mon-miam-miam-api.onrender.com
+      # Base SQLite incluse dans le conteneur (voir Dockerfile + entrypoint)
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: database
+      # Pas de serveur mail en production de demo : les mails partent dans les logs
+      - key: MAIL_MAILER
+        value: log

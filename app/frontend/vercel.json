@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/img/(.*)",
+      "destination": "https://mon-miam-miam-api.onrender.com/img/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
