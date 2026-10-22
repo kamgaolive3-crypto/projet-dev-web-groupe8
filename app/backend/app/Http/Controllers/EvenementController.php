@@ -71,6 +71,13 @@ class EvenementController extends Controller
             'description_evenement.required' => 'La description est obligatoire.',
             'description_evenement.max' => 'La description ne doit pas dépasser 1000 caractères.',
         ]);
+        if (! empty($data['debut_evenement'])) {
+            $data['debut_evenement'] = str_replace('T', ' ', $data['debut_evenement']);
+        }
+        if (! empty($data['fin_evenement'])) {
+            $data['fin_evenement'] = str_replace('T', ' ', $data['fin_evenement']);
+        }
+
         if (empty($data['Id_utilisateur'])) {
             // journal : priorite au profil administrateur connecte. Un gerant/employe
             // peut tout de meme publier un evenement : l'ecriture est alors attribuee
@@ -135,6 +142,13 @@ class EvenementController extends Controller
             'description_evenement.required' => 'La description est obligatoire.',
             'description_evenement.max' => 'La description ne doit pas dépasser 1000 caractères.',
         ]);
+        if (! empty($data['debut_evenement'])) {
+            $data['debut_evenement'] = str_replace('T', ' ', $data['debut_evenement']);
+        }
+        if (! empty($data['fin_evenement'])) {
+            $data['fin_evenement'] = str_replace('T', ' ', $data['fin_evenement']);
+        }
+
         // sans Id_utilisateur fourni, on conserve le createur existant (journal intact)
         if (! array_key_exists('Id_utilisateur', $data) || $data['Id_utilisateur'] === null) {
             unset($data['Id_utilisateur']);

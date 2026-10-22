@@ -36,16 +36,19 @@ class Evenement extends Model
         return $this->participation_env();
     }
     public function scopePromotionsActives($query){
+        // normalisation : le 'T' d'un champ ISO ("2026-10-22T08:00") doit etre
+        // converti en espace ("2026-10-22 08:00") sous SQLite pour que la
+        // comparaison binaire avec now() fonctionne correctement
         return $query->where('type_evenement', 'promotion')
-                     ->where('debut_evenement', '<=', now())
-                     ->where('fin_evenement', '>=', now());
+                     ->whereRaw("REPLACE(debut_evenement, 'T', ' ') <= ?", [now()->format('Y-m-d H:i:s')])
+                     ->whereRaw("REPLACE(fin_evenement, 'T', ' ') >= ?", [now()->format('Y-m-d H:i:s')]);
     }
 
     // Tous les evenements actifs du moment (promotion, evenement, mini_jeu):
     // sert a la page d accueil pour remplir les bandes "Evenements" et
     // "Promotions" (GET /api/evenements/actifs).
     public function scopeActifs($query){
-        return $query->where('debut_evenement', '<=', now())
-                     ->where('fin_evenement', '>=', now());
+        return $query->whereRaw("REPLACE(debut_evenement, 'T', ' ') <= ?", [now()->format('Y-m-d H:i:s')])
+                     ->whereRaw("REPLACE(fin_evenement, 'T', ' ') >= ?", [now()->format('Y-m-d H:i:s')]);
     }
 }
