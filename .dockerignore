@@ -1,0 +1,24 @@
+# Contexte de build = racine du depot : on n emporte que le necessaire
+.git
+.github
+
+# Backend : rien de sensible ni de regenerable
+**/.env
+**/.env.*
+app/backend/vendor/
+app/backend/database/*.sqlite
+app/backend/database/*.sqlite-journal
+app/backend/storage/framework/cache/*
+app/backend/storage/framework/sessions/*
+app/backend/storage/framework/views/*
+app/backend/storage/logs/*.log
+app/backend/.phpunit.result.cache
+
+# Frontend : rien de regenerable
+app/frontend/node_modules/
+app/frontend/dist/
+
+# Divers
+**/node_modules
+*.md
+!README.md

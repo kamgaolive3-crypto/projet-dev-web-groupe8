@@ -5,6 +5,10 @@
 
     RewriteEngine On
 
+    # A la racine, servir le SPA (index.html) avant index.php :
+    # docker-php.conf force DirectoryIndex "index.php index.html", sinon "/" part dans Laravel.
+    DirectoryIndex index.html index.php
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -13,13 +17,20 @@
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
-    # Redirect Trailing Slashes If Not A Folder...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_URI} (.+)/$
-    RewriteRule ^ %1 [L,R=301]
+    # 1. API Laravel + health check : envoye a index.php (front controller)
+    RewriteRule ^(api|sanctum)(/|$) index.php [L,QSA]
+    RewriteRule ^up/?$ index.php [L,QSA]
 
-    # Send Requests To Front Controller...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
+    # 2. Fichiers et dossiers reels (bundle React, images, favicon...) : on ne touche rien
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 3. Toute autre route (/Menu, /Panier...) = page React -> index.html (fallback SPA)
+    RewriteRule ^ index.html [L]
 </IfModule>
+
+# Fichiers internes inaccessibles en direct
+<FilesMatch "^(\.ht|\.env|composer\.(json|lock))">
+    Require all denied
+</FilesMatch>

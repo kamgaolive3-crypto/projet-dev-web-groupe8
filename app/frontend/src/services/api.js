@@ -1,6 +1,7 @@
 // client API unique de l application : toutes les pages passent par ici
 // en dev : le proxy vite transmet /api a Laravel (http://127.0.0.1:8000)
-// en production : definir VITE_API_URL (ex : https://monmiammiam.vercel.app/api)
+// en production : par defaut l API est sur la meme origine (/api). VITE_API_URL
+// ne sert que si l API est sur une autre origine (ex : https://mon-miam-miam.onrender.com/api)
 const BASE = import.meta.env.VITE_API_URL || "/api";
 
 const CLE_TOKEN = "miam_token";

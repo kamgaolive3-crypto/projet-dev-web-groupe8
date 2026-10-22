@@ -1,5 +1,14 @@
-# --- Image de production du backend Mon Miam Miam (Laravel 11 / PHP 8.2) ---
-# Construite localement (docker build) et sur Render (runtime: docker dans render.yaml).
+# --- Image de production COMPLETE Mon Miam Miam ---
+# Etage 1 : build du frontend React (Vite)  ->  Etage 2 : Laravel 11 / PHP 8.2 / Apache
+# Le bundle React est copie dans public/ : UNE SEULE URL sert le site ET l API
+# (same-origin : pas de CORS, pas de proxy d images, une seule plateforme a heberger).
+FROM node:20-slim AS front
+WORKDIR /app/frontend
+COPY app/frontend/package*.json ./
+RUN npm ci
+COPY app/frontend/ ./
+RUN npm run build
+
 FROM php:8.2-apache
 
 # Extensions : l image officielle fournit deja pdo_sqlite/sqlite3/mbstring/curl/opcache.
@@ -10,8 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
-# ServerName unique (evite l'avertissement Apache au demarrage)
-# + DocumentRoot Laravel (public/) + .htaccess actif (routes /api via rewrite)
+# ServerName unique + DocumentRoot Laravel (public/) + .htaccess actif (routes /api et fallback SPA)
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
     && sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf \
     && sed -ri 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
@@ -21,17 +29,21 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Dependances PHP (le .dockerignore exclut vendor/, .env, la DB locale...)
-COPY . .
+# Backend Laravel (le .dockerignore racine exclut .env, vendor, la DB locale...)
+COPY app/backend/ .
 RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Frontend React : index.html + assets/ cohabitent avec index.php Laravel
+# (index.html est servi a la racine, index.php reste le front controller de /api)
+COPY --from=front /app/frontend/dist/ /var/www/html/public/
 
 # Dossiers ecrivables a l execution (sessions, cache, uploads)
 RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
     && touch database/database.sqlite \
     && chown -R www-data: storage bootstrap/cache database
 
-# Script d'amorcage : cree la DB, migre, seed (idempotent) puis lance Apache
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# Script d'amorcage : DB SQLite, migrations, seeds idempotents, puis Apache
+COPY app/backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 80

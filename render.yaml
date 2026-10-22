@@ -1,12 +1,19 @@
-# --- Blueprint Render : backend Laravel (API) de Mon Miam Miam ---
-# Applique automatiquement quand on connecte le depot GitHub a Render
-# (Dashboard Render > New > Blueprint > choisir ce depot).
-# Le frontend React est deploie cote Vercel (voir app/frontend/vercel.json).
+# --- Blueprint Render : Mon Miam Miam complet (API Laravel + frontend React) ---
+# Une SEULE image Docker (Dockerfile a la racine du depot) sert le site entier :
+# le bundle React est dans public/ et les routes /api vont a Laravel (meme origine,
+# pas de CORS, pas de proxy d images).
+#
+# Mise en route (une seule fois) :
+#   Option A : Dashboard Render > New > Blueprint > choisir ce depot GitHub
+#              (build automatique depuis le Dockerfile, deploiement a chaque push).
+#   Option B : sans lien GitHub : New > Web Service > "Deploy an existing image"
+#              avec l'image ghcr.io/kamgaolive3-crypto/projet-dev-web-groupe8:latest
+#              publiee par la CI GitHub Actions.
 services:
   - type: web
-    name: mon-miam-miam-api
+    name: mon-miam-miam
     runtime: docker
-    rootDir: app/backend
+    dockerfilePath: ./Dockerfile
     plan: free
     healthCheckPath: /up
     envVars:
@@ -18,7 +25,7 @@ services:
       - key: APP_DEBUG
         value: "false"
       - key: APP_URL
-        value: https://mon-miam-miam-api.onrender.com
+        value: https://mon-miam-miam.onrender.com
       # Base SQLite incluse dans le conteneur (voir Dockerfile + entrypoint)
       - key: DB_CONNECTION
         value: sqlite
