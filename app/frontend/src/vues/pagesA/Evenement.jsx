@@ -5,24 +5,32 @@ import { useAuth } from "../../services/auth";
 // libellés des types (mêmes valeurs que la base)
 const types = ["promotion", "evenement", "mini_jeu"];
 
-// formulaire vide
-const FORMULAIRE_VIDE = {
+// horodatage local "YYYY-MM-DDTHH:MM" pour datetime-local (date ET heure,
+// car un champ sans heure reste vide et est refuse par la validation)
+const horodatage = (heure) => {
+    const d = new Date(); d.setHours(heure, 0, 0, 0)
+    const p = (n) => String(n).padStart(2, "0")
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(heure) + ":00"
+}
+
+// formulaire vide (dates pre-remplies : debut du jour 08:00, fin 22:00)
+const formVide = () => ({
     Id_evenement: "",
     type_evenement: "promotion",
-    debut_evenement: "",
-    fin_evenement: "",
+    debut_evenement: horodatage(8),
+    fin_evenement: horodatage(22),
     points_evenement: 0,
     taux_reduction: "",
     description_evenement: "",
     affiche_evenement: "",
-};
+});
 
 export default function Evenement() {
     const { user } = useAuth()
     const [evenements, setEvenements] = useState([])
     const [erreur, setErreur] = useState("")
     const [message, setMessage] = useState("")
-    const [form, setForm] = useState(FORMULAIRE_VIDE)
+    const [form, setForm] = useState(formVide)
     const [modeEdition, setModeEdition] = useState(false)
     // participations affichées d un événement (bouton "Voir")
     const [participations, setParticipations] = useState(null)
@@ -37,6 +45,14 @@ export default function Evenement() {
     // POST (création) ou PUT (modification)
     const enregistrer = async () => {
         setMessage(""); setErreur("")
+        // datetime-local sans heure = valeur vide : on explique en francais
+        // plutot que de laisser passer un message de validation anglais
+        if (!form.debut_evenement?.includes("T")) {
+            setErreur("Choisissez la date ET l'heure de début de l'événement."); return
+        }
+        if (!form.fin_evenement?.includes("T")) {
+            setErreur("Choisissez la date ET l'heure de fin de l'événement."); return
+        }
         const corps = {
             ...form,
             points_evenement: Number(form.points_evenement) || 0,
@@ -50,7 +66,7 @@ export default function Evenement() {
                 await api.post("/evenement", corps)
                 setMessage("Événement " + form.Id_evenement + " créé.")
             }
-            setForm(FORMULAIRE_VIDE)
+            setForm(formVide())
             setModeEdition(false)
             charger()
         } catch (e) {
@@ -165,13 +181,13 @@ export default function Evenement() {
                         className="rounded-md border border-[#CFBD97] px-2 py-1" />
                 </div>
                 <div className="flex flex-col gap-1 text-xs">
-                    <label>Début</label>
+                    <label>Début (date et heure)</label>
                     <input type="datetime-local" value={form.debut_evenement}
                         onChange={(e) => setForm({ ...form, debut_evenement: e.target.value })}
                         className="rounded-md border border-[#CFBD97] px-2 py-1" />
                 </div>
                 <div className="flex flex-col gap-1 text-xs">
-                    <label>Fin (après le début)</label>
+                    <label>Fin (après le début — date et heure)</label>
                     <input type="datetime-local" value={form.fin_evenement}
                         onChange={(e) => setForm({ ...form, fin_evenement: e.target.value })}
                         className="rounded-md border border-[#CFBD97] px-2 py-1" />
@@ -200,7 +216,7 @@ export default function Evenement() {
                         {modeEdition ? "Enregistrer" : "Créer l événement"}
                     </button>
                     {modeEdition && (
-                        <button onClick={() => { setModeEdition(false); setForm(FORMULAIRE_VIDE) }}
+                        <button onClick={() => { setModeEdition(false); setForm(formVide()) }}
                             className="rounded-full border border-[#CFBD97] px-4 py-1.5 text-xs">Annuler</button>
                     )}
                 </div>

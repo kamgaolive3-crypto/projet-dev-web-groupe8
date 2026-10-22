@@ -97,12 +97,21 @@ class ReclamationController extends Controller
         }
 
         DB::transaction(function () use ($reclamation, $data, $request) {
-            $reclamation->update([
+            $maj = [
                 'statut_reclamation'   => 'observation',   // passée au gérant pour décision
                 'reponse_reclamation'  => $data['reponse'],
-                'Id_traitant'          => $request->user()->Id_utilisateur,
                 'date_traitement'      => now(),
-            ]);
+            ];
+            // Les FK pointent vers des tables distinctes : Id_traitant reference
+            // la table "employe" — un gérant/admin qui traite ne doit pas y etre
+            // inscrit (sinon violation de cle etrangere -> 500).
+            if ($request->user()->role === 'employe') {
+                $maj['Id_traitant'] = $request->user()->Id_utilisateur;
+            } elseif ($request->user()->role === 'administrateur') {
+                $maj['Id_admin_traitant']   = $request->user()->Id_utilisateur;
+                $maj['date_traitement_admin'] = now();
+            }
+            $reclamation->update($maj);
         });
 
         return $reclamation;
@@ -129,12 +138,22 @@ class ReclamationController extends Controller
         }
 
         DB::transaction(function () use ($reclamation, $data, $request) {
-            $reclamation->update([
+            $maj = [
                 'statut_reclamation' => $data['decision'],
-                'Id_gerant'          => $request->user()->Id_utilisateur,
                 'date_decision'      => now(),
                 'decision'           => $data['decision'],
-            ]);
+            ];
+            // Id_gerant reference la table "gerant" : quand c est l administrateur
+            // qui decide, on ecrit dans les colonnes admin (sinon violation de
+            // cle etrangere -> 500). Meme mecanique que traiter().
+            if ($request->user()->role === 'administrateur') {
+                $maj['Id_admin_decideur']    = $request->user()->Id_utilisateur;
+                $maj['date_decision_admin']  = now();
+                $maj['decision_admin']       = $data['decision'];
+            } else {
+                $maj['Id_gerant'] = $request->user()->Id_utilisateur;
+            }
+            $reclamation->update($maj);
         });
 
         return $reclamation;
