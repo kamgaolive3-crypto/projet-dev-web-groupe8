@@ -188,5 +188,91 @@ class DatabaseSeeder extends Seeder
                 ]
             );
         }
+
+        // --- Commandes de démonstration (pour que les tableaux de bord ne soient pas vides) ---
+        $this->creerCommandesDemo();
+    }
+
+    /**
+     * Crée quelques commandes de démo avec différents statuts
+     * pour que les tableaux de bord (admin, gérant, employé) affichent des données.
+     */
+    private function creerCommandesDemo(): void
+    {
+        use App\Models\Commande;
+        use App\Models\Contenir;
+        use Carbon\Carbon;
+
+        // Vérifier s'il y a déjà des commandes
+        if (Commande::count() > 0) {
+            return;
+        }
+
+        $etudiants = ['ETUD000001', 'ETUD000002'];
+        $articles = ['PLA001', 'BOI001', 'DES001', 'PLA003', 'ACC001'];
+        $restaurant = 'RS001';
+        $statuts = ['en_preparation', 'prete', 'livraison', 'livree', 'annulee'];
+        $maintenant = Carbon::now();
+
+        foreach ($etudiants as $i => $idEtudiant) {
+            // 2-3 commandes par étudiant
+            $nbCommandes = $i === 0 ? 3 : 2;
+            for ($j = 0; $j < $nbCommandes; $j++) {
+                $statut = $statuts[array_rand($statuts)];
+                $dateCmd = $maintenant->copy()->subDays(rand(0, 25))->setTime(rand(10, 22), rand(0, 59));
+
+                $articlesCmd = array_rand(array_flip($articles), rand(1, 3));
+                if (!is_array($articlesCmd)) $articlesCmd = [$articlesCmd];
+
+                $commande = Commande::create([
+                    'Id_commande'     => 'COM' . strtoupper(substr(md5($idEtudiant . $j . $dateCmd), 0, 4)),
+                    'Id_utilisateur'  => $idEtudiant,
+                    'Id_restaurant'   => $restaurant,
+                    'date_commande'   => $dateCmd,
+                    'statut_commande' => $statut,
+                    'montant_total'   => 0, // calculé après
+                    'mode_service'    => rand(0, 1) ? 'sur_place' : 'a_emporter',
+                    'heure_recup'     => $dateCmd->copy()->addMinutes(30)->format('H:i'),
+                    'points_utilises' => 0,
+                    'points_gagnes'   => 0,
+                ]);
+
+                $total = 0;
+                foreach ($articlesCmd as $idArt) {
+                    $art = \App\Models\ArticleMenu::find($idArt);
+                    if ($art) {
+                        $qte = rand(1, 2);
+                        Contenir::create([
+                            'Id_commande' => $commande->Id_commande,
+                            'Id_article'  => $idArt,
+                            'quantite'    => $qte,
+                            'prix_unitaire' => $art->prix_article,
+                        ]);
+                        $total += $art->prix_article * $qte;
+                    }
+                }
+
+                // Appliquer promo active si sur place (US-028)
+                $promo = \App\Models\Evenement::promotionsActives()->first();
+                $reduction = 0;
+                if ($promo && $commande->mode_service === 'sur_place') {
+                    $reduction = ($total * $promo->taux_reduction) / 100;
+                }
+
+                $commande->update([
+                    'montant_total' => $total - $reduction,
+                    'points_gagnes' => (int)(($total - $reduction) / 1000), // 1 point par 1000F
+                ]);
+
+                // Historique statut
+                \App\Models\HistoriqueStatut::create([
+                    'Id_commande'     => $commande->Id_commande,
+                    'statut_precedent' => 'nouvelle',
+                    'statut_nouveau'  => $statut,
+                    'date_changement' => $dateCmd,
+                    'Id_auteur'       => $statut === 'annulee' ? $idEtudiant : 'GERA000001',
+                ]);
+            }
+        }
     }
 }
