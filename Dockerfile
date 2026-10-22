@@ -38,7 +38,9 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 COPY --from=front /app/frontend/dist/ /var/www/html/public/
 
 # Dossiers ecrivables a l execution (sessions, cache, uploads)
-RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
+# (sans accolades : /bin/sh = dash n expande pas {a,b,c})
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views \
+        storage/logs bootstrap/cache \
     && touch database/database.sqlite \
     && chown -R www-data: storage bootstrap/cache database
 

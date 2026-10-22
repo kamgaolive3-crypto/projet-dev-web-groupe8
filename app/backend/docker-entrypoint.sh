@@ -7,7 +7,11 @@ set -e
 
 PORT="${PORT:-80}"
 if [ "$PORT" != "80" ]; then
+    # Render (et tout cloud) assigne un port explicite : il faut changer
+    # ECOUTE (Listen) ET le vhost, sinon Apache ignore le vhost et retombe
+    # sur le DocumentRoot global /var/www/html (403/404 partout).
     sed -ri "s/^Listen 80/Listen ${PORT}/" /etc/apache2/ports.conf
+    sed -ri "s/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf
 fi
 
 echo "[entrypoint] Preparation de la base SQLite..."
