@@ -97,7 +97,7 @@ class FideliteController extends Controller
             });
         }
 
-        return response()->json(['message' => "Expiration traitée pour {$traite} étudiant(s)."]);
+        return response()->json(['message' => "Expiration traitée pour {$traites} étudiant(s)."]);
     }
 
     /**

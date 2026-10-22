@@ -79,7 +79,7 @@ export default function TableauBord() {
                     >
                         + Rapport mensuel
                     </button>
-                    <Link to="/Commandes" className="rounded-full border border-[#CFBD97] px-4 py-1.5 text-xs">Suivi commandes</Link>
+                    <Link to="/CommandesG" className="rounded-full border border-[#CFBD97] px-4 py-1.5 text-xs">Suivi commandes</Link>
                     <Link to="/Livraisons" className="rounded-full border border-[#CFBD97] px-4 py-1.5 text-xs">Livraisons</Link>
                 </div>
             </div>

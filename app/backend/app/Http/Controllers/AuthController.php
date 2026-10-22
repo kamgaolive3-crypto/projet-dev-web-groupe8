@@ -47,11 +47,11 @@ class AuthController extends Controller
             'statut_compte'  => 'actif',
         ]);
 
-        $code = $lettres . random_int(100, 999);
+        $code = $lettres . random_int(1000, 9999);
         Etudiant::create([
             'Id_utilisateur'  => $utilisateur->Id_utilisateur,
             'localisation'    => $data['localisation'] ?? null,
-            'code_parrainage' => strtoupper(Str::random(4)).random_int(1000, 9999),
+            'code_parrainage' => $code,
             'solde_point'     => 0,
         ]);
 

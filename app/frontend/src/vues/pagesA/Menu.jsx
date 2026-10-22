@@ -18,7 +18,7 @@ const FORMULAIRE_VIDE = {
     disponibilite_article: true,
     Menu_du_jour: false,
     image_article: "",
-    Id_restaurant: "RS001",
+    Id_restaurant: "",
 };
 
 export default function Menu() {
@@ -75,7 +75,10 @@ export default function Menu() {
                 await api.post("/article_menu", corps)
                 setMessage("Article " + form.Id_article + " créé.")
             }
-            setForm(FORMULAIRE_VIDE)
+            setForm({
+                ...FORMULAIRE_VIDE,
+                Id_restaurant: restaurants[0]?.Id_restaurant ?? "",
+            });
             setModeEdition(false)
             charger()
         } catch (e) {
@@ -163,7 +166,13 @@ export default function Menu() {
                 </div>
                 <button
                     type="button"
-                    onClick={() => { setModeEdition(false); setForm(FORMULAIRE_VIDE); }}
+                    onClick={() => {
+                        setModeEdition(false); 
+                        setForm({
+                            ...FORMULAIRE_VIDE,
+                            Id_restaurant: restaurants[0]?.Id_restaurant ?? "",
+                        });
+                    }}
                     className="rounded-full bg-[#CFBD97] px-4 py-1.5 text-xs font-semibold text-white hover:brightness-95"
                 >
                     + Ajouter un plat

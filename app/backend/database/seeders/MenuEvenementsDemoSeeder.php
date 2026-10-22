@@ -64,7 +64,7 @@ class MenuEvenementsDemoSeeder extends Seeder
 
         // promotion ACTIVE des maintenant (bande "Promotions" de l'accueil)
         Evenement::updateOrCreate(
-            ['Id_evenement' => 'PRMO0001'],
+            ['Id_evenement' => 'PRM0001'],
             [
                 'type_evenement'        => 'promotion',
                 'debut_evenement'       => $maintenant->copy()->subDays(2),
@@ -73,13 +73,13 @@ class MenuEvenementsDemoSeeder extends Seeder
                 'points_evenement'      => 0,
                 'description_evenement' => '-15 % sur toute commande servie sur place cette semaine',
                 'affiche_evenement'     => '/maq/maq_promo.jpg',
-                'Id_utilisateur'        => 'ADMI000001',
+                'Id_utilisateur'        => 'ADMI000000',
             ]
         );
 
         // mini-jeu ACTIVE des maintenant (bande "Evenements" de l accueil, "Je participe")
         Evenement::updateOrCreate(
-            ['Id_evenement' => 'MINJ0001'],
+            ['Id_evenement' => 'MIN0001'],
             [
                 'type_evenement'        => 'mini_jeu',
                 'debut_evenement'       => $maintenant->copy()->subDays(1),
@@ -87,21 +87,21 @@ class MenuEvenementsDemoSeeder extends Seeder
                 'points_evenement'      => 50,
                 'description_evenement' => 'Mini-jeu client : 50 points a remporter chaque soir',
                 'affiche_evenement'     => '/maq/maq_evenement.jpg',
-                'Id_utilisateur'        => 'ADMI000001',
+                'Id_utilisateur'        => 'ADMI000000',
             ]
         );
 
         // evenement a venir (visible pour le gerant, pas encore dans les bandes)
         Evenement::updateOrCreate(
-            ['Id_evenement' => 'EVEN0001'],
+            ['Id_evenement' => 'EVE0001'],
             [
                 'type_evenement'        => 'evenement',
-                'debut_evenement'       => $maintenant->copy()->addDays(5),
-                'fin_evenement'         => $maintenant->copy()->addDays(5)->setTime(22, 0),
+                'debut_evenement' => $maintenant->copy()->addDays(5)->setTime(18, 0),
+                'fin_evenement'   => $maintenant->copy()->addDays(5)->setTime(22, 0),
                 'points_evenement'      => 20,
                 'description_evenement' => 'Soirée tasting : menu découverte du chef',
                 'affiche_evenement'     => '/maq/maq_evenement.jpg',
-                'Id_utilisateur'        => 'ADMI000001',
+                'Id_utilisateur'        => 'ADMI000000',
             ]
         );
     }

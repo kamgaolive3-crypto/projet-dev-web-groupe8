@@ -6,6 +6,7 @@ use App\Models\Etudiant;
 use App\Models\MvtPoint;
 use App\Models\Parrainer;
 use App\Models\Utilisateur;
+use App\Models\Parametre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -13,7 +14,13 @@ use Illuminate\Support\Str;
 class ParrainageController extends Controller
 {
     /** Bonus au parrain à la 1ère commande du filleul (US-019) */
-    public const BONUS_PARRAIN = 500; // points
+    private static function lireBonusParrain(): int
+{
+        $valeur = Parametre::where('cle', 'points_commande_filleul')
+            ->value('valeur');
+
+    return $valeur === null ? 500 : max(0, (int) $valeur);
+} // points
 
     /**
      * afficher / générer mon code de parrainage (US-017)
@@ -33,7 +40,8 @@ class ParrainageController extends Controller
 
         return response()->json([
             'code_parrainage' => $etudiant->code_parrainage,
-            'bonus_attendu'   => self::BONUS_PARRAIN . ' points à la 1ère commande du filleul',
+            'bonus_attendu'   => self::lireBonusParrain()
+                . ' points à la 1ère commande du filleul',
         ]);
     }
 
@@ -125,14 +133,15 @@ class ParrainageController extends Controller
             return; // pas de parrain (ou bonus déjà versé)
         }
 
-        DB::transaction(function () use ($filleul, $parrainage) {
+        $bonus = self::lireBonusParrain();
+        DB::transaction(function () use ($filleul, $parrainage, $bonus) {
             $parrain = Etudiant::where('Id_utilisateur', $parrainage->Id_parrain)->first();
 
             if (! $parrain) {
                 return;
             }
 
-            $parrain->increment('solde_point', self::BONUS_PARRAIN);
+            $parrain->increment('solde_point', $bonus);
 
             do {
                 $id = 'MV' . str_pad((string) random_int(0, 999), 3, '0', STR_PAD_LEFT);
@@ -140,7 +149,7 @@ class ParrainageController extends Controller
 
             MvtPoint::create([
                 'Id_mvt'         => $id,
-                'nbres_points'   => self::BONUS_PARRAIN,
+                'nbres_points'   => $bonus,
                 'type_mvt'       => 'parrainage',
                 'Id_utilisateur' => $parrain->Id_utilisateur,
             ]);

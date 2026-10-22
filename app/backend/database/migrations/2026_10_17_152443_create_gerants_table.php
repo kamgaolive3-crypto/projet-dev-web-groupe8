@@ -6,31 +6,28 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         if (Schema::hasTable('gerant')) {
             return;
         }
+
         Schema::create('gerant', function (Blueprint $table) {
             $table->string('Id_utilisateur', 10)->primary();
             $table->date('date_nomination')->nullable();
             $table->string('Id_restaurant', 5);
-            $table->timestamps();
 
-            $table->foreign('Id_utilisateur')
-                ->references('Id_utilisateur')->on('utilisateur')
+            $table->foreign('Id_utilisateur', 'fk_gerant_utilisateur')
+                ->references('Id_utilisateur')
+                ->on('utilisateur')
                 ->onDelete('cascade');
-            $table->foreign('Id_restaurant')
-                ->references('Id_restaurant')->on('restaurant');
+
+            $table->foreign('Id_restaurant', 'fk_gerant_restaurant')
+                ->references('Id_restaurant')
+                ->on('restaurant');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('gerant');

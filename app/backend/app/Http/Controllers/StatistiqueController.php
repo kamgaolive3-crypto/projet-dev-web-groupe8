@@ -162,7 +162,7 @@ class StatistiqueController extends Controller
             ->whereNotIn('statut_commande', ['annulee'])
             ->selectRaw('Id_utilisateur, COUNT(*) as nb_commandes, COALESCE(SUM(montant_total),0) as montant')
             ->groupBy('Id_utilisateur')
-            ->orderByDesc('nb_commandes')
+            ->orderByDesc('montant')
             ->limit(10)
             ->get();
 
