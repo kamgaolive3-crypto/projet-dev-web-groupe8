@@ -62,8 +62,8 @@ class ParametreController extends Controller
         $parametre = Parametre::findOrFail($id);
         
         $data = $request->validate([
-            'valeur'        => 'required|string',
-            'Id_utilisateur'=> 'required|exists:administrateur,Id_utilisateur',
+            'valeur'         => 'required|string',
+            'Id_utilisateur' => 'nullable|exists:administrateur,Id_utilisateur',
         ]);
 
         $parametre->update(['valeur' => $data['valeur']]);

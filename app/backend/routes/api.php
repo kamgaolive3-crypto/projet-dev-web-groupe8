@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('restaurant', [RestaurantController::class, 'index']);
 Route::get('restaurant/{restaurant}', [RestaurantController::class, 'show']);
 Route::get('article_menu', [ArticleMenuController::class, 'index']);
+Route::get('article_menu/{article_menu}', [ArticleMenuController::class, 'show']);
 Route::get('evenement', [EvenementController::class, 'index']);
 Route::get('evenement/{evenement}', [EvenementController::class, 'show']);
 
